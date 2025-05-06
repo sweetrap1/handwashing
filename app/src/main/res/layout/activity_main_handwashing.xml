@@ -4,7 +4,6 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#f0f0f0"
     tools:context=".gui.MainHandwashing">
 
     <ImageView
@@ -105,60 +104,74 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:gravity="center"
                 android:text="Name"
                 android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                android:gravity="center"/>
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:gravity="center"
                 android:text="Handwashes"
                 android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                android:gravity="center"/>
+                android:textStyle="bold" />
         </TableRow>
 
         <TableRow android:padding="8dp">
+
             <TextView
-                android:text="Employee 1"
-                android:gravity="center"/>
+                android:gravity="center"
+                android:text="Employee 1" />
+
             <TextView
-                android:text="100"
-                android:gravity="center"/>
+                android:gravity="center"
+                android:text="100" />
         </TableRow>
+
         <TableRow android:padding="8dp">
+
             <TextView
-                android:text="Employee 2"
-                android:gravity="center"/>
+                android:gravity="center"
+                android:text="Employee 2" />
+
             <TextView
-                android:text="90"
-                android:gravity="center"/>
+                android:gravity="center"
+                android:text="90" />
         </TableRow>
+
         <TableRow android:padding="8dp">
+
             <TextView
-                android:text="Employee 3"
-                android:gravity="center"/>
+                android:gravity="center"
+                android:text="Employee 3" />
+
             <TextView
-                android:text="80"
-                android:gravity="center"/>
+                android:gravity="center"
+                android:text="80" />
         </TableRow>
+
         <TableRow android:padding="8dp">
+
             <TextView
-                android:text="Employee 4"
-                android:gravity="center"/>
+                android:gravity="center"
+                android:text="Employee 4" />
+
             <TextView
-                android:text="70"
-                android:gravity="center"/>
+                android:gravity="center"
+                android:text="70" />
         </TableRow>
+
         <TableRow android:padding="8dp">
+
             <TextView
-                android:text="Employee 5"
-                android:gravity="center"/>
+                android:gravity="center"
+                android:text="Employee 5" />
+
             <TextView
-                android:text="60"
-                android:gravity="center"/>
+                android:gravity="center"
+                android:text="60" />
         </TableRow>
 
     </TableLayout>

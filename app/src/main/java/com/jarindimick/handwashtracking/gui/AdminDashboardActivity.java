@@ -48,7 +48,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_dashboard); // Make sure this layout file exists
-
+        getSupportActionBar().hide();
         setupgui();
         setupListeners();
         // Initialize dbHelper here if uncommented above

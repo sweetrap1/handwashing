@@ -19,6 +19,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.jarindimick.handwashtracking.R;
+import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -36,7 +37,7 @@ public class MainHandwashing extends AppCompatActivity {
 
     private Handler handler = new Handler();
     private Runnable updateTimeRunnable;
-    private com.jarindimick.handwashtracking.gui.DatabaseHelper dbHelper;
+    private com.jarindimick.handwashtracking.databasehelper.DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,10 +49,11 @@ public class MainHandwashing extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        getSupportActionBar().hide();
         setupgui();
         startUpdatingTime();
         setupListeners();
-        dbHelper = new com.jarindimick.handwashtracking.gui.DatabaseHelper(this); // Initialize DatabaseHelper
+        dbHelper = new DatabaseHelper(this); // Initialize DatabaseHelper
     }
 
     private void setupgui() {

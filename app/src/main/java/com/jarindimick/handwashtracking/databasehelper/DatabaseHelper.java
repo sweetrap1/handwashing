@@ -1,4 +1,4 @@
-package com.jarindimick.handwashtracking.gui;
+package com.jarindimick.handwashtracking.databasehelper;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
