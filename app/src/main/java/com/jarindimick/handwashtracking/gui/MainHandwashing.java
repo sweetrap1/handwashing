@@ -23,7 +23,9 @@ import com.jarindimick.handwashtracking.R;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-
+import android.app.AlertDialog; // Add this
+import android.view.LayoutInflater; // Add this
+import android.content.Intent; // Make sure this is also imported for the Intent
 
 public class MainHandwashing extends AppCompatActivity {
     private ImageView img_logo;

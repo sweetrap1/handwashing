@@ -1,21 +1,22 @@
 package com.jarindimick.handwashtracking.gui;
 
 import android.app.DatePickerDialog;
-import android.content.Intent;
+import android.content.Intent; // Needed for logout or other navigation
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.RadioGroup;
-import android.widget.Toast;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.jarindimick.handwashtracking.R;
 
 import java.util.Calendar;
+import java.util.Locale;
 
 public class AdminDashboardActivity extends AppCompatActivity {
 
@@ -33,32 +34,36 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private EditText edit_search_end_date;
     private Button btn_search_handwashes;
 
+    private TextView txt_message;
+
     // UI elements for Other Buttons
     private Button btn_logout;
     private Button btn_delete_data;
     private Button btn_import_employees;
 
-    // Message Display
-    private TextView txt_message;
+    // Declare DatabaseHelper if needed in this Activity
+    // private DatabaseHelper dbHelper; // Uncomment if you need database access here
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_admin_dashboard);
+        setContentView(R.layout.activity_admin_dashboard); // Make sure this layout file exists
 
         setupgui();
         setupListeners();
+        // Initialize dbHelper here if uncommented above
+        // dbHelper = new DatabaseHelper(this);
     }
 
     private void setupgui() {
         // Download Data
         edit_download_start_date = findViewById(R.id.edit_download_start_date);
         edit_download_end_date = findViewById(R.id.edit_download_end_date);
-        radio_download_type = findViewById(R.id.radio_download_type);
+        radio_download_type = findViewById(R.id.radio_download_type); // Make sure R.id.radio_download_type is a RadioGroup
         btn_download_data = findViewById(R.id.btn_download_data);
 
         // Search Handwashes
-        edit_search_first_name = findViewById(R.id.edit_search_first_name);
+        edit_search_first_name = findViewById(R.id.edit_search_first_name); // Make sure these IDs exist in your layout
         edit_search_last_name = findViewById(R.id.edit_search_last_name);
         edit_search_employee_id = findViewById(R.id.edit_search_employee_id);
         edit_search_start_date = findViewById(R.id.edit_search_start_date);
@@ -66,15 +71,16 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_search_handwashes = findViewById(R.id.btn_search_handwashes);
 
         // Other Buttons
-        btn_logout = findViewById(R.id.btn_logout);
+        btn_logout = findViewById(R.id.btn_logout); // Make sure these IDs exist in your layout
         btn_delete_data = findViewById(R.id.btn_delete_data);
         btn_import_employees = findViewById(R.id.btn_import_employees);
 
-        // Message Display
-        txt_message = findViewById(R.id.txt_message);
+        // Text Buttons (Assuming this was meant to be a TextView message area)
+        txt_message = findViewById(R.id.txt_message); // Make sure this ID exists in your layout and is a TextView
     }
 
     private void setupListeners() {
+        // Listener for Download Data Button
         btn_download_data.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -82,6 +88,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
             }
         });
 
+        // Listeners for Date EditTexts to show DatePickerDialog
         edit_download_start_date.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -110,45 +117,82 @@ public class AdminDashboardActivity extends AppCompatActivity {
             }
         });
 
+        // Listeners for the remaining buttons (Search, Logout, Delete, Import)
+
         btn_search_handwashes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Implement Search Handwashes logic here (LATER)
-                Toast.makeText(AdminDashboardActivity.this, "Search Handwashes clicked", Toast.LENGTH_SHORT).show();
+                searchHandwashes(); // Call the search method
             }
         });
 
         btn_logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Implement Logout logic here (LATER)
-                Toast.makeText(AdminDashboardActivity.this, "Logout clicked", Toast.LENGTH_SHORT).show();
-                //  For now, just finish the activity (go back to login)
-                finish();
+                logout(); // Call the logout method
             }
         });
 
         btn_delete_data.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Implement Delete Data logic here (LATER)
-                Toast.makeText(AdminDashboardActivity.this, "Delete Data clicked", Toast.LENGTH_SHORT).show();
+                deleteData(); // Call the delete method
             }
         });
 
         btn_import_employees.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Implement Import Employees logic here (LATER)
-                Toast.makeText(AdminDashboardActivity.this, "Import Employees clicked", Toast.LENGTH_SHORT).show();
+                importEmployees(); // Call the import method
             }
         });
+    }
+
+    private void showDatePickerDialog(final EditText editText) {
+        final Calendar c = Calendar.getInstance();
+        int year = c.get(Calendar.YEAR);
+        int month = c.get(Calendar.MONTH);
+        int day = c.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(
+                AdminDashboardActivity.this,
+                new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                        // Format the date as YYYY-MM-DD
+                        // monthOfYear is 0-indexed, so add 1
+                        String formattedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, monthOfYear + 1, dayOfMonth);
+                        editText.setText(formattedDate);
+                    }
+                },
+                year, month, day);
+        datePickerDialog.show();
     }
 
     private void downloadData() {
         String startDate = edit_download_start_date.getText().toString();
         String endDate = edit_download_end_date.getText().toString();
-        String downloadType = radio_download_type.getCheckedRadioButtonId() == R.id.radio_summary ? "summary" : "detailed";
+
+        // Get selected download type from RadioGroup
+        int selectedId = radio_download_type.getCheckedRadioButtonId();
+        String downloadType;
+        if (selectedId != -1) { // Check if a radio button is selected
+            if (selectedId == R.id.radio_summary) { // Assuming R.id.radio_summary is the ID for the summary radio button
+                downloadType = "summary";
+            } else if (selectedId == R.id.radio_detailed){ // Assuming R.id.radio_detailed is the ID for the detailed radio button
+                downloadType = "detailed";
+            } else {
+                downloadType = "unknown"; // Default or error case
+                Toast.makeText(this, "Please select a download type", Toast.LENGTH_SHORT).show();
+                txt_message.setText("Please select a download type.");
+                return; // Exit if no valid type selected
+            }
+        } else {
+            Toast.makeText(this, "Please select a download type", Toast.LENGTH_SHORT).show();
+            txt_message.setText("Please select a download type.");
+            return; // Exit if no type is selected
+        }
+
 
         // Basic input validation
         if (startDate.isEmpty() || endDate.isEmpty()) {
@@ -167,35 +211,85 @@ public class AdminDashboardActivity extends AppCompatActivity {
         // Simulate a successful download for now
         // In the future you would make an API call here and handle the response
         // Example:
-        // makeAPICall(apiUrl);
+        // makeAPICall(apiUrl); // Call the placeholder API method
 
         // Display a success message (replace with actual response handling later)
         txt_message.append("\nData download initiated (replace with actual result)");
     }
 
+    // --- Placeholder Methods (Implement the actual logic for these) ---
+
+    private void searchHandwashes() {
+        // TODO: Implement logic to search handwashes based on input fields
+        Toast.makeText(this, "Search Handwashes button clicked (Implement me!)", Toast.LENGTH_SHORT).show();
+        // Example: Get search criteria from edit_search fields and query database/API
+        String firstName = edit_search_first_name.getText().toString();
+        String lastName = edit_search_last_name.getText().toString();
+        String employeeId = edit_search_employee_id.getText().toString();
+        String startDate = edit_search_start_date.getText().toString();
+        String endDate = edit_search_end_date.getText().toString();
+
+        // Use these variables to perform your search...
+        txt_message.setText("Searching for:\nFirst Name: " + firstName + "\nLast Name: " + lastName +
+                "\nEmployee ID: " + employeeId + "\nStart Date: " + startDate + "\nEnd Date: " + endDate);
+        // ... perform search logic here ...
+        txt_message.append("\nSearch initiated (replace with actual results)");
+    }
+
+    private void logout() {
+        // TODO: Implement logout logic (clear session, credentials, etc.)
+        Toast.makeText(this, "Logging out...", Toast.LENGTH_SHORT).show();
+        // Example: Navigate back to MainHandwashing or a login screen
+        Intent intent = new Intent(AdminDashboardActivity.this, MainHandwashing.class);
+        // Clear back stack so user can't go back to admin screen with back button
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish(); // Close the current activity
+    }
+
+    private void deleteData() {
+        // TODO: Implement logic to delete data
+        Toast.makeText(this, "Delete Data button clicked (Implement me!)", Toast.LENGTH_SHORT).show();
+        // Example: Show a confirmation dialog, then delete data from database/API
+        txt_message.setText("Delete Data button clicked (Implement actual deletion logic)");
+    }
+
+    private void importEmployees() {
+        // TODO: Implement logic to import employees
+        Toast.makeText(this, "Import Employees button clicked (Implement me!)", Toast.LENGTH_SHORT).show();
+        // Example: Open a file picker or read from a predefined location and insert into database/API
+        txt_message.setText("Import Employees button clicked (Implement actual import logic)");
+    }
+
+
     // Placeholder for API call (IMPLEMENT LATER)
+    // Uncomment and implement this when you integrate networking
+    /*
     private void makeAPICall(String url) {
-        // Implement your network request here (e.g., using HttpURLConnection, Retrofit, etc.)
+        // Implement your network request here (e.g., using HttpURLConnection, Retrofit, Volley, etc.)
         // This is a placeholder; replace with actual network code
+        // Example:
+        // new Thread(() -> {
+        //     try {
+        //         URL apiEndpoint = new URL(url);
+        //         HttpURLConnection myConnection = (HttpURLConnection) apiEndpoint.openConnection();
+        //         // Set up connection properties, read response, handle errors, etc.
+        //         // ...
+        //         myConnection.disconnect();
+        //     } catch (Exception e) {
+        //         e.printStackTrace();
+        //         // Handle exceptions
+        //     }
+        // }).start();
     }
+    */
 
-    private void showDatePickerDialog(final EditText editText) {
-        final Calendar c = Calendar.getInstance();
-        int year = c.get(Calendar.YEAR);
-        int month = c.get(Calendar.MONTH);
-        int day = c.get(Calendar.DAY_OF_MONTH);
-
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
-                AdminDashboardActivity.this,
-                new DatePickerDialog.OnDateSetListener() {
-                    @Override
-                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                        // Format the date as YYYY-MM-DD
-                        String formattedDate = String.format("%04d-%02d-%02d", year, monthOfYear + 1, dayOfMonth);
-                        editText.setText(formattedDate);
-                    }
-                },
-                year, month, day);
-        datePickerDialog.show();
-    }
+    // Add onDestroy if needed for cleanup (e.g., closing database helper)
+    // @Override
+    // protected void onDestroy() {
+    //     super.onDestroy();
+    //     // if (dbHelper != null) {
+    //     //     dbHelper.close();
+    //     // }
+    // }
 }
