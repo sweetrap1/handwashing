@@ -1,13 +1,8 @@
-package com.jarindimick.handwashtracking.gui;
+package com.jarindimick.handwashtracking.databasehelper;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.content.ContentValues;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -84,60 +79,5 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         // Create tables again
         onCreate(db);
-    }
-
-    public long insertEmployee(String employeeNumber) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_EMPLOYEE_NUMBER, employeeNumber);
-        values.put(COLUMN_FIRST_NAME, ""); // Default empty (can be updated later)
-        values.put(COLUMN_LAST_NAME, "");  // Default empty (can be updated later)
-        values.put(COLUMN_IS_ACTIVE, 1);    // Default active
-
-        long id = db.insert(TABLE_EMPLOYEES, null, values);
-        db.close();
-        return id; // Returns the row ID of the newly inserted row, or -1 if an error occurred
-    }
-
-    public List<LeaderboardEntry> getTopHandwashers() {
-        SQLiteDatabase db = this.getReadableDatabase();
-        List<LeaderboardEntry> leaderboard = new ArrayList<>();
-
-        // SQL to get the top 5 employees by handwash count
-        String query = "SELECT " + TABLE_EMPLOYEES + "." + COLUMN_EMPLOYEE_NUMBER + ", "
-                + COLUMN_FIRST_NAME + ", "
-                + "COUNT(" + TABLE_HANDWASH_LOG + "." + COLUMN_EMPLOYEE_NUMBER + ") AS handwash_count "
-                + "FROM " + TABLE_EMPLOYEES + " LEFT JOIN " + TABLE_HANDWASH_LOG
-                + " ON " + TABLE_EMPLOYEES + "." + COLUMN_EMPLOYEE_NUMBER + " = " + TABLE_HANDWASH_LOG + "." + COLUMN_EMPLOYEE_NUMBER
-                + " GROUP BY " + TABLE_EMPLOYEES + "." + COLUMN_EMPLOYEE_NUMBER + ", " + COLUMN_FIRST_NAME
-                + " ORDER BY handwash_count DESC LIMIT 5";
-
-        Cursor cursor = db.rawQuery(query, null);
-
-        if (cursor.moveToFirst()) {
-            do {
-                String employeeNumber = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
-                String firstName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIRST_NAME));
-                int handwashCount = cursor.getInt(cursor.getColumnIndexOrThrow("handwash_count"));
-                leaderboard.add(new LeaderboardEntry(employeeNumber, firstName, handwashCount));
-            } while (cursor.moveToNext());
-        }
-
-        cursor.close();
-        db.close();
-        return leaderboard;
-    }
-
-    public long insertHandwashLog(String employeeNumber, String washDate, String washTime, String photoPath) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_EMPLOYEE_NUMBER, employeeNumber);
-        values.put(COLUMN_WASH_DATE, washDate);
-        values.put(COLUMN_WASH_TIME, washTime);
-        values.put(COLUMN_PHOTO_PATH, photoPath);
-
-        long id = db.insert(TABLE_HANDWASH_LOG, null, values);
-        db.close();
-        return id;
     }
 }
