@@ -1,8 +1,9 @@
-package com.jarindimick.handwashtracking.databasehelper;
+package com.jarindimick.handwashtracking.gui;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.content.ContentValues;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -79,5 +80,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         // Create tables again
         onCreate(db);
+    }
+
+    public long insertEmployee(String employeeNumber) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_EMPLOYEE_NUMBER, employeeNumber);
+        values.put(COLUMN_FIRST_NAME, ""); // Default empty (can be updated later)
+        values.put(COLUMN_LAST_NAME, "");  // Default empty (can be updated later)
+        values.put(COLUMN_IS_ACTIVE, 1);    // Default active
+
+        long id = db.insert(TABLE_EMPLOYEES, null, values);
+        db.close();
+        return id; // Returns the row ID of the newly inserted row, or -1 if an error occurred
     }
 }

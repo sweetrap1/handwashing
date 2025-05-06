@@ -1,15 +1,16 @@
 package com.jarindimick.handwashtracking.gui;
 
+import android.content.Intent; // Keep this import
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.AlertDialog; // Keep this import
+import android.view.LayoutInflater; // Keep this import
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,42 +19,22 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.jarindimick.handwashtracking.R;
-import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
-// Define a simple data class to represent an employee's leaderboard entry
-class LeaderboardEntry {
-    String employeeNumber;
-    String employeeName;
-    int handwashCount;
-
-    public LeaderboardEntry(String employeeNumber, String employeeName, int handwashCount) {
-        this.employeeNumber = employeeNumber;
-        this.employeeName = employeeName;
-        this.handwashCount = handwashCount;
-    }
-}
 
 public class MainHandwashing extends AppCompatActivity {
     private ImageView img_logo;
     private TextView txt_datetime;
-    private TextView txt_title;
     private EditText edit_employee_number;
     private Button btn_start;
-    private TextView txt_top_handwashers_title;
-    private TableLayout table_top_handwashers;
-    private Button btn_admin_login;
+    private Button btn_admin_login; // Declare btn_admin_login
+
     private Handler handler = new Handler();
     private Runnable updateTimeRunnable;
-    private DatabaseHelper dbHelper;;
-
-    // Mock data for the leaderboard (replace with actual data later)
-    private List<LeaderboardEntry> leaderboardData = new ArrayList<>();
+    private com.jarindimick.handwashtracking.gui.DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,19 +49,15 @@ public class MainHandwashing extends AppCompatActivity {
         setupgui();
         startUpdatingTime();
         setupListeners();
-        initializeMockLeaderboardData();  // Initialize mock data
-        populateLeaderboardTable();       // Populate the table
+        dbHelper = new com.jarindimick.handwashtracking.gui.DatabaseHelper(this); // Initialize DatabaseHelper
     }
 
     private void setupgui() {
         img_logo = findViewById(R.id.img_logo);
         txt_datetime = findViewById(R.id.txt_datetime);
-        txt_title = findViewById(R.id.txt_title);
         edit_employee_number = findViewById(R.id.edit_employee_number);
         btn_start = findViewById(R.id.btn_start);
-        txt_top_handwashers_title = findViewById(R.id.txt_top_handwashers_title);
-        table_top_handwashers = findViewById(R.id.table_top_handwashers);
-        btn_admin_login = findViewById(R.id.btn_admin_login);
+        btn_admin_login = findViewById(R.id.btn_admin_login); // Initialize btn_admin_login
     }
 
     private void updateDateTime() {
@@ -109,85 +86,95 @@ public class MainHandwashing extends AppCompatActivity {
             public void onClick(View v) {
                 String employeeNumber = edit_employee_number.getText().toString();
                 if (!employeeNumber.isEmpty()) {
-                    // For now, just display a toast.  Later, we'll handle the handwash recording.
-                    Toast.makeText(MainHandwashing.this, "Start handwashing for employee: " + employeeNumber, Toast.LENGTH_SHORT).show();
+                    saveEmployeeData(employeeNumber);
                 } else {
                     Toast.makeText(MainHandwashing.this, "Please enter employee number", Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
-        btn_admin_login.setOnClickListener(new View.OnClickListener() {
+        // Add the listener for the admin login button here
+        btn_admin_login.setOnClickListener(new View.OnClickListener() { // <-- Added this listener
             @Override
             public void onClick(View v) {
-                // For now, just display a toast.  Later, we'll navigate to the admin login.
-                Toast.makeText(MainHandwashing.this, "Admin login clicked", Toast.LENGTH_SHORT).show();
+                showAdminLoginDialog(); // <-- This calls the method defined below
             }
         });
     }
 
-    // Initialize mock leaderboard data
-    private void initializeMockLeaderboardData() {
-        leaderboardData.add(new LeaderboardEntry("12345", "Alice Smith", 120));
-        leaderboardData.add(new LeaderboardEntry("67890", "Bob Johnson", 95));
-        leaderboardData.add(new LeaderboardEntry("24680", "Charlie Williams", 80));
-        leaderboardData.add(new LeaderboardEntry("13579", "David Brown", 72));
-        leaderboardData.add(new LeaderboardEntry("11223", "Emily Davis", 61));
-    }
-
-    // Populate the TableLayout with leaderboard data
-    private void populateLeaderboardTable() {
-        table_top_handwashers.removeAllViews();  // Clear existing rows (except header)
-
-        // Add header row
-        TableRow headerRow = new TableRow(this);
-        headerRow.setBackgroundColor(getColor(R.color.teal_700)); // Example color
-        headerRow.setPadding(8, 8, 8, 8);
-
-        TextView nameHeader = createTableHeaderTextView("Name");
-        TextView countHeader = createTableHeaderTextView("Handwashes");
-
-        headerRow.addView(nameHeader);
-        headerRow.addView(countHeader);
-        table_top_handwashers.addView(headerRow);
-
-        // Add data rows
-        for (LeaderboardEntry entry : leaderboardData) {
-            TableRow row = new TableRow(this);
-            row.setPadding(8, 8, 8, 8);
-
-            TextView nameView = createDataTextView(entry.employeeName);
-            TextView countView = createDataTextView(String.valueOf(entry.handwashCount));
-
-            row.addView(nameView);
-            row.addView(countView);
-            table_top_handwashers.addView(row);
+    private void saveEmployeeData(String employeeNumber) {
+        long result = dbHelper.insertEmployee(employeeNumber);
+        if (result != -1) {
+            Toast.makeText(this, "Employee data saved", Toast.LENGTH_SHORT).show();
+            edit_employee_number.setText(""); // Clear the input field
+        } else {
+            Toast.makeText(this, "Error saving employee data", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    // Helper method to create TextView for table header
-    private TextView createTableHeaderTextView(String text) {
-        TextView textView = new TextView(this);
-        textView.setText(text);
-        textView.setTextColor(getColor(R.color.white));
-        textView.setTextSize(18);
-        textView.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        textView.setGravity(android.view.Gravity.CENTER);
-        return textView;
-    }
-
-    // Helper method to create TextView for table data
-    private TextView createDataTextView(String text) {
-        TextView textView = new TextView(this);
-        textView.setText(text);
-        textView.setTextSize(16);
-        textView.setGravity(android.view.Gravity.CENTER);
-        return textView;
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        // Remove the callback to prevent memory leaks
         handler.removeCallbacks(updateTimeRunnable);
+        if (dbHelper != null) {
+            dbHelper.close();
+        }
     }
+
+    // Add this method somewhere within your MainHandwashing class,
+    // outside of other methods like onCreate, setupListeners, etc.
+    // <-- The method definition starts here, OUTSIDE of setupListeners()
+    private void showAdminLoginDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        // Get the layout inflater
+        LayoutInflater inflater = this.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_admin_login, null); // Make sure dialog_admin_login.xml exists
+
+        // Set the custom layout for the dialog
+        builder.setView(dialogView);
+
+        // Get references to the EditText fields in the dialog layout
+        EditText usernameEditText = dialogView.findViewById(R.id.edit_admin_username);
+        EditText passwordEditText = dialogView.findViewById(R.id.edit_admin_password);
+
+        // Add action buttons
+        builder.setPositiveButton("Login", (dialog, id) -> {
+            // This button is handled below to prevent auto-dismissal
+        });
+        builder.setNegativeButton("Cancel", (dialog, id) -> {
+            // User cancelled the dialog, do nothing or handle accordingly
+            dialog.cancel();
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Override the positive button's onClickListener to handle validation
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String enteredUsername = usernameEditText.getText().toString();
+                String enteredPassword = passwordEditText.getText().toString();
+
+                // --- Simple Hardcoded Credential Check (Replace with secure method in production) ---
+                String correctUsername = "admin"; // Replace with your actual username
+                String correctPassword = "admin"; // Replace with your actual password
+                // ---------------------------------------------------------------------------------
+
+                if (enteredUsername.equals(correctUsername) && enteredPassword.equals(correctPassword)) {
+                    // Credentials match, navigate to Admin Dashboard
+                    Toast.makeText(MainHandwashing.this, "Login Successful", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(MainHandwashing.this, AdminDashboardActivity.class);
+                    startActivity(intent);
+                    dialog.dismiss(); // Dismiss the dialog after successful login
+
+                } else {
+                    // Credentials do not match
+                    Toast.makeText(MainHandwashing.this, "Invalid Username or Password", Toast.LENGTH_SHORT).show();
+                    // Optionally, clear fields or shake inputs to indicate error
+                }
+            }
+        });
+    } // <-- The method definition ends here
 }

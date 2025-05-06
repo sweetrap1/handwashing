@@ -51,9 +51,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="YYYY-MM-DD"
-                    android:focusableInTouchMode="false"
-                    android:focusable="false"
-                    />
+                    android:inputType="date" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -65,9 +63,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="YYYY-MM-DD"
-                    android:focusableInTouchMode="false"
-                    android:focusable="false"
-                    />
+                    android:inputType="date" />
 
                 <RadioGroup
                     android:id="@+id/radio_download_type"
@@ -151,9 +147,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="YYYY-MM-DD"
-                    android:focusableInTouchMode="false"
-                    android:focusable="false"
-                    />
+                    android:inputType="date" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -165,9 +159,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="YYYY-MM-DD"
-                    android:focusableInTouchMode="false"
-                    android:focusable="false"
-                    />
+                    android:inputType="date" />
 
                 <Button
                     android:id="@+id/btn_search_handwashes"
@@ -343,4 +335,5 @@
         </HorizontalScrollView>
 
     </LinearLayout>
+
 </ScrollView>
