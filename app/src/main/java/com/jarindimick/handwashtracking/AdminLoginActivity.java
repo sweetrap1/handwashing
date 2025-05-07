@@ -1,4 +1,4 @@
-package com.jarindimick.handwashtracking.gui;
+package com.jarindimick.handwashtracking;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +10,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.jarindimick.handwashtracking.R;
+import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper; // Import DatabaseHelper
+import com.jarindimick.handwashtracking.gui.AdminDashboardActivity;
 
 public class AdminLoginActivity extends AppCompatActivity {
 
@@ -17,6 +19,7 @@ public class AdminLoginActivity extends AppCompatActivity {
     private EditText edit_password;
     private Button btn_login;
     private Button btn_return_to_main;
+    private DatabaseHelper dbHelper; // Add DatabaseHelper instance
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +27,7 @@ public class AdminLoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_admin_login);
 
         setupgui();
+        dbHelper = new DatabaseHelper(this); // Initialize DatabaseHelper
         setupListeners();
     }
 
@@ -42,7 +46,8 @@ public class AdminLoginActivity extends AppCompatActivity {
                 String password = edit_password.getText().toString();
 
                 // *** REPLACE THIS WITH API CALL LATER ***
-                if (username.equals("admin") && password.equals("Maddox8545!")) {
+                //if (username.equals("admin") && password.equals("admin")) {  // Old insecure check
+                if (dbHelper.validateAdminLogin(username, password)) {  // Use the new validation method
                     // Successful login
                     Toast.makeText(AdminLoginActivity.this, "Login Successful", Toast.LENGTH_SHORT).show();
                     //  Navigate to Admin Dashboard Activity (IMPLEMENT LATER)
@@ -63,5 +68,13 @@ public class AdminLoginActivity extends AppCompatActivity {
                 finish(); // Simply finish the current activity to go back
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (dbHelper != null) {
+            dbHelper.close(); // Close the database connection
+        }
     }
 }

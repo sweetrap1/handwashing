@@ -2,6 +2,8 @@ package com.jarindimick.handwashtracking.gui;
 
 import android.app.DatePickerDialog;
 import android.content.Intent; // Needed for logout or other navigation
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -11,9 +13,13 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.jarindimick.handwashtracking.R;
+import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
+
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Calendar;
 import java.util.Locale;
@@ -42,7 +48,14 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private Button btn_import_employees;
 
     // Declare DatabaseHelper if needed in this Activity
-    // private DatabaseHelper dbHelper; // Uncomment if you need database access here
+    private DatabaseHelper dbHelper; //  IMPORTANT:  Declare it here
+
+    // UI elements for changing admin password
+    private EditText edit_old_password;
+    private EditText edit_new_password;
+    private EditText edit_confirm_new_password;
+    private Button btn_change_password;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +65,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         setupgui();
         setupListeners();
         // Initialize dbHelper here if uncommented above
-        // dbHelper = new DatabaseHelper(this);
+        dbHelper = new DatabaseHelper(this);  // IMPORTANT: Initialize it in onCreate
     }
 
     private void setupgui() {
@@ -77,6 +90,12 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         // Text Buttons (Assuming this was meant to be a TextView message area)
         txt_message = findViewById(R.id.txt_message); // Make sure this ID exists in your layout and is a TextView
+
+        // Change Password UI elements
+        edit_old_password = findViewById(R.id.edit_old_password);
+        edit_new_password = findViewById(R.id.edit_new_password);
+        edit_confirm_new_password = findViewById(R.id.edit_confirm_new_password);
+        btn_change_password = findViewById(R.id.btn_change_password);
     }
 
     private void setupListeners() {
@@ -146,6 +165,12 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 importEmployees(); // Call the import method
             }
         });
+        btn_change_password.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                changeAdminPassword();
+            }
+        });
     }
 
     private void showDatePickerDialog(final EditText editText) {
@@ -179,7 +204,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         if (selectedId != -1) { // Check if a radio button is selected
             if (selectedId == R.id.radio_summary) { // Assuming R.id.radio_summary is the ID for the summary radio button
                 downloadType = "summary";
-            } else if (selectedId == R.id.radio_detailed){ // Assuming R.id.radio_detailed is the ID for the detailed radio button
+            } else if (selectedId == R.id.radio_detailed) { // Assuming R.id.radio_detailed is the ID for the detailed radio button
                 downloadType = "detailed";
             } else {
                 downloadType = "unknown"; // Default or error case
@@ -219,6 +244,41 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
     // --- Placeholder Methods (Implement the actual logic for these) ---
 
+    private void changeAdminPassword() {
+        String oldPassword = edit_old_password.getText().toString();
+        String newPassword = edit_new_password.getText().toString();
+        String confirmNewPassword = edit_confirm_new_password.getText().toString();
+
+        if (!newPassword.equals(confirmNewPassword)) {
+            txt_message.setText("New passwords do not match.");
+            return;
+        }
+
+        // Verify the old password (using the same logic as in AdminLoginActivity)
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String query = "SELECT " + DatabaseHelper.COLUMN_PASSWORD_HASH + " FROM " + DatabaseHelper.TABLE_ADMIN_USERS +
+                " WHERE " + DatabaseHelper.COLUMN_USERNAME + " = 'admin'";  // Assuming 'admin' is the username
+        Cursor cursor = db.rawQuery(query, null);
+        String storedHash = null;
+        if (cursor.moveToFirst()) {
+            storedHash = cursor.getString(0);
+        }
+        cursor.close();
+        db.close();
+
+        if (storedHash != null && BCrypt.checkpw(oldPassword, storedHash)) {
+            // Old password is correct, update the password
+            boolean updated = dbHelper.updateAdminPassword("admin", newPassword); // Assuming 'admin' is the username
+            if (updated) {
+                txt_message.setText("Password changed successfully.");
+            } else {
+                txt_message.setText("Error updating password.");
+            }
+        } else {
+            txt_message.setText("Incorrect old password.");
+        }
+    }
+
     private void searchHandwashes() {
         // TODO: Implement logic to search handwashes based on input fields
         Toast.makeText(this, "Search Handwashes button clicked (Implement me!)", Toast.LENGTH_SHORT).show();
@@ -248,10 +308,34 @@ public class AdminDashboardActivity extends AppCompatActivity {
     }
 
     private void deleteData() {
-        // TODO: Implement logic to delete data
-        Toast.makeText(this, "Delete Data button clicked (Implement me!)", Toast.LENGTH_SHORT).show();
-        // Example: Show a confirmation dialog, then delete data from database/API
-        txt_message.setText("Delete Data button clicked (Implement actual deletion logic)");
+        String startDate = edit_download_start_date.getText().toString();
+        String endDate = edit_download_end_date.getText().toString();
+
+        // Basic input validation
+        if (startDate.isEmpty() || endDate.isEmpty()) {
+            txt_message.setText("Please enter start and end dates.");
+            return;
+        }
+
+        // Confirmation dialog
+        new AlertDialog.Builder(this)
+                .setTitle("Confirm Delete")
+                .setMessage("Are you sure you want to delete handwash logs between " + startDate + " and " + endDate + "?")
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                    // User clicked Yes, proceed with deletion
+                    int rowsDeleted = dbHelper.deleteHandwashLogs(startDate, endDate);
+                    if (rowsDeleted >= 0) {
+                        txt_message.setText("Deleted " + rowsDeleted + " handwash logs.");
+                    } else {
+                        txt_message.setText("Error deleting handwash logs.");
+                    }
+                })
+                .setNegativeButton(android.R.string.no, (dialog, which) -> {
+                    // User clicked No, do nothing
+                    txt_message.setText("Deletion cancelled.");
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 
     private void importEmployees() {
@@ -285,11 +369,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
     */
 
     // Add onDestroy if needed for cleanup (e.g., closing database helper)
-    // @Override
-    // protected void onDestroy() {
-    //     super.onDestroy();
-    //     // if (dbHelper != null) {
-    //     //     dbHelper.close();
-    //     // }
-    // }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (dbHelper != null) {
+            dbHelper.close();
+        }
+    }
 }
