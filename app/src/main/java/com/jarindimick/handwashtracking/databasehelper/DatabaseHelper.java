@@ -92,12 +92,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public long insertEmployee(String employeeNumber) {
+    public long insertEmployee(String employeeNumber, String firstName, String lastName) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_EMPLOYEE_NUMBER, employeeNumber);
-        values.put(COLUMN_FIRST_NAME, ""); // Default empty (can be updated later)
-        values.put(COLUMN_LAST_NAME, "");  // Default empty (can be updated later)
+        values.put(COLUMN_FIRST_NAME, firstName);
+        values.put(COLUMN_LAST_NAME, lastName);
         values.put(COLUMN_IS_ACTIVE, 1);    // Default active
 
         // First, check if the employee number already exists
@@ -106,21 +106,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (cursor.getCount() > 0) {
             // Employee exists, so update (or do nothing, depending on your needs)
             // Here, we'll assume you want to update the 'is_active' status or similar
-            values.put(COLUMN_IS_ACTIVE, 1); // Ensure they are marked as active
+            // values.put(COLUMN_IS_ACTIVE, 1); // Ensure they are marked as active
             id = db.update(TABLE_EMPLOYEES, values, COLUMN_EMPLOYEE_NUMBER + "=?", new String[]{employeeNumber});
             if (id == 0) {
                 id = -1; // Indicate error during update
             }
         } else {
             // Employee doesn't exist, so insert
-            values.put(COLUMN_FIRST_NAME, ""); // Default empty (can be updated later)
-            values.put(COLUMN_LAST_NAME, "");  // Default empty (can be updated later)
-            values.put(COLUMN_IS_ACTIVE, 1);    // Default active
             id = db.insert(TABLE_EMPLOYEES, null, values);
         }
         cursor.close();
         db.close();
         return id; // Returns the row ID of the newly inserted row, or -1 if an error occurred
+    }
+
+    public long insertEmployee(String employeeNumber) {
+        return insertEmployee(employeeNumber, "", "");
     }
 
     public List<LeaderboardEntry> getTopHandwashers() {
@@ -169,6 +170,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return id;
     }
+
 
     public boolean updateAdminPassword(String username, String newPassword) {
         SQLiteDatabase db = this.getWritableDatabase();

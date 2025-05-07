@@ -1,10 +1,12 @@
 package com.jarindimick.handwashtracking.gui;
 
 import android.app.DatePickerDialog;
-import android.content.Intent; // Needed for logout or other navigation
+import android.content.Intent;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -21,7 +23,14 @@ import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
 import org.mindrot.jbcrypt.BCrypt;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
 public class AdminDashboardActivity extends AppCompatActivity {
@@ -48,7 +57,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private Button btn_import_employees;
 
     // Declare DatabaseHelper if needed in this Activity
-    private DatabaseHelper dbHelper; //  IMPORTANT:  Declare it here
+    private DatabaseHelper dbHelper;
 
     // UI elements for changing admin password
     private EditText edit_old_password;
@@ -56,27 +65,25 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private EditText edit_confirm_new_password;
     private Button btn_change_password;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_admin_dashboard); // Make sure this layout file exists
+        setContentView(R.layout.activity_admin_dashboard);
         getSupportActionBar().hide();
         setupgui();
         setupListeners();
-        // Initialize dbHelper here if uncommented above
-        dbHelper = new DatabaseHelper(this);  // IMPORTANT: Initialize it in onCreate
+        dbHelper = new DatabaseHelper(this);
     }
 
     private void setupgui() {
         // Download Data
         edit_download_start_date = findViewById(R.id.edit_download_start_date);
         edit_download_end_date = findViewById(R.id.edit_download_end_date);
-        radio_download_type = findViewById(R.id.radio_download_type); // Make sure R.id.radio_download_type is a RadioGroup
+        radio_download_type = findViewById(R.id.radio_download_type);
         btn_download_data = findViewById(R.id.btn_download_data);
 
         // Search Handwashes
-        edit_search_first_name = findViewById(R.id.edit_search_first_name); // Make sure these IDs exist in your layout
+        edit_search_first_name = findViewById(R.id.edit_search_first_name);
         edit_search_last_name = findViewById(R.id.edit_search_last_name);
         edit_search_employee_id = findViewById(R.id.edit_search_employee_id);
         edit_search_start_date = findViewById(R.id.edit_search_start_date);
@@ -84,12 +91,12 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_search_handwashes = findViewById(R.id.btn_search_handwashes);
 
         // Other Buttons
-        btn_logout = findViewById(R.id.btn_logout); // Make sure these IDs exist in your layout
+        btn_logout = findViewById(R.id.btn_logout);
         btn_delete_data = findViewById(R.id.btn_delete_data);
         btn_import_employees = findViewById(R.id.btn_import_employees);
 
-        // Text Buttons (Assuming this was meant to be a TextView message area)
-        txt_message = findViewById(R.id.txt_message); // Make sure this ID exists in your layout and is a TextView
+        // Text message area
+        txt_message = findViewById(R.id.txt_message);
 
         // Change Password UI elements
         edit_old_password = findViewById(R.id.edit_old_password);
@@ -136,35 +143,35 @@ public class AdminDashboardActivity extends AppCompatActivity {
             }
         });
 
-        // Listeners for the remaining buttons (Search, Logout, Delete, Import)
-
+        // Listeners for the remaining buttons
         btn_search_handwashes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                searchHandwashes(); // Call the search method
+                searchHandwashes();
             }
         });
 
         btn_logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                logout(); // Call the logout method
+                logout();
             }
         });
 
         btn_delete_data.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                deleteData(); // Call the delete method
+                deleteData();
             }
         });
 
         btn_import_employees.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                importEmployees(); // Call the import method
+                importEmployees();
             }
         });
+
         btn_change_password.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -184,8 +191,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                        // Format the date as YYYY-MM-DD
-                        // monthOfYear is 0-indexed, so add 1
                         String formattedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, monthOfYear + 1, dayOfMonth);
                         editText.setText(formattedDate);
                     }
@@ -201,23 +206,22 @@ public class AdminDashboardActivity extends AppCompatActivity {
         // Get selected download type from RadioGroup
         int selectedId = radio_download_type.getCheckedRadioButtonId();
         String downloadType;
-        if (selectedId != -1) { // Check if a radio button is selected
-            if (selectedId == R.id.radio_summary) { // Assuming R.id.radio_summary is the ID for the summary radio button
+        if (selectedId != -1) {
+            if (selectedId == R.id.radio_summary) {
                 downloadType = "summary";
-            } else if (selectedId == R.id.radio_detailed) { // Assuming R.id.radio_detailed is the ID for the detailed radio button
+            } else if (selectedId == R.id.radio_detailed) {
                 downloadType = "detailed";
             } else {
-                downloadType = "unknown"; // Default or error case
+                downloadType = "unknown";
                 Toast.makeText(this, "Please select a download type", Toast.LENGTH_SHORT).show();
                 txt_message.setText("Please select a download type.");
-                return; // Exit if no valid type selected
+                return;
             }
         } else {
             Toast.makeText(this, "Please select a download type", Toast.LENGTH_SHORT).show();
             txt_message.setText("Please select a download type.");
-            return; // Exit if no type is selected
+            return;
         }
-
 
         // Basic input validation
         if (startDate.isEmpty() || endDate.isEmpty()) {
@@ -226,7 +230,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         }
 
         // *** REPLACE THIS WITH ACTUAL API CALL LATER ***
-        String apiUrl = "your_api_url/download_data.php" +  // Replace with your actual API URL
+        String apiUrl = "your_api_url/download_data.php" +
                 "?start_date=" + startDate +
                 "&end_date=" + endDate +
                 "&download_type=" + downloadType;
@@ -242,8 +246,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         txt_message.append("\nData download initiated (replace with actual result)");
     }
 
-    // --- Placeholder Methods (Implement the actual logic for these) ---
-
     private void changeAdminPassword() {
         String oldPassword = edit_old_password.getText().toString();
         String newPassword = edit_new_password.getText().toString();
@@ -254,10 +256,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
             return;
         }
 
-        // Verify the old password (using the same logic as in AdminLoginActivity)
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         String query = "SELECT " + DatabaseHelper.COLUMN_PASSWORD_HASH + " FROM " + DatabaseHelper.TABLE_ADMIN_USERS +
-                " WHERE " + DatabaseHelper.COLUMN_USERNAME + " = 'admin'";  // Assuming 'admin' is the username
+                " WHERE " + DatabaseHelper.COLUMN_USERNAME + " = 'admin'";
         Cursor cursor = db.rawQuery(query, null);
         String storedHash = null;
         if (cursor.moveToFirst()) {
@@ -267,8 +268,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         db.close();
 
         if (storedHash != null && BCrypt.checkpw(oldPassword, storedHash)) {
-            // Old password is correct, update the password
-            boolean updated = dbHelper.updateAdminPassword("admin", newPassword); // Assuming 'admin' is the username
+            boolean updated = dbHelper.updateAdminPassword("admin", newPassword);
             if (updated) {
                 txt_message.setText("Password changed successfully.");
             } else {
@@ -297,32 +297,26 @@ public class AdminDashboardActivity extends AppCompatActivity {
     }
 
     private void logout() {
-        // TODO: Implement logout logic (clear session, credentials, etc.)
         Toast.makeText(this, "Logging out...", Toast.LENGTH_SHORT).show();
-        // Example: Navigate back to MainHandwashing or a login screen
         Intent intent = new Intent(AdminDashboardActivity.this, MainHandwashing.class);
-        // Clear back stack so user can't go back to admin screen with back button
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
-        finish(); // Close the current activity
+        finish();
     }
 
     private void deleteData() {
         String startDate = edit_download_start_date.getText().toString();
         String endDate = edit_download_end_date.getText().toString();
 
-        // Basic input validation
         if (startDate.isEmpty() || endDate.isEmpty()) {
             txt_message.setText("Please enter start and end dates.");
             return;
         }
 
-        // Confirmation dialog
         new AlertDialog.Builder(this)
                 .setTitle("Confirm Delete")
                 .setMessage("Are you sure you want to delete handwash logs between " + startDate + " and " + endDate + "?")
                 .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                    // User clicked Yes, proceed with deletion
                     int rowsDeleted = dbHelper.deleteHandwashLogs(startDate, endDate);
                     if (rowsDeleted >= 0) {
                         txt_message.setText("Deleted " + rowsDeleted + " handwash logs.");
@@ -331,7 +325,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     }
                 })
                 .setNegativeButton(android.R.string.no, (dialog, which) -> {
-                    // User clicked No, do nothing
                     txt_message.setText("Deletion cancelled.");
                 })
                 .setIcon(android.R.drawable.ic_dialog_alert)
@@ -339,36 +332,71 @@ public class AdminDashboardActivity extends AppCompatActivity {
     }
 
     private void importEmployees() {
-        // TODO: Implement logic to import employees
-        Toast.makeText(this, "Import Employees button clicked (Implement me!)", Toast.LENGTH_SHORT).show();
-        // Example: Open a file picker or read from a predefined location and insert into database/API
-        txt_message.setText("Import Employees button clicked (Implement actual import logic)");
+        String csvFileName = "employees.csv"; // The name of your CSV file in assets
+
+        List<Employee> employees;
+        try {
+            employees = readAndParseCsvFile(csvFileName);
+        } catch (IOException e) {
+            txt_message.setText("Error reading CSV file: " + e.getMessage());
+            return;
+        }
+
+        int importedCount = 0;
+        int errorCount = 0;
+        for (Employee employee : employees) {
+            long result = dbHelper.insertEmployee(employee.employeeNumber, employee.firstName, employee.lastName);
+            if (result != -1) {
+                importedCount++;
+            } else {
+                errorCount++;
+            }
+        }
+
+        txt_message.setText("Imported " + importedCount + " employees. Errors: " + errorCount);
+        Toast.makeText(this, "Import completed.", Toast.LENGTH_SHORT).show();
     }
 
+    private List<Employee> readAndParseCsvFile(String csvFileName) throws IOException {
+        List<Employee> employees = new ArrayList<>();
+        AssetManager assetManager = getAssets();
+        InputStream inputStream = assetManager.open(csvFileName);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        String line;
+        boolean isFirstLine = true;
 
-    // Placeholder for API call (IMPLEMENT LATER)
-    // Uncomment and implement this when you integrate networking
-    /*
-    private void makeAPICall(String url) {
-        // Implement your network request here (e.g., using HttpURLConnection, Retrofit, Volley, etc.)
-        // This is a placeholder; replace with actual network code
-        // Example:
-        // new Thread(() -> {
-        //     try {
-        //         URL apiEndpoint = new URL(url);
-        //         HttpURLConnection myConnection = (HttpURLConnection) apiEndpoint.openConnection();
-        //         // Set up connection properties, read response, handle errors, etc.
-        //         // ...
-        //         myConnection.disconnect();
-        //     } catch (Exception e) {
-        //         e.printStackTrace();
-        //         // Handle exceptions
-        //     }
-        // }).start();
+        while ((line = reader.readLine()) != null) {
+            if (isFirstLine) {
+                isFirstLine = false;
+                continue;
+            }
+            String[] tokens = line.split(",");
+            if (tokens.length >= 3) {
+                String employeeNumber = tokens[0].trim();
+                String firstName = tokens[1].trim();
+                String lastName = tokens[2].trim();
+                employees.add(new Employee(employeeNumber, firstName, lastName));
+            } else {
+                Log.w("CSV Parser", "Skipping line: " + line + " (Not enough columns)");
+            }
+        }
+        reader.close();
+        inputStream.close();
+        return employees;
     }
-    */
 
-    // Add onDestroy if needed for cleanup (e.g., closing database helper)
+    private static class Employee {
+        String employeeNumber;
+        String firstName;
+        String lastName;
+
+        public Employee(String employeeNumber, String firstName, String lastName) {
+            this.employeeNumber = employeeNumber;
+            this.firstName = firstName;
+            this.lastName = lastName;
+        }
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
