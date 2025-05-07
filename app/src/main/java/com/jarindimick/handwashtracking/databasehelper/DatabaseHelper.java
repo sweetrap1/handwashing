@@ -12,12 +12,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.mindrot.jbcrypt.BCrypt; // Import BCrypt
+import org.mindrot.jbcrypt.BCrypt;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "Handwash.db";
-    private static final int DATABASE_VERSION = 2; // Increment version if you change the schema
+    private static final int DATABASE_VERSION = 2;
 
     // Table names
     public static final String TABLE_EMPLOYEES = "employees";
@@ -40,7 +40,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Admin Users table column names
     public static final String COLUMN_USERNAME = "username";
-    public static final String COLUMN_PASSWORD_HASH = "password_hash"; // Changed: Store hash, not plain text
+    public static final String COLUMN_PASSWORD_HASH = "password_hash";
     public static final String COLUMN_ROLE = "role";
 
     public DatabaseHelper(Context context) {
@@ -71,7 +71,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String CREATE_ADMIN_USERS_TABLE = "CREATE TABLE " + TABLE_ADMIN_USERS + "("
                 + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + COLUMN_USERNAME + " TEXT UNIQUE,"
-                + COLUMN_PASSWORD_HASH + " TEXT," // Changed: Store hash
+                + COLUMN_PASSWORD_HASH + " TEXT,"
                 + COLUMN_ROLE + " TEXT" + ")";
         db.execSQL(CREATE_ADMIN_USERS_TABLE);
 
@@ -92,6 +92,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    /**
+     * Inserts a new employee into the employees table.
+     *
+     * @param employeeNumber The employee's number.
+     * @param firstName      The employee's first name.
+     * @param lastName       The employee's last name.
+     * @return The row ID of the newly inserted row, or -1 if an error occurred.
+     */
     public long insertEmployee(String employeeNumber, String firstName, String lastName) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -100,7 +108,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_LAST_NAME, lastName);
         values.put(COLUMN_IS_ACTIVE, 1);    // Default active
 
-        // First, check if the employee number already exists
+        // First, check if the employee number already exists (you might want to handle this differently)
         Cursor cursor = db.query(TABLE_EMPLOYEES, new String[]{COLUMN_ID}, COLUMN_EMPLOYEE_NUMBER + "=?", new String[]{employeeNumber}, null, null, null);
         long id;
         if (cursor.getCount() > 0) {
@@ -117,13 +125,83 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         db.close();
-        return id; // Returns the row ID of the newly inserted row, or -1 if an error occurred
+        return id;
     }
 
+    /**
+     * Overloaded method to insert a new employee with only the employee number.
+     * First name and last name are set to empty strings.
+     *
+     * @param employeeNumber The employee's number.
+     * @return The row ID of the newly inserted row, or -1 if an error occurred.
+     */
     public long insertEmployee(String employeeNumber) {
         return insertEmployee(employeeNumber, "", "");
     }
 
+    /**
+     * Retrieves handwash logs based on the specified date range and download type.
+     *
+     * @param startDate    The start date for the log range (YYYY-MM-DD).
+     * @param endDate      The end date for the log range (YYYY-MM-DD).
+     * @param downloadType The type of download ("summary" or "detailed").
+     * @return A List of HandwashLog objects containing the retrieved data.
+     */
+    public List<HandwashLog> getHandwashLogs(String startDate, String endDate, String downloadType) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<HandwashLog> logs = new ArrayList<>();
+        String query;
+
+        if (downloadType.equals("summary")) {
+            // Summary: Employee number and total handwash count
+            query = "SELECT " + COLUMN_EMPLOYEE_NUMBER + ", COUNT(*) as total_washes " +
+                    "FROM " + TABLE_HANDWASH_LOG +
+                    " WHERE " + COLUMN_WASH_DATE + " BETWEEN ? AND ? " +
+                    "GROUP BY " + COLUMN_EMPLOYEE_NUMBER;
+        } else {
+            // Detailed: All columns from handwash_log
+            query = "SELECT * FROM " + TABLE_HANDWASH_LOG +
+                    " WHERE " + COLUMN_WASH_DATE + " BETWEEN ? AND ?";
+        }
+
+        Cursor cursor = db.rawQuery(query, new String[]{startDate, endDate});
+
+        if (cursor.moveToFirst()) {
+            do {
+                HandwashLog log = new HandwashLog();
+                log.employeeNumber = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
+                if (downloadType.equals("summary")) {
+                    log.washCount = cursor.getInt(cursor.getColumnIndexOrThrow("total_washes"));
+                } else {
+                    log.washDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WASH_DATE));
+                    log.washTime = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WASH_TIME));
+                    log.photoPath = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PHOTO_PATH));
+                }
+                logs.add(log);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return logs;
+    }
+
+    /**
+     * Helper class to represent HandwashLog data.
+     */
+    public static class HandwashLog {
+        public String employeeNumber;
+        public String washDate;
+        public String washTime;
+        public String photoPath;
+        public int washCount; // For summary data
+    }
+
+    /**
+     * Retrieves the top 5 employees with the most handwashes for the current day.
+     *
+     * @return A List of LeaderboardEntry objects representing the top handwashers.
+     */
     public List<LeaderboardEntry> getTopHandwashers() {
         SQLiteDatabase db = this.getReadableDatabase();
         List<LeaderboardEntry> leaderboard = new ArrayList<>();
@@ -137,9 +215,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String query = "SELECT " + TABLE_EMPLOYEES + "." + COLUMN_EMPLOYEE_NUMBER + ", "
                 + COLUMN_FIRST_NAME + ", "
                 + "COUNT(" + TABLE_HANDWASH_LOG + "." + COLUMN_EMPLOYEE_NUMBER + ") AS handwash_count "
-                + "FROM " + TABLE_EMPLOYEES + " INNER JOIN " + TABLE_HANDWASH_LOG  // Use INNER JOIN to only include employees with washes
+                + "FROM " + TABLE_EMPLOYEES + " INNER JOIN " + TABLE_HANDWASH_LOG
                 + " ON " + TABLE_EMPLOYEES + "." + COLUMN_EMPLOYEE_NUMBER + " = " + TABLE_HANDWASH_LOG + "." + COLUMN_EMPLOYEE_NUMBER
-                + " WHERE " + TABLE_HANDWASH_LOG + "." + COLUMN_WASH_DATE + " = '" + today + "' "  // Filter by current date
+                + " WHERE " + TABLE_HANDWASH_LOG + "." + COLUMN_WASH_DATE + " = '" + today + "' "
                 + " GROUP BY " + TABLE_EMPLOYEES + "." + COLUMN_EMPLOYEE_NUMBER + ", " + COLUMN_FIRST_NAME
                 + " ORDER BY handwash_count DESC LIMIT 5";
 
@@ -158,6 +236,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return leaderboard;
     }
+
+    /**
+     * Inserts a new handwash log entry.
+     *
+     * @param employeeNumber The employee's number.
+     * @param washDate       The date of the handwash (YYYY-MM-DD).
+     * @param washTime       The time of the handwash (HH:MM:SS).
+     * @param photoPath      The path to the photo (if any).
+     * @return The row ID of the newly inserted row, or -1 if an error occurred.
+     */
     public long insertHandwashLog(String employeeNumber, String washDate, String washTime, String photoPath) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -171,17 +259,30 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return id;
     }
 
-
+    /**
+     * Updates the admin password in the admin_users table.
+     *
+     * @param username    The admin's username.
+     * @param newPassword The new password (will be hashed).
+     * @return True if the update was successful, false otherwise.
+     */
     public boolean updateAdminPassword(String username, String newPassword) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt()); // Hash the new password
+        String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
         values.put(COLUMN_PASSWORD_HASH, hashedPassword);
         int rowsAffected = db.update(TABLE_ADMIN_USERS, values, COLUMN_USERNAME + " = ?", new String[]{username});
         db.close();
-        return rowsAffected > 0; // Returns true if the update was successful (at least one row was updated)
+        return rowsAffected > 0;
     }
-    // New method to validate admin login
+
+    /**
+     * Validates the admin login credentials.
+     *
+     * @param username The admin's username.
+     * @param password The admin's password.
+     * @return True if the credentials are valid, false otherwise.
+     */
     public boolean validateAdminLogin(String username, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT " + COLUMN_PASSWORD_HASH + " FROM " + TABLE_ADMIN_USERS +
@@ -191,13 +292,20 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             String storedHash = cursor.getString(0);
             cursor.close();
             db.close();
-            return BCrypt.checkpw(password, storedHash); // Compare entered password with stored hash
+            return BCrypt.checkpw(password, storedHash);
         }
         cursor.close();
         db.close();
-        return false; // User not found or password doesn't match
+        return false;
     }
 
+    /**
+     * Deletes handwash logs within the specified date range.
+     *
+     * @param startDate The start date (YYYY-MM-DD).
+     * @param endDate   The end date (YYYY-MM-DD).
+     * @return The number of rows deleted.
+     */
     public int deleteHandwashLogs(String startDate, String endDate) {
         SQLiteDatabase db = this.getWritableDatabase();
         String whereClause = COLUMN_WASH_DATE + " BETWEEN ? AND ?";

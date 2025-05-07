@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -17,6 +18,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
@@ -24,7 +26,9 @@ import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -229,21 +233,106 @@ public class AdminDashboardActivity extends AppCompatActivity {
             return;
         }
 
-        // *** REPLACE THIS WITH ACTUAL API CALL LATER ***
-        String apiUrl = "your_api_url/download_data.php" +
-                "?start_date=" + startDate +
-                "&end_date=" + endDate +
-                "&download_type=" + downloadType;
+        List<DatabaseHelper.HandwashLog> logs = dbHelper.getHandwashLogs(startDate, endDate, downloadType);
+        if (logs.isEmpty()) {
+            txt_message.setText("No data found for the selected criteria.");
+            return;
+        }
 
-        // For now, just display the constructed URL and a success message
-        txt_message.setText("Downloading data from: " + apiUrl);
-        // Simulate a successful download for now
-        // In the future you would make an API call here and handle the response
-        // Example:
-        // makeAPICall(apiUrl); // Call the placeholder API method
+        String csvData = formatDataToCsv(logs, downloadType);
+        try {
+            File csvFile = createAndSaveCsvFile(csvData, downloadType);
+            if (csvFile != null) {
+                openCsvFile(csvFile);
+            } else {
+                txt_message.setText("Error creating CSV file.");
+            }
+        } catch (IOException e) {
+            txt_message.setText("Error saving data: " + e.getMessage());
+            Log.e("DownloadData", "Error saving CSV", e);
+        }
+    }
 
-        // Display a success message (replace with actual response handling later)
-        txt_message.append("\nData download initiated (replace with actual result)");
+    private String formatDataToCsv(List<DatabaseHelper.HandwashLog> logs, String downloadType) {
+        Log.d("formatDataToCsv", "Formatting data for download type: " + downloadType);
+        StringBuilder csvBuilder = new StringBuilder();
+
+        // Add header row
+        if (downloadType.equals("summary")) {
+            csvBuilder.append("Employee Number,Total Handwashes\n");
+        } else if (downloadType.equals("detailed")) {
+            csvBuilder.append("Employee Number,Wash Date,Wash Time,Photo Path\n");
+        } else {
+            Log.e("formatDataToCsv", "Unknown download type: " + downloadType);
+            return ""; // Or throw an exception
+        }
+
+        for (DatabaseHelper.HandwashLog log : logs) {
+            csvBuilder.append(log.employeeNumber).append(",");
+            if (downloadType.equals("summary")) {
+                csvBuilder.append(log.washCount).append("\n");
+            } else if (downloadType.equals("detailed")) {
+                csvBuilder.append(log.washDate).append(",").append(log.washTime).append(",").append(log.photoPath).append("\n");
+            } else {
+                Log.e("formatDataToCsv", "Unknown download type in loop: " + downloadType);
+            }
+        }
+
+        Log.d("formatDataToCsv", "CSV Data:\n" + csvBuilder.toString());
+        return csvBuilder.toString();
+    }
+
+    private File createAndSaveCsvFile(String csvData, String downloadType) throws IOException {
+        String fileName = "handwash_data_" + (downloadType.equals("summary") ? "summary" : "detailed") + "_" +
+                System.currentTimeMillis() + ".csv";
+        File csvFile = new File(getCacheDir(), fileName); // Save to app's cache directory
+
+        Log.d("createAndSaveCsvFile", "Creating file: " + csvFile.getAbsolutePath());
+
+        FileWriter writer = new FileWriter(csvFile);
+        writer.write(csvData);
+        writer.close();
+
+        Log.d("createAndSaveCsvFile", "File created successfully.");
+        return csvFile;
+    }
+
+    private void openCsvFile(File csvFile) {
+        Log.d("openCsvFile", "Attempting to open CSV file: " + csvFile.getAbsolutePath());
+        try {
+            if (!csvFile.exists()) {
+                txt_message.setText("CSV file does not exist.");
+                Log.e("openCsvFile", "CSV file does not exist: " + csvFile.getAbsolutePath());
+                return;
+            }
+
+            // Use FileProvider to share the file (for Android 7.0 and above)
+            Uri fileUri = FileProvider.getUriForFile(
+                    this,
+                    "com.jarindimick.handwashtracking.fileprovider", // Make sure this matches your manifest!
+                    csvFile
+            );
+
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(fileUri, "text/csv"); // Explicitly set type and data
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            // Verify that there's an app to handle the Intent
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(Intent.createChooser(intent, "Open with"));
+                Log.d("openCsvFile", "Intent sent to open CSV file.");
+            } else {
+                txt_message.setText("No app found to open CSV file.");
+                Log.e("openCsvFile", "No app found to open CSV file.");
+            }
+
+        } catch (IllegalArgumentException e) {
+            txt_message.setText("FileProvider error: " + e.getMessage());
+            Log.e("openCsvFile", "FileProvider error", e);
+        } catch (Exception e) {
+            txt_message.setText("Error opening CSV file: " + e.getMessage());
+            Log.e("openCsvFile", "General error opening file", e);
+        }
     }
 
     private void changeAdminPassword() {
