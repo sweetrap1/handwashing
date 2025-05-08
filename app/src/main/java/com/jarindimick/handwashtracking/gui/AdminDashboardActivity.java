@@ -107,6 +107,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
         edit_new_password = findViewById(R.id.edit_new_password);
         edit_confirm_new_password = findViewById(R.id.edit_confirm_new_password);
         btn_change_password = findViewById(R.id.btn_change_password);
+
+        //Hide action bar
+        getSupportActionBar().hide();
     }
 
     private void setupListeners() {

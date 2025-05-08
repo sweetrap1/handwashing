@@ -1,4 +1,4 @@
-package com.jarindimick.handwashtracking;
+package com.jarindimick.handwashtracking.gui;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper; // Import DatabaseHelper
-import com.jarindimick.handwashtracking.gui.AdminDashboardActivity;
+
 
 public class AdminLoginActivity extends AppCompatActivity {
 
@@ -36,6 +36,9 @@ public class AdminLoginActivity extends AppCompatActivity {
         edit_password = findViewById(R.id.edit_password);
         btn_login = findViewById(R.id.btn_login);
         btn_return_to_main = findViewById(R.id.btn_return_to_main);
+
+        //Hide action bar
+        getSupportActionBar().hide();
     }
 
     private void setupListeners() {

@@ -18,7 +18,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.jarindimick.handwashtracking.AdminLoginActivity;
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
@@ -65,6 +64,9 @@ public class MainHandwashing extends AppCompatActivity {
         btn_start = findViewById(R.id.btn_start);
         table_top_handwashers = findViewById(R.id.table_top_handwashers);
         btn_admin_login = findViewById(R.id.btn_admin_login);
+
+        //Hide action bar
+        getSupportActionBar().hide();
     }
 
     private void updateDateTime() {

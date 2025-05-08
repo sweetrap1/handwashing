@@ -16,7 +16,7 @@
             android:name=".gui.AdminDashboardActivity"
             android:exported="false" />
         <activity
-            android:name=".AdminLoginActivity"
+            android:name=".gui.AdminLoginActivity"
             android:exported="false" />
         <activity
             android:name=".gui.MainHandwashing"
