@@ -369,20 +369,27 @@ public class AdminDashboardActivity extends AppCompatActivity {
     }
 
     private void searchHandwashes() {
-        // TODO: Implement logic to search handwashes based on input fields
-        Toast.makeText(this, "Search Handwashes button clicked (Implement me!)", Toast.LENGTH_SHORT).show();
-        // Example: Get search criteria from edit_search fields and query database/API
         String firstName = edit_search_first_name.getText().toString();
         String lastName = edit_search_last_name.getText().toString();
         String employeeId = edit_search_employee_id.getText().toString();
         String startDate = edit_search_start_date.getText().toString();
         String endDate = edit_search_end_date.getText().toString();
 
-        // Use these variables to perform your search...
-        txt_message.setText("Searching for:\nFirst Name: " + firstName + "\nLast Name: " + lastName +
-                "\nEmployee ID: " + employeeId + "\nStart Date: " + startDate + "\nEnd Date: " + endDate);
-        // ... perform search logic here ...
-        txt_message.append("\nSearch initiated (replace with actual results)");
+        List<DatabaseHelper.HandwashLog> results = dbHelper.searchHandwashLogs(firstName, lastName, employeeId, startDate, endDate);
+
+        if (results.isEmpty()) {
+            txt_message.setText("No handwash logs found matching the search criteria.");
+        } else {
+            StringBuilder message = new StringBuilder("Search Results:\n");
+            for (DatabaseHelper.HandwashLog log : results) {
+                message.append("--------------------\n");
+                message.append("Employee Number: ").append(log.employeeNumber).append("\n");
+                message.append("Wash Date: ").append(log.washDate).append("\n");
+                message.append("Wash Time: ").append(log.washTime).append("\n");
+                message.append("Photo Path: ").append(log.photoPath).append("\n");
+            }
+            txt_message.setText(message.toString());
+        }
     }
 
     private void logout() {

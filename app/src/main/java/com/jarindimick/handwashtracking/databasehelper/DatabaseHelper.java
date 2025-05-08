@@ -47,6 +47,66 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    public List<HandwashLog> searchHandwashLogs(String firstName, String lastName, String employeeNumber, String startDate, String endDate) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<HandwashLog> logs = new ArrayList<>();
+        String query = "SELECT * FROM " + TABLE_HANDWASH_LOG;
+        String whereClause = "";
+        List<String> whereArgs = new ArrayList<>();
+
+        // Build the WHERE clause dynamically
+        if (firstName != null && !firstName.isEmpty()) {
+            if (!whereClause.isEmpty()) whereClause += " AND ";
+            whereClause += COLUMN_EMPLOYEE_NUMBER + " IN (SELECT " + COLUMN_EMPLOYEE_NUMBER + " FROM " + TABLE_EMPLOYEES + " WHERE " + COLUMN_FIRST_NAME + " LIKE ?)";
+            whereArgs.add("%" + firstName + "%");
+        }
+        if (lastName != null && !lastName.isEmpty()) {
+            if (!whereClause.isEmpty()) whereClause += " AND ";
+            whereClause += COLUMN_EMPLOYEE_NUMBER + " IN (SELECT " + COLUMN_EMPLOYEE_NUMBER + " FROM " + TABLE_EMPLOYEES + " WHERE " + COLUMN_LAST_NAME + " LIKE ?)";
+            whereArgs.add("%" + lastName + "%");
+        }
+        if (employeeNumber != null && !employeeNumber.isEmpty()) {
+            if (!whereClause.isEmpty()) whereClause += " AND ";
+            whereClause += COLUMN_EMPLOYEE_NUMBER + " = ?";
+            whereArgs.add(employeeNumber);
+        }
+        if (startDate != null && !startDate.isEmpty() && endDate != null && !endDate.isEmpty()) {
+            if (!whereClause.isEmpty()) whereClause += " AND ";
+            whereClause += COLUMN_WASH_DATE + " BETWEEN ? AND ?";
+            whereArgs.add(startDate);
+            whereArgs.add(endDate);
+        } else if (startDate != null && !startDate.isEmpty()) {
+            if (!whereClause.isEmpty()) whereClause += " AND ";
+            whereClause += COLUMN_WASH_DATE + " >= ?";
+            whereArgs.add(startDate);
+        } else if (endDate != null && !endDate.isEmpty()) {
+            if (!whereClause.isEmpty()) whereClause += " AND ";
+            whereClause += COLUMN_WASH_DATE + " <= ?";
+            whereArgs.add(endDate);
+        }
+
+        if (!whereClause.isEmpty()) {
+            query += " WHERE " + whereClause;
+        }
+
+        Cursor cursor = db.rawQuery(query, whereArgs.toArray(new String[0]));
+
+        if (cursor.moveToFirst()) {
+            do {
+                HandwashLog log = new HandwashLog();
+                log.employeeNumber = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
+                log.washDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WASH_DATE));
+                log.washTime = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WASH_TIME));
+                log.photoPath = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PHOTO_PATH));
+                logs.add(log);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return logs;
+    }
+
     @Override
     public void onCreate(SQLiteDatabase db) {
         // Create Employees table
