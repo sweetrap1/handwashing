@@ -17,7 +17,7 @@ import org.mindrot.jbcrypt.BCrypt;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "Handwash.db";
-    private static final int DATABASE_VERSION = 3; // Increment database version
+    private static final int DATABASE_VERSION = 3; // Keep the database version at 3 from previous changes
 
     // Table names
     public static final String TABLE_EMPLOYEES = "employees";
@@ -31,7 +31,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_EMPLOYEE_NUMBER = "employee_number";
     public static final String COLUMN_FIRST_NAME = "first_name";
     public static final String COLUMN_LAST_NAME = "last_name";
-    public static final String COLUMN_DEPARTMENT = "department"; // New: Department column
+    public static final String COLUMN_DEPARTMENT = "department";
     public static final String COLUMN_IS_ACTIVE = "is_active";
 
     // Handwash Log table column names
@@ -116,7 +116,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_EMPLOYEE_NUMBER + " TEXT UNIQUE,"
                 + COLUMN_FIRST_NAME + " TEXT,"
                 + COLUMN_LAST_NAME + " TEXT,"
-                + COLUMN_DEPARTMENT + " TEXT," // New: Add department column
+                + COLUMN_DEPARTMENT + " TEXT,"
                 + COLUMN_IS_ACTIVE + " INTEGER" + ")";
         db.execSQL(CREATE_EMPLOYEES_TABLE);
 
@@ -160,25 +160,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @param employeeNumber The employee's number.
      * @param firstName      The employee's first name.
      * @param lastName       The employee's last name.
-     * @param department     The employee's department. // New: Add department parameter
+     * @param department     The employee's department.
      * @return The row ID of the newly inserted row, or -1 if an error occurred.
      */
-    public long insertEmployee(String employeeNumber, String firstName, String lastName, String department) { // Modified: Added department parameter
+    public long insertEmployee(String employeeNumber, String firstName, String lastName, String department) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_EMPLOYEE_NUMBER, employeeNumber);
         values.put(COLUMN_FIRST_NAME, firstName);
         values.put(COLUMN_LAST_NAME, lastName);
-        values.put(COLUMN_DEPARTMENT, department); // New: Add department value
+        values.put(COLUMN_DEPARTMENT, department);
         values.put(COLUMN_IS_ACTIVE, 1);    // Default active
 
-        // First, check if the employee number already exists (you might want to handle this differently)
+        // First, check if the employee number already exists
         Cursor cursor = db.query(TABLE_EMPLOYEES, new String[]{COLUMN_ID}, COLUMN_EMPLOYEE_NUMBER + "=?", new String[]{employeeNumber}, null, null, null);
         long id;
         if (cursor.getCount() > 0) {
-            // Employee exists, so update (or do nothing, depending on your needs)
-            // Here, we'll assume you want to update the 'is_active' status or similar
-            // values.put(COLUMN_IS_ACTIVE, 1); // Ensure they are marked as active
+            // Employee exists, so update
             id = db.update(TABLE_EMPLOYEES, values, COLUMN_EMPLOYEE_NUMBER + "=?", new String[]{employeeNumber});
             if (id == 0) {
                 id = -1; // Indicate error during update
@@ -194,13 +192,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     /**
      * Overloaded method to insert a new employee with only the employee number.
-     * First name and last name are set to empty strings. Department is also set to empty.
+     * First name, last name, and department are set to empty strings.
      *
      * @param employeeNumber The employee's number.
      * @return The row ID of the newly inserted row, or -1 if an error occurred.
      */
     public long insertEmployee(String employeeNumber) {
-        return insertEmployee(employeeNumber, "", "", ""); // Modified: Added empty department
+        return insertEmployee(employeeNumber, "", "", "");
     }
 
     /**
@@ -270,14 +268,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         List<LeaderboardEntry> leaderboard = new ArrayList<>();
 
-        // Get the current date in yyyy-MM-DD format
+        // Get the current date in YYYY-MM-DD format
         java.time.LocalDate currentDate = java.time.LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String today = currentDate.format(formatter);
 
         // SQL to get the top 5 employees by handwash count for the current day
         String query = "SELECT " + TABLE_EMPLOYEES + "." + COLUMN_EMPLOYEE_NUMBER + ", "
-                + COLUMN_FIRST_NAME + ", "
+                + COLUMN_FIRST_NAME + ", " // Retrieving first name
                 + "COUNT(" + TABLE_HANDWASH_LOG + "." + COLUMN_EMPLOYEE_NUMBER + ") AS handwash_count "
                 + "FROM " + TABLE_EMPLOYEES + " INNER JOIN " + TABLE_HANDWASH_LOG
                 + " ON " + TABLE_EMPLOYEES + "." + COLUMN_EMPLOYEE_NUMBER + " = " + TABLE_HANDWASH_LOG + "." + COLUMN_EMPLOYEE_NUMBER
@@ -290,9 +288,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (cursor.moveToFirst()) {
             do {
                 String employeeNumber = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
-                String firstName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIRST_NAME));
+                String firstName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIRST_NAME)); // Get first name
                 int handwashCount = cursor.getInt(cursor.getColumnIndexOrThrow("handwash_count"));
-                leaderboard.add(new LeaderboardEntry(employeeNumber, firstName, handwashCount));
+                leaderboard.add(new LeaderboardEntry(employeeNumber, firstName, handwashCount)); // Pass first name
             } while (cursor.moveToNext());
         }
 
@@ -378,5 +376,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         int rowsDeleted = db.delete(TABLE_HANDWASH_LOG, whereClause, whereArgs);
         db.close();
         return rowsDeleted;
+    }
+
+    /**
+     * Checks if an employee with the given employee number exists in the database.
+     * @param employeeNumber The employee number to check.
+     * @return True if the employee exists, false otherwise.
+     */
+    public boolean doesEmployeeExist(String employeeNumber) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT " + COLUMN_ID + " FROM " + TABLE_EMPLOYEES +
+                " WHERE " + COLUMN_EMPLOYEE_NUMBER + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{employeeNumber});
+        boolean exists = (cursor.getCount() > 0);
+        cursor.close();
+        db.close();
+        return exists;
     }
 }
