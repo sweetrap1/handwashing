@@ -60,26 +60,38 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private Button btn_delete_data;
     private Button btn_import_employees;
 
-    // Declare DatabaseHelper if needed in this Activity
-    private DatabaseHelper dbHelper;
-
     // UI elements for changing admin password
     private EditText edit_old_password;
     private EditText edit_new_password;
     private EditText edit_confirm_new_password;
     private Button btn_change_password;
 
+    // UI elements for adding new employee // New Declarations
+    private EditText edit_add_employee_number;
+    private EditText edit_add_first_name;
+    private EditText edit_add_last_name;
+    private EditText edit_add_department;
+    private Button btn_add_employee;
+
+
+    // Declare DatabaseHelper if needed in this Activity
+    private DatabaseHelper dbHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_dashboard);
-        getSupportActionBar().hide();
+        // getSupportActionBar().hide(); // You can keep or remove this based on preference
         setupgui();
         setupListeners();
         dbHelper = new DatabaseHelper(this);
     }
 
     private void setupgui() {
+        // Admin Dashboard Title
+        TextView lbl_admin_dashboard_title = findViewById(R.id.lbl_admin_dashboard_title);
+
+
         // Download Data
         edit_download_start_date = findViewById(R.id.edit_download_start_date);
         edit_download_end_date = findViewById(R.id.edit_download_end_date);
@@ -87,6 +99,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_download_data = findViewById(R.id.btn_download_data);
 
         // Search Handwashes
+        TextView lbl_search_handwashes_title = findViewById(R.id.lbl_search_handwashes_title);
         edit_search_first_name = findViewById(R.id.edit_search_first_name);
         edit_search_last_name = findViewById(R.id.edit_search_last_name);
         edit_search_employee_id = findViewById(R.id.edit_search_employee_id);
@@ -100,16 +113,27 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_import_employees = findViewById(R.id.btn_import_employees);
 
         // Text message area
+        TextView lbl_message_area_title = findViewById(R.id.lbl_message_area_title);
         txt_message = findViewById(R.id.txt_message);
 
         // Change Password UI elements
+        TextView lbl_change_password_title = findViewById(R.id.lbl_change_password_title);
         edit_old_password = findViewById(R.id.edit_old_password);
         edit_new_password = findViewById(R.id.edit_new_password);
         edit_confirm_new_password = findViewById(R.id.edit_confirm_new_password);
         btn_change_password = findViewById(R.id.btn_change_password);
 
-        //Hide action bar
-        getSupportActionBar().hide();
+        // Add New Employee UI elements // New Initializations
+        TextView lbl_add_employee_title = findViewById(R.id.lbl_add_employee_title);
+        edit_add_employee_number = findViewById(R.id.edit_add_employee_number);
+        edit_add_first_name = findViewById(R.id.edit_add_first_name);
+        edit_add_last_name = findViewById(R.id.edit_add_last_name);
+        edit_add_department = findViewById(R.id.edit_add_department);
+        btn_add_employee = findViewById(R.id.btn_add_employee);
+
+
+        //Hide action bar - you can keep or remove this based on preference
+        // getSupportActionBar().hide();
     }
 
     private void setupListeners() {
@@ -183,6 +207,14 @@ public class AdminDashboardActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 changeAdminPassword();
+            }
+        });
+
+        // Listener for Add Employee Button // New Listener
+        btn_add_employee.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addEmployee();
             }
         });
     }
@@ -343,6 +375,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
         String newPassword = edit_new_password.getText().toString();
         String confirmNewPassword = edit_confirm_new_password.getText().toString();
 
+        if (oldPassword.isEmpty() || newPassword.isEmpty() || confirmNewPassword.isEmpty()) {
+            txt_message.setText("Please fill in all password fields.");
+            return;
+        }
+
         if (!newPassword.equals(confirmNewPassword)) {
             txt_message.setText("New passwords do not match.");
             return;
@@ -363,6 +400,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
             boolean updated = dbHelper.updateAdminPassword("admin", newPassword);
             if (updated) {
                 txt_message.setText("Password changed successfully.");
+                edit_old_password.setText("");
+                edit_new_password.setText("");
+                edit_confirm_new_password.setText("");
             } else {
                 txt_message.setText("Error updating password.");
             }
@@ -414,7 +454,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         new AlertDialog.Builder(this)
                 .setTitle("Confirm Delete")
-                .setMessage("Are you sure you want to delete handwash logs between " + startDate + " and " + endDate + "?")
+                .setMessage("Are you sure you want to delete handwash logs between " + startDate + " and " + endDate + "? This action cannot be undone.")
                 .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                     int rowsDeleted = dbHelper.deleteHandwashLogs(startDate, endDate);
                     if (rowsDeleted >= 0) {
@@ -438,17 +478,21 @@ public class AdminDashboardActivity extends AppCompatActivity {
             employees = readAndParseCsvFile(csvFileName);
         } catch (IOException e) {
             txt_message.setText("Error reading CSV file: " + e.getMessage());
+            Log.e("ImportEmployees", "Error reading CSV", e);
             return;
         }
 
         int importedCount = 0;
         int errorCount = 0;
         for (Employee employee : employees) {
-            long result = dbHelper.insertEmployee(employee.employeeNumber, employee.firstName, employee.lastName);
+            // Assuming your CSV has Employee Number, First Name, Last Name, and potentially Department
+            // Adjust the Employee class and readAndParseCsvFile if your CSV format is different.
+            // For this example, we'll call the new insertEmployee with a placeholder for department
+            long result = dbHelper.insertEmployee(employee.employeeNumber, employee.firstName, employee.lastName, "Imported"); // Use a placeholder department
             if (result != -1) {
                 importedCount++;
             } else {
-                errorCount++;
+                errorCount++; // Employee number might already exist
             }
         }
 
@@ -462,7 +506,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         InputStream inputStream = assetManager.open(csvFileName);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         String line;
-        boolean isFirstLine = true;
+        boolean isFirstLine = true; // Skip header row
 
         while ((line = reader.readLine()) != null) {
             if (isFirstLine) {
@@ -470,11 +514,16 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 continue;
             }
             String[] tokens = line.split(",");
+            // Adjust the number of tokens based on your CSV structure
+            // Assuming CSV format: Employee Number,First Name,Last Name
             if (tokens.length >= 3) {
                 String employeeNumber = tokens[0].trim();
                 String firstName = tokens[1].trim();
                 String lastName = tokens[2].trim();
-                employees.add(new Employee(employeeNumber, firstName, lastName));
+                // If your CSV has a department, you would add it here:
+                // String department = tokens.length > 3 ? tokens[3].trim() : "";
+                // employees.add(new Employee(employeeNumber, firstName, lastName, department));
+                employees.add(new Employee(employeeNumber, firstName, lastName)); // Using the simplified Employee class for now
             } else {
                 Log.w("CSV Parser", "Skipping line: " + line + " (Not enough columns)");
             }
@@ -484,17 +533,56 @@ public class AdminDashboardActivity extends AppCompatActivity {
         return employees;
     }
 
+    // Simplified Employee class for CSV import if department is not in CSV
     private static class Employee {
         String employeeNumber;
         String firstName;
         String lastName;
+        // String department; // Include if department is in CSV
 
         public Employee(String employeeNumber, String firstName, String lastName) {
             this.employeeNumber = employeeNumber;
             this.firstName = firstName;
             this.lastName = lastName;
         }
+        // Add constructor with department if needed
+        /*
+        public Employee(String employeeNumber, String firstName, String lastName, String department) {
+            this.employeeNumber = employeeNumber;
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.department = department;
+        }
+        */
     }
+
+
+    // New method to add employee manually // New Method
+    private void addEmployee() {
+        String employeeNumber = edit_add_employee_number.getText().toString().trim();
+        String firstName = edit_add_first_name.getText().toString().trim();
+        String lastName = edit_add_last_name.getText().toString().trim();
+        String department = edit_add_department.getText().toString().trim();
+
+        if (employeeNumber.isEmpty() || firstName.isEmpty() || lastName.isEmpty() || department.isEmpty()) {
+            txt_message.setText("Please fill all employee details.");
+            return;
+        }
+
+        long result = dbHelper.insertEmployee(employeeNumber, firstName, lastName, department);
+
+        if (result != -1) {
+            txt_message.setText("Employee added successfully.");
+            // Clear the input fields
+            edit_add_employee_number.setText("");
+            edit_add_first_name.setText("");
+            edit_add_last_name.setText("");
+            edit_add_department.setText("");
+        } else {
+            txt_message.setText("Error adding employee. Employee number might already exist.");
+        }
+    }
+
 
     @Override
     protected void onDestroy() {

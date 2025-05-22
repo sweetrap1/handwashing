@@ -125,73 +125,47 @@
             </TableRow>
 
             <TableRow android:padding="8dp">
-
                 <TextView
                     android:gravity="center"
                     android:text="Employee 1" />
-
                 <TextView
                     android:gravity="center"
                     android:text="100" />
             </TableRow>
-
             <TableRow android:padding="8dp">
-
                 <TextView
                     android:gravity="center"
                     android:text="Employee 2" />
-
                 <TextView
                     android:gravity="center"
                     android:text="90" />
             </TableRow>
-
             <TableRow android:padding="8dp">
-
                 <TextView
                     android:gravity="center"
                     android:text="Employee 3" />
-
                 <TextView
                     android:gravity="center"
                     android:text="80" />
             </TableRow>
-
             <TableRow android:padding="8dp">
-
                 <TextView
                     android:gravity="center"
                     android:text="Employee 4" />
-
                 <TextView
                     android:gravity="center"
                     android:text="70" />
             </TableRow>
-
             <TableRow android:padding="8dp">
-
                 <TextView
                     android:gravity="center"
                     android:text="Employee 5" />
-
                 <TextView
                     android:gravity="center"
                     android:text="60" />
             </TableRow>
 
         </TableLayout>
-
-        <Button
-            android:id="@+id/btn_admin_login"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:backgroundTint="#FFFFFF"
-            android:text="Admin Login"
-            android:textColor="#000000"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/table_top_handwashers" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

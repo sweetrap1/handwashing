@@ -17,7 +17,7 @@ import org.mindrot.jbcrypt.BCrypt;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "Handwash.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3; // Increment database version
 
     // Table names
     public static final String TABLE_EMPLOYEES = "employees";
@@ -31,6 +31,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_EMPLOYEE_NUMBER = "employee_number";
     public static final String COLUMN_FIRST_NAME = "first_name";
     public static final String COLUMN_LAST_NAME = "last_name";
+    public static final String COLUMN_DEPARTMENT = "department"; // New: Department column
     public static final String COLUMN_IS_ACTIVE = "is_active";
 
     // Handwash Log table column names
@@ -115,6 +116,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_EMPLOYEE_NUMBER + " TEXT UNIQUE,"
                 + COLUMN_FIRST_NAME + " TEXT,"
                 + COLUMN_LAST_NAME + " TEXT,"
+                + COLUMN_DEPARTMENT + " TEXT," // New: Add department column
                 + COLUMN_IS_ACTIVE + " INTEGER" + ")";
         db.execSQL(CREATE_EMPLOYEES_TABLE);
 
@@ -158,14 +160,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @param employeeNumber The employee's number.
      * @param firstName      The employee's first name.
      * @param lastName       The employee's last name.
+     * @param department     The employee's department. // New: Add department parameter
      * @return The row ID of the newly inserted row, or -1 if an error occurred.
      */
-    public long insertEmployee(String employeeNumber, String firstName, String lastName) {
+    public long insertEmployee(String employeeNumber, String firstName, String lastName, String department) { // Modified: Added department parameter
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_EMPLOYEE_NUMBER, employeeNumber);
         values.put(COLUMN_FIRST_NAME, firstName);
         values.put(COLUMN_LAST_NAME, lastName);
+        values.put(COLUMN_DEPARTMENT, department); // New: Add department value
         values.put(COLUMN_IS_ACTIVE, 1);    // Default active
 
         // First, check if the employee number already exists (you might want to handle this differently)
@@ -190,13 +194,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     /**
      * Overloaded method to insert a new employee with only the employee number.
-     * First name and last name are set to empty strings.
+     * First name and last name are set to empty strings. Department is also set to empty.
      *
      * @param employeeNumber The employee's number.
      * @return The row ID of the newly inserted row, or -1 if an error occurred.
      */
     public long insertEmployee(String employeeNumber) {
-        return insertEmployee(employeeNumber, "", "");
+        return insertEmployee(employeeNumber, "", "", ""); // Modified: Added empty department
     }
 
     /**
@@ -266,7 +270,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         List<LeaderboardEntry> leaderboard = new ArrayList<>();
 
-        // Get the current date in YYYY-MM-DD format
+        // Get the current date in yyyy-MM-DD format
         java.time.LocalDate currentDate = java.time.LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String today = currentDate.format(formatter);

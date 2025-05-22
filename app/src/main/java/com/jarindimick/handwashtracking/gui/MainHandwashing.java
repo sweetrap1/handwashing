@@ -3,6 +3,9 @@ package com.jarindimick.handwashtracking.gui;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.Menu; // Import Menu
+import android.view.MenuInflater; // Import MenuInflater
+import android.view.MenuItem; // Import MenuItem
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -38,7 +41,7 @@ public class MainHandwashing extends AppCompatActivity {
     private Runnable updateTimeRunnable;
     private DatabaseHelper dbHelper;
     private List<com.jarindimick.handwashtracking.gui.LeaderboardEntry> leaderboardData = new ArrayList<>();
-    private Button btn_admin_login;
+    // Removed btn_admin_login declaration
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,10 +66,10 @@ public class MainHandwashing extends AppCompatActivity {
         edit_employee_number = findViewById(R.id.edit_employee_number);
         btn_start = findViewById(R.id.btn_start);
         table_top_handwashers = findViewById(R.id.table_top_handwashers);
-        btn_admin_login = findViewById(R.id.btn_admin_login);
+        // Removed btn_admin_login initialization
 
-        //Hide action bar
-        getSupportActionBar().hide();
+        //Hide action bar - you can remove this if you want the action bar for the menu icon
+        // getSupportActionBar().hide();
     }
 
     private void updateDateTime() {
@@ -102,15 +105,28 @@ public class MainHandwashing extends AppCompatActivity {
             }
         });
 
-        btn_admin_login.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Navigate to AdminLoginActivity
-                Intent intent = new Intent(MainHandwashing.this, AdminLoginActivity.class);
-                startActivity(intent);
-            }
-        });
+        // Removed btn_admin_login listener
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu); // Inflate your menu resource
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        if (item.getItemId() == R.id.menu_admin_login) {
+            Intent intent = new Intent(MainHandwashing.this, AdminLoginActivity.class);
+            startActivity(intent);
+            return true;
+        }
+        // Handle other menu item clicks here (e.g., settings)
+        return super.onOptionsItemSelected(item);
+    }
+
 
     public class LeaderboardEntry {
         String employeeNumber;
@@ -136,14 +152,23 @@ public class MainHandwashing extends AppCompatActivity {
 
         if (logResult != -1) {
             // Optionally, you might want to update employee data here if needed
-            long empResult = dbHelper.insertEmployee(employeeNumber); // This will now update or insert
+            // Since we are now allowing manual employee addition,
+            // we should still ensure the employee exists, but we don't need
+            // to call insertEmployee with only the number here if it's handled
+            // in the admin dashboard.
+            // However, keeping it here ensures that even if an employee isn't
+            // manually added in the admin panel, a handwash log will create
+            // a basic employee entry. You might adjust this logic based on
+            // whether all employees MUST be added via the admin panel.
+            long empResult = dbHelper.insertEmployee(employeeNumber); // This will now update or insert a basic entry
             if (empResult != -1) {
                 Toast.makeText(this, "Handwash recorded", Toast.LENGTH_SHORT).show();
                 edit_employee_number.setText("");
                 populateLeaderboardTable(); // Refresh the leaderboard
             } else {
-                Toast.makeText(this, "Error updating employee data", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Handwash recorded, but error updating employee data", Toast.LENGTH_SHORT).show();
             }
+
 
         } else {
             Toast.makeText(this, "Error recording handwash", Toast.LENGTH_SHORT).show();
