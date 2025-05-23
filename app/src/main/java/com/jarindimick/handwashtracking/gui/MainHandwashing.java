@@ -56,6 +56,13 @@ public class MainHandwashing extends AppCompatActivity {
         startUpdatingTime();
         setupListeners();
         dbHelper = new DatabaseHelper(this);
+        // populateLeaderboardTable() is now called in onResume()
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh leaderboard every time the activity comes to the foreground
         populateLeaderboardTable();
     }
 
@@ -100,7 +107,12 @@ public class MainHandwashing extends AppCompatActivity {
 
                 // Check if employee number exists in the database
                 if (dbHelper.doesEmployeeExist(employeeNumber)) {
-                    saveEmployeeData(employeeNumber);
+                    // Start the first handwashing step activity
+                    Intent intent = new Intent(MainHandwashing.this, WetHandsActivity.class);
+                    intent.putExtra("employee_number", employeeNumber);
+                    startActivity(intent);
+                    // Clear the employee number field immediately
+                    edit_employee_number.setText("");
                 } else {
                     Toast.makeText(MainHandwashing.this, "Employee number not found", Toast.LENGTH_SHORT).show();
                 }
@@ -136,25 +148,6 @@ public class MainHandwashing extends AppCompatActivity {
             this.employeeNumber = employeeNumber;
             this.employeeName = employeeName;
             this.handwashCount = handwashCount;
-        }
-    }
-
-    private void saveEmployeeData(String employeeNumber) {
-        // Log the handwash
-        LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.getDefault());
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.getDefault());
-        String washDate = now.format(dateFormatter);
-        String washTime = now.format(timeFormatter);
-
-        long logResult = dbHelper.insertHandwashLog(employeeNumber, washDate, washTime, ""); // Empty photoPath for now
-
-        if (logResult != -1) {
-            Toast.makeText(this, "Handwash recorded", Toast.LENGTH_SHORT).show();
-            edit_employee_number.setText("");
-            populateLeaderboardTable(); // Refresh the leaderboard
-        } else {
-            Toast.makeText(this, "Error recording handwash", Toast.LENGTH_SHORT).show();
         }
     }
 

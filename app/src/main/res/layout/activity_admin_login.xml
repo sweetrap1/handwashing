@@ -1,14 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#2C2B2B"
     android:fillViewport="true">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#727171"
         tools:context=".gui.AdminLoginActivity">
 
         <TextView
@@ -17,6 +18,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
             android:text="Admin Login"
+            android:textColor="?attr/colorOnBackground"
             android:textSize="24sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
@@ -29,6 +31,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
             android:text="Username:"
+            android:textColor="?attr/colorOnBackground"
             android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -40,8 +43,11 @@
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
             android:background="@drawable/edit_text_border"
-            android:inputType="text"
+            android:hint="Username"
+            android:inputType="textPersonName"
             android:padding="8dp"
+            android:textColor="?attr/colorOnBackground"
+            android:textColorHint="?attr/colorOnBackground"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/lbl_username" />
@@ -52,6 +58,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Password:"
+            android:textColor="?attr/colorOnBackground"
             android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -63,8 +70,11 @@
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
             android:background="@drawable/edit_text_border"
+            android:hint="Password"
             android:inputType="textPassword"
             android:padding="8dp"
+            android:textColor="?attr/colorOnBackground"
+            android:textColorHint="?attr/colorOnBackground"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/lbl_password" />
@@ -84,7 +94,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:backgroundTint="?attr/colorSecondary"
             android:text="Return to Handwashing"
+            android:textColor="?attr/colorOnSecondary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/btn_login" />

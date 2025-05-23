@@ -8,9 +8,11 @@ import android.content.ContentValues;
 
 import com.jarindimick.handwashtracking.gui.LeaderboardEntry;
 
+import java.time.LocalDate; // Import LocalDate
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale; // Import Locale
 
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -268,8 +270,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         List<LeaderboardEntry> leaderboard = new ArrayList<>();
 
-        // Get the current date in YYYY-MM-DD format
-        java.time.LocalDate currentDate = java.time.LocalDate.now();
+        // Get the current date in yyyy-MM-DD format
+        LocalDate currentDate = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String today = currentDate.format(formatter);
 
@@ -392,5 +394,31 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return exists;
+    }
+
+    /**
+     * Retrieves the number of handwashes for a specific employee for the current day.
+     * @param employeeNumber The employee number.
+     * @return The count of handwashes for the employee today.
+     */
+    public int getHandwashCountForEmployeeToday(String employeeNumber) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        int count = 0;
+
+        LocalDate currentDate = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String today = currentDate.format(formatter);
+
+        String query = "SELECT COUNT(*) FROM " + TABLE_HANDWASH_LOG +
+                " WHERE " + COLUMN_EMPLOYEE_NUMBER + " = ? AND " +
+                COLUMN_WASH_DATE + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{employeeNumber, today});
+
+        if (cursor.moveToFirst()) {
+            count = cursor.getInt(0);
+        }
+        cursor.close();
+        db.close();
+        return count;
     }
 }

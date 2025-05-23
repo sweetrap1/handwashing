@@ -5,35 +5,34 @@
     android:orientation="vertical"
     android:padding="16dp"
     android:layout_marginBottom="8dp"
-    android:background="#FFFFFF">
-
-    <TextView
-        android:id="@+id/txt_employee_number"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Employee Number: 12345"
-        android:textSize="16sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/txt_wash_date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Wash Date: 2024-05-08"
-        android:textSize="14sp" />
-
-    <TextView
-        android:id="@+id/txt_wash_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Wash Time: 10:30:00"
-        android:textSize="14sp" />
-
-    <TextView
-        android:id="@+id/txt_photo_path"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Photo Path: /path/to/photo.jpg"
-        android:textSize="14sp" />
+    android:background="?attr/colorSurface"> <TextView
+    android:id="@+id/txt_employee_number"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Employee Number: 12345"
+    android:textSize="16sp"
+    android:textStyle="bold"
+    android:textColor="?attr/colorOnSurface" /> <TextView
+    android:id="@+id/txt_wash_date"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Wash Date: 2024-05-08"
+    android:textSize="14sp"
+    android:textColor="?attr/colorOnSurface" /> <TextView
+    android:id="@+id/txt_wash_time"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Wash Time: 10:30:00"
+    android:textSize="14sp"
+    android:textColor="?attr/colorOnSurface" /> <TextView
+    android:id="@+id/txt_photo_path"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Photo Path: /path/to/photo.jpg"
+    android:textSize="14sp"
+    android:textColor="@color/teal_700"
+    android:textStyle="italic"
+    android:clickable="true"
+    android:focusable="true" />
 
 </LinearLayout>

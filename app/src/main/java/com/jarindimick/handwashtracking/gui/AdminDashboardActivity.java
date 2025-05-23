@@ -19,6 +19,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
+import androidx.recyclerview.widget.LinearLayoutManager; // Import LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView; // Import RecyclerView
 
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
@@ -52,8 +54,10 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private EditText edit_search_start_date;
     private EditText edit_search_end_date;
     private Button btn_search_handwashes;
+    private RecyclerView recycler_search_results; // Declare RecyclerView
+    private HandwashLogAdapter handwashLogAdapter; // Declare adapter
 
-    private TextView txt_message;
+    private TextView txt_message; // General message area
 
     // UI elements for Other Buttons
     private Button btn_logout;
@@ -66,7 +70,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private EditText edit_confirm_new_password;
     private Button btn_change_password;
 
-    // UI elements for adding new employee // New Declarations
+    // UI elements for adding new employee
     private EditText edit_add_employee_number;
     private EditText edit_add_first_name;
     private EditText edit_add_last_name;
@@ -74,14 +78,14 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private Button btn_add_employee;
 
 
-    // Declare DatabaseHelper if needed in this Activity
+    // Declare DatabaseHelper
     private DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_dashboard);
-        // getSupportActionBar().hide(); // You can keep or remove this based on preference
+        getSupportActionBar().hide();
         setupgui();
         setupListeners();
         dbHelper = new DatabaseHelper(this);
@@ -90,7 +94,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private void setupgui() {
         // Admin Dashboard Title
         TextView lbl_admin_dashboard_title = findViewById(R.id.lbl_admin_dashboard_title);
-
 
         // Download Data
         edit_download_start_date = findViewById(R.id.edit_download_start_date);
@@ -106,6 +109,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
         edit_search_start_date = findViewById(R.id.edit_search_start_date);
         edit_search_end_date = findViewById(R.id.edit_search_end_date);
         btn_search_handwashes = findViewById(R.id.btn_search_handwashes);
+
+        // Initialize RecyclerView for search results
+        recycler_search_results = findViewById(R.id.recycler_search_results);
+        recycler_search_results.setLayoutManager(new LinearLayoutManager(this));
+
 
         // Other Buttons
         btn_logout = findViewById(R.id.btn_logout);
@@ -123,17 +131,13 @@ public class AdminDashboardActivity extends AppCompatActivity {
         edit_confirm_new_password = findViewById(R.id.edit_confirm_new_password);
         btn_change_password = findViewById(R.id.btn_change_password);
 
-        // Add New Employee UI elements // New Initializations
+        // Add New Employee UI elements
         TextView lbl_add_employee_title = findViewById(R.id.lbl_add_employee_title);
         edit_add_employee_number = findViewById(R.id.edit_add_employee_number);
         edit_add_first_name = findViewById(R.id.edit_add_first_name);
         edit_add_last_name = findViewById(R.id.edit_add_last_name);
         edit_add_department = findViewById(R.id.edit_add_department);
         btn_add_employee = findViewById(R.id.btn_add_employee);
-
-
-        //Hide action bar - you can keep or remove this based on preference
-        // getSupportActionBar().hide();
     }
 
     private void setupListeners() {
@@ -174,7 +178,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
             }
         });
 
-        // Listeners for the remaining buttons
+        // Listener for Search Handwashes Button
         btn_search_handwashes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -182,6 +186,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
             }
         });
 
+        // Listeners for other buttons
         btn_logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -210,7 +215,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
             }
         });
 
-        // Listener for Add Employee Button // New Listener
+        // Listener for Add Employee Button
         btn_add_employee.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -412,26 +417,22 @@ public class AdminDashboardActivity extends AppCompatActivity {
     }
 
     private void searchHandwashes() {
-        String firstName = edit_search_first_name.getText().toString();
-        String lastName = edit_search_last_name.getText().toString();
-        String employeeId = edit_search_employee_id.getText().toString();
-        String startDate = edit_search_start_date.getText().toString();
-        String endDate = edit_search_end_date.getText().toString();
+        String firstName = edit_search_first_name.getText().toString().trim();
+        String lastName = edit_search_last_name.getText().toString().trim();
+        String employeeId = edit_search_employee_id.getText().toString().trim();
+        String startDate = edit_search_start_date.getText().toString().trim();
+        String endDate = edit_search_end_date.getText().toString().trim();
 
         List<DatabaseHelper.HandwashLog> results = dbHelper.searchHandwashLogs(firstName, lastName, employeeId, startDate, endDate);
 
         if (results.isEmpty()) {
             txt_message.setText("No handwash logs found matching the search criteria.");
+            recycler_search_results.setVisibility(View.GONE); // Hide RecyclerView if no results
         } else {
-            StringBuilder message = new StringBuilder("Search Results:\n");
-            for (DatabaseHelper.HandwashLog log : results) {
-                message.append("--------------------\n");
-                message.append("Employee Number: ").append(log.employeeNumber).append("\n");
-                message.append("Wash Date: ").append(log.washDate).append("\n");
-                message.append("Wash Time: ").append(log.washTime).append("\n");
-                message.append("Photo Path: ").append(log.photoPath).append("\n");
-            }
-            txt_message.setText(message.toString());
+            txt_message.setText("Found " + results.size() + " handwash logs.");
+            recycler_search_results.setVisibility(View.VISIBLE); // Show RecyclerView
+            handwashLogAdapter = new HandwashLogAdapter(results, this); // Pass context
+            recycler_search_results.setAdapter(handwashLogAdapter);
         }
     }
 
@@ -459,6 +460,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     int rowsDeleted = dbHelper.deleteHandwashLogs(startDate, endDate);
                     if (rowsDeleted >= 0) {
                         txt_message.setText("Deleted " + rowsDeleted + " handwash logs.");
+                        // Clear RecyclerView after deletion if dates match current search
+                        if (handwashLogAdapter != null) {
+                            handwashLogAdapter = new HandwashLogAdapter(new ArrayList<>(), this); // Clear adapter
+                            recycler_search_results.setAdapter(handwashLogAdapter);
+                        }
                     } else {
                         txt_message.setText("Error deleting handwash logs.");
                     }
@@ -486,8 +492,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         int errorCount = 0;
         for (Employee employee : employees) {
             // Assuming your CSV has Employee Number, First Name, Last Name, and potentially Department
-            // Adjust the Employee class and readAndParseCsvFile if your CSV format is different.
-            // For this example, we'll call the new insertEmployee with a placeholder for department
             long result = dbHelper.insertEmployee(employee.employeeNumber, employee.firstName, employee.lastName, "Imported"); // Use a placeholder department
             if (result != -1) {
                 importedCount++;
@@ -514,16 +518,12 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 continue;
             }
             String[] tokens = line.split(",");
-            // Adjust the number of tokens based on your CSV structure
             // Assuming CSV format: Employee Number,First Name,Last Name
             if (tokens.length >= 3) {
                 String employeeNumber = tokens[0].trim();
                 String firstName = tokens[1].trim();
                 String lastName = tokens[2].trim();
-                // If your CSV has a department, you would add it here:
-                // String department = tokens.length > 3 ? tokens[3].trim() : "";
-                // employees.add(new Employee(employeeNumber, firstName, lastName, department));
-                employees.add(new Employee(employeeNumber, firstName, lastName)); // Using the simplified Employee class for now
+                employees.add(new Employee(employeeNumber, firstName, lastName));
             } else {
                 Log.w("CSV Parser", "Skipping line: " + line + " (Not enough columns)");
             }
@@ -538,26 +538,16 @@ public class AdminDashboardActivity extends AppCompatActivity {
         String employeeNumber;
         String firstName;
         String lastName;
-        // String department; // Include if department is in CSV
 
         public Employee(String employeeNumber, String firstName, String lastName) {
             this.employeeNumber = employeeNumber;
             this.firstName = firstName;
             this.lastName = lastName;
         }
-        // Add constructor with department if needed
-        /*
-        public Employee(String employeeNumber, String firstName, String lastName, String department) {
-            this.employeeNumber = employeeNumber;
-            this.firstName = firstName;
-            this.lastName = lastName;
-            this.department = department;
-        }
-        */
     }
 
 
-    // New method to add employee manually // New Method
+    // Method to add employee manually
     private void addEmployee() {
         String employeeNumber = edit_add_employee_number.getText().toString().trim();
         String firstName = edit_add_first_name.getText().toString().trim();
@@ -582,7 +572,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
             txt_message.setText("Error adding employee. Employee number might already exist.");
         }
     }
-
 
     @Override
     protected void onDestroy() {
