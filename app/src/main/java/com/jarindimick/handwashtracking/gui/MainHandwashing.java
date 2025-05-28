@@ -1,15 +1,18 @@
 package com.jarindimick.handwashtracking.gui;
 
 import android.content.Intent;
+import android.graphics.Typeface; // For text styling
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.Gravity; // For centering
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.ImageView; // For icons
+import android.widget.LinearLayout; // For icon and text in a row cell
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -17,12 +20,16 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat; // For getting colors and drawables
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
+// Make sure LeaderboardEntry is imported if it's in a different package,
+// or accessible if in the same package (com.jarindimick.handwashtracking.gui)
+// import com.jarindimick.handwashtracking.gui.LeaderboardEntry; // Usually not needed if in same package
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -40,7 +47,9 @@ public class MainHandwashing extends AppCompatActivity {
     private Handler handler = new Handler();
     private Runnable updateTimeRunnable;
     private DatabaseHelper dbHelper;
-    private List<com.jarindimick.handwashtracking.gui.LeaderboardEntry> leaderboardData = new ArrayList<>();
+    // This assumes LeaderboardEntry.java exists in com.jarindimick.handwashtracking.gui
+    private List<LeaderboardEntry> leaderboardData = new ArrayList<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,13 +65,11 @@ public class MainHandwashing extends AppCompatActivity {
         startUpdatingTime();
         setupListeners();
         dbHelper = new DatabaseHelper(this);
-        // populateLeaderboardTable() is now called in onResume()
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh leaderboard every time the activity comes to the foreground
         populateLeaderboardTable();
     }
 
@@ -76,7 +83,7 @@ public class MainHandwashing extends AppCompatActivity {
 
     private void updateDateTime() {
         LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM d,yyyy", Locale.getDefault());
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, uuuu", Locale.getDefault()); // uuuu for year
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault());
         String formattedDate = now.format(dateFormatter);
         String formattedTime = now.format(timeFormatter);
@@ -88,30 +95,28 @@ public class MainHandwashing extends AppCompatActivity {
             @Override
             public void run() {
                 updateDateTime();
-                handler.postDelayed(this, 1000);
+                handler.postDelayed(this, 1000); // Update every second
             }
         };
-        handler.postDelayed(updateTimeRunnable, 0);
+        handler.postDelayed(updateTimeRunnable, 0); // Start immediately
     }
 
     private void setupListeners() {
         btn_start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String employeeNumber = edit_employee_number.getText().toString().trim(); // Trim whitespace
-
-                if (employeeNumber.isEmpty()) {
+                String employeeNumberStr = edit_employee_number.getText().toString().trim();
+                if (employeeNumberStr.isEmpty()) {
                     Toast.makeText(MainHandwashing.this, "Please enter employee number", Toast.LENGTH_SHORT).show();
-                    return; // Stop here if empty
+                    return;
                 }
-
-                // Check if employee number exists in the database
-                if (dbHelper.doesEmployeeExist(employeeNumber)) {
-                    // Start the first handwashing step activity
+                if (dbHelper.doesEmployeeExist(employeeNumberStr)) {
                     Intent intent = new Intent(MainHandwashing.this, WetHandsActivity.class);
-                    intent.putExtra("employee_number", employeeNumber);
+                    intent.putExtra("employee_number", employeeNumberStr);
+                    // Reset total process duration for the new handwashing sequence
+                    // This now correctly accesses the public static field
+                    intent.putExtra("overall_time_remaining", WetHandsActivity.TOTAL_PROCESS_DURATION_MS);
                     startActivity(intent);
-                    // Clear the employee number field immediately
                     edit_employee_number.setText("");
                 } else {
                     Toast.makeText(MainHandwashing.this, "Employee number not found", Toast.LENGTH_SHORT).show();
@@ -123,13 +128,12 @@ public class MainHandwashing extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main_menu, menu); // Inflate your menu resource
+        inflater.inflate(R.menu.main_menu, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
         if (item.getItemId() == R.id.menu_admin_login) {
             Intent intent = new Intent(MainHandwashing.this, AdminLoginActivity.class);
             startActivity(intent);
@@ -139,47 +143,85 @@ public class MainHandwashing extends AppCompatActivity {
     }
 
 
-    public class LeaderboardEntry {
-        String employeeNumber;
-        String employeeName; // This holds the first name for display
-        int handwashCount;
-
-        public LeaderboardEntry(String employeeNumber, String employeeName, int handwashCount) {
-            this.employeeNumber = employeeNumber;
-            this.employeeName = employeeName;
-            this.handwashCount = handwashCount;
-        }
-    }
-
     private void populateLeaderboardTable() {
-        table_top_handwashers.removeAllViews();
+        table_top_handwashers.removeAllViews(); // Clear previous entries
 
-        // Add header row
+        // Add Header Row
         TableRow headerRow = new TableRow(this);
-        headerRow.setBackgroundColor(getColor(R.color.teal_700));
-        headerRow.setPadding(8, 8, 8, 8);
+        TableRow.LayoutParams headerParams = new TableRow.LayoutParams(
+                TableRow.LayoutParams.MATCH_PARENT,
+                TableRow.LayoutParams.WRAP_CONTENT);
+        headerRow.setLayoutParams(headerParams);
+        headerRow.setPadding(dpToPx(8), dpToPx(12), dpToPx(8), dpToPx(12));
 
-        TextView nameHeader = createTableHeaderTextView("Name"); // Changed header text
-        TextView countHeader = createTableHeaderTextView("Handwashes");
+        TextView rankHeader = createTableHeaderTextView("Rank");
+        TextView nameHeader = createTableHeaderTextView("Name");
+        TextView countHeader = createTableHeaderTextView("Washes");
 
+        rankHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f));
+        nameHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1.5f));
+        countHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f));
+
+        headerRow.addView(rankHeader);
         headerRow.addView(nameHeader);
         headerRow.addView(countHeader);
         table_top_handwashers.addView(headerRow);
 
-        // Get data from the database
         leaderboardData = dbHelper.getTopHandwashers();
 
-        // Add data rows
-        for (com.jarindimick.handwashtracking.gui.LeaderboardEntry entry : leaderboardData) {
-            TableRow row = new TableRow(this);
-            row.setPadding(8, 8, 8, 8);
+        if (leaderboardData.isEmpty()) {
+            TableRow emptyRow = new TableRow(this);
+            TextView emptyMsg = new TextView(this);
+            emptyMsg.setText("No handwashes recorded yet today!");
+            emptyMsg.setTextSize(16);
+            emptyMsg.setPadding(dpToPx(8), dpToPx(16), dpToPx(8), dpToPx(16));
+            emptyMsg.setGravity(Gravity.CENTER);
+            TableRow.LayoutParams emptyParams = new TableRow.LayoutParams(
+                    TableRow.LayoutParams.MATCH_PARENT,
+                    TableRow.LayoutParams.WRAP_CONTENT);
+            emptyParams.span = 3;
+            emptyRow.addView(emptyMsg, emptyParams);
+            table_top_handwashers.addView(emptyRow);
+        } else {
+            int rank = 1;
+            for (LeaderboardEntry entry : leaderboardData) { // LeaderboardEntry type used here
+                TableRow dataRow = new TableRow(this);
+                dataRow.setPadding(dpToPx(8), dpToPx(10), dpToPx(8), dpToPx(10));
 
-            TextView nameView = createDataTextView(entry.employeeName); // Use employeeName
-            TextView countView = createDataTextView(String.valueOf(entry.handwashCount));
+                TextView rankView = createDataTextView(String.valueOf(rank) + ".", 18, Typeface.BOLD);
+                rankView.setGravity(Gravity.CENTER);
 
-            row.addView(nameView);
-            row.addView(countView);
-            table_top_handwashers.addView(row);
+                LinearLayout nameCellLayout = new LinearLayout(this);
+                nameCellLayout.setOrientation(LinearLayout.HORIZONTAL);
+                // CORRECTED LINE: Center the LinearLayout (icon + name) within its table cell
+                nameCellLayout.setGravity(Gravity.CENTER);
+
+
+                ImageView starIcon = new ImageView(this);
+                starIcon.setImageResource(R.drawable.ic_star_leaderboard);
+                LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(20), dpToPx(20));
+                iconParams.setMarginEnd(dpToPx(8));
+                starIcon.setLayoutParams(iconParams);
+
+                // TextView for the name, its own gravity will align text next to icon
+                TextView nameView = createDataTextView(entry.employeeName, 18, Typeface.NORMAL);
+                // Gravity.START or Gravity.LEFT is fine here for text alignment within the nameView itself
+                nameView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+
+
+                nameCellLayout.addView(starIcon);
+                nameCellLayout.addView(nameView);
+
+                TextView countView = createDataTextView(String.valueOf(entry.handwashCount), 18, Typeface.BOLD);
+                countView.setGravity(Gravity.CENTER);
+
+                dataRow.addView(rankView, new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f));
+                dataRow.addView(nameCellLayout, new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1.5f));
+                dataRow.addView(countView, new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f));
+
+                table_top_handwashers.addView(dataRow);
+                rank++;
+            }
         }
     }
 
@@ -187,20 +229,30 @@ public class MainHandwashing extends AppCompatActivity {
     private TextView createTableHeaderTextView(String text) {
         TextView textView = new TextView(this);
         textView.setText(text);
-        textView.setTextColor(getColor(R.color.white));
-        textView.setTextSize(18);
-        textView.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        textView.setGravity(android.view.Gravity.CENTER);
+        textView.setTextColor(ContextCompat.getColor(this, R.color.purple_700));
+        textView.setTextSize(16);
+        textView.setTypeface(Typeface.DEFAULT_BOLD);
+        textView.setGravity(Gravity.CENTER);
+        textView.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
         return textView;
     }
 
-    // Helper method to create TextView for table data
-    private TextView createDataTextView(String text) {
+    // Overloaded helper method for table data TextViews
+    private TextView createDataTextView(String text, int textSize, int textStyle) {
         TextView textView = new TextView(this);
         textView.setText(text);
-        textView.setTextSize(16);
-        textView.setGravity(android.view.Gravity.CENTER);
+        textView.setTextSize(textSize);
+        textView.setTypeface(null, textStyle);
+        textView.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+        // You might want to set a default text color for data rows as well, e.g.:
+        // textView.setTextColor(ContextCompat.getColor(this, R.color.black)); // Or another appropriate color
         return textView;
+    }
+
+
+    // Helper to convert dp to pixels
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
     @Override

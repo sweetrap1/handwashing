@@ -9,7 +9,7 @@
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:context=".gui.MainHandwashing">
+        android:paddingBottom="16dp" tools:context=".gui.MainHandwashing">
 
         <ImageView
             android:id="@+id/img_logo"
@@ -19,7 +19,8 @@
             android:layout_marginTop="16dp"
             android:src="@drawable/colorlogo"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:contentDescription="App Logo" />
 
         <TextView
             android:id="@+id/txt_datetime"
@@ -27,8 +28,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
             android:text="Sunday, May 4, 12:22 PM"
-            android:textSize="25sp"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:textSize="22sp" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -63,9 +63,12 @@
             android:background="@drawable/edit_text_border"
             android:inputType="number"
             android:padding="8dp"
+            android:gravity="center"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/lbl_employee_number" />
+            app:layout_constraintTop_toBottomOf="@id/lbl_employee_number"
+            android:autofillHints="employeeId"
+            android:hint="Employee ID"/>
 
         <Button
             android:id="@+id/btn_start"
@@ -79,94 +82,40 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/edit_employee_number" />
 
-        <TextView
-            android:id="@+id/txt_top_handwashers_title"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/leaderboard_section"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:text="Top 5 Handwashers"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:orientation="vertical"
+            android:layout_marginTop="24dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:padding="12dp"
+            android:background="@drawable/leaderboard_background"
+            app:layout_constraintTop_toBottomOf="@id/btn_start"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btn_start" />
-
-        <TableLayout
-            android:id="@+id/table_top_handwashers"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:stretchColumns="*"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/txt_top_handwashers_title">
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintVertical_bias="0.0" >
 
-            <TableRow
-                android:background="#009688"
-                android:padding="8dp">
+            <TextView
+                android:id="@+id/txt_top_handwashers_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Top 5 Handwashers Today"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textColor="?attr/colorOnPrimarySurface"
+                android:layout_marginBottom="12dp"/>
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Name"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Handwashes"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold" />
-            </TableRow>
-
-            <TableRow android:padding="8dp">
-                <TextView
-                    android:gravity="center"
-                    android:text="Employee 1" />
-                <TextView
-                    android:gravity="center"
-                    android:text="100" />
-            </TableRow>
-            <TableRow android:padding="8dp">
-                <TextView
-                    android:gravity="center"
-                    android:text="Employee 2" />
-                <TextView
-                    android:gravity="center"
-                    android:text="90" />
-            </TableRow>
-            <TableRow android:padding="8dp">
-                <TextView
-                    android:gravity="center"
-                    android:text="Employee 3" />
-                <TextView
-                    android:gravity="center"
-                    android:text="80" />
-            </TableRow>
-            <TableRow android:padding="8dp">
-                <TextView
-                    android:gravity="center"
-                    android:text="Employee 4" />
-                <TextView
-                    android:gravity="center"
-                    android:text="70" />
-            </TableRow>
-            <TableRow android:padding="8dp">
-                <TextView
-                    android:gravity="center"
-                    android:text="Employee 5" />
-                <TextView
-                    android:gravity="center"
-                    android:text="60" />
-            </TableRow>
-
-        </TableLayout>
+            <TableLayout
+                android:id="@+id/table_top_handwashers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:stretchColumns="1">
+            </TableLayout>
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </ScrollView>
