@@ -7,7 +7,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.content.ContentValues;
 import android.util.Log;
 
-import com.jarindimick.handwashtracking.gui.LeaderboardEntry; // Assuming this is in the gui package
+import com.jarindimick.handwashtracking.gui.Employee; // Corrected import
+import com.jarindimick.handwashtracking.gui.LeaderboardEntry;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -21,29 +22,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String TAG = "DatabaseHelper";
     private static final String DATABASE_NAME = "Handwash.db";
-    private static final int DATABASE_VERSION = 3; // Keep version consistent, or increment if schema changes significantly
+    private static final int DATABASE_VERSION = 3; // Or increment if schema changes
 
-    // Table names
     public static final String TABLE_EMPLOYEES = "employees";
     public static final String TABLE_HANDWASH_LOG = "handwash_log";
     public static final String TABLE_ADMIN_USERS = "admin_users";
 
-    // Common column names
     public static final String COLUMN_ID = "id";
-
-    // Employees table column names
     public static final String COLUMN_EMPLOYEE_NUMBER = "employee_number";
     public static final String COLUMN_FIRST_NAME = "first_name";
     public static final String COLUMN_LAST_NAME = "last_name";
     public static final String COLUMN_DEPARTMENT = "department";
     public static final String COLUMN_IS_ACTIVE = "is_active";
 
-    // Handwash Log table column names
     public static final String COLUMN_WASH_DATE = "wash_date";
     public static final String COLUMN_WASH_TIME = "wash_time";
     public static final String COLUMN_PHOTO_PATH = "photo_path";
 
-    // Admin Users table column names
     public static final String COLUMN_USERNAME = "username";
     public static final String COLUMN_PASSWORD_HASH = "password_hash";
     public static final String COLUMN_ROLE = "role";
@@ -79,8 +74,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_ROLE + " TEXT" + ")";
         db.execSQL(CREATE_ADMIN_USERS_TABLE);
 
-        // Insert initial admin user with new default password "admin"
-        String defaultPassword = "admin"; // CHANGED DEFAULT PASSWORD
+        String defaultPassword = "admin";
         String hashedPassword = BCrypt.hashpw(defaultPassword, BCrypt.gensalt());
         ContentValues adminValues = new ContentValues();
         adminValues.put(COLUMN_USERNAME, "admin");
@@ -99,7 +93,62 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    // --- Overview Methods START ---
+    // --- Method to update an employee ---
+    public boolean updateEmployee(Employee employee) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_FIRST_NAME, employee.getFirstName());
+        values.put(COLUMN_LAST_NAME, employee.getLastName());
+        values.put(COLUMN_DEPARTMENT, employee.getDepartment());
+        values.put(COLUMN_IS_ACTIVE, employee.isActive() ? 1 : 0);
+        // Employee number is the key and should not be changed here.
+        // We update based on the employee's internal ID.
+
+        int rowsAffected = 0;
+        try {
+            rowsAffected = db.update(TABLE_EMPLOYEES, values, COLUMN_ID + " = ?",
+                    new String[]{String.valueOf(employee.getId())});
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating employee: " + e.getMessage());
+        } finally {
+            db.close();
+        }
+        return rowsAffected > 0;
+    }
+    // --- End update employee method ---
+
+    public List<Employee> getAllEmployees() {
+        List<Employee> employeeList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(TABLE_EMPLOYEES,
+                    new String[]{COLUMN_ID, COLUMN_EMPLOYEE_NUMBER, COLUMN_FIRST_NAME, COLUMN_LAST_NAME, COLUMN_DEPARTMENT, COLUMN_IS_ACTIVE},
+                    null, null, null, null, COLUMN_LAST_NAME + " ASC, " + COLUMN_FIRST_NAME + " ASC");
+
+            if (cursor.moveToFirst()) {
+                do {
+                    long id = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_ID));
+                    String number = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
+                    String firstName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIRST_NAME));
+                    String lastName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_LAST_NAME));
+                    String department = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DEPARTMENT));
+                    boolean isActive = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_IS_ACTIVE)) == 1;
+                    employeeList.add(new Employee(id, number, firstName, lastName, department, isActive));
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error while trying to get employees from database", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return employeeList;
+    }
+
+
     public int getTotalHandwashesToday() {
         SQLiteDatabase db = this.getReadableDatabase();
         int count = 0;
@@ -140,9 +189,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         return count;
     }
-    // --- Overview Methods END ---
 
-    // --- Employee Number Check Method START ---
     public boolean isEmployeeNumberTaken(String employeeNumber) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = null;
@@ -160,7 +207,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         return isTaken;
     }
-    // --- Employee Number Check Method END ---
 
 
     public List<HandwashLog> searchHandwashLogs(String firstName, String lastName, String employeeNumber, String startDate, String endDate) {
@@ -282,7 +328,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             }
             query += " GROUP BY hl." + COLUMN_EMPLOYEE_NUMBER + ", e." + COLUMN_FIRST_NAME + ", e." + COLUMN_LAST_NAME +
                     " ORDER BY total_washes DESC";
-        } else { // detailed
+        } else {
             query = "SELECT hl.*, e." + COLUMN_FIRST_NAME + ", e." + COLUMN_LAST_NAME +
                     " FROM " + TABLE_HANDWASH_LOG + " hl " +
                     "LEFT JOIN " + TABLE_EMPLOYEES + " e ON hl." + COLUMN_EMPLOYEE_NUMBER + " = e." + COLUMN_EMPLOYEE_NUMBER;
