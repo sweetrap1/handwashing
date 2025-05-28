@@ -2,9 +2,11 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main" android:layout_width="match_parent"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="0dp" tools:context=".gui.WetHandsActivity">
+    android:padding="0dp"
+    tools:context=".gui.DryHandsActivity">
 
     <LinearLayout
         android:id="@+id/content_area"
@@ -18,23 +20,25 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_bias="0.4"
         android:paddingStart="16dp"
-        android:paddingEnd="16dp"> <TextView
-        android:id="@+id/text_step_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Step 1: Wet Hands"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:layout_marginTop="20dp"
-        android:gravity="center"/>
+        android:paddingEnd="16dp">
+
+        <TextView
+            android:id="@+id/text_step_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Step 4: Dry Hands"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginTop="20dp"
+            android:gravity="center"/>
 
         <ImageView
             android:id="@+id/image_step_animation"
             android:layout_width="120dp"
             android:layout_height="120dp"
-            android:src="@drawable/ic_wet_hands_anim"
+            android:src="@drawable/ic_dry_hands_anim"
             android:layout_marginTop="20dp"
-            android:contentDescription="Wet hands animation"/>
+            android:contentDescription="Dry hands animation"/>
 
         <TextView
             android:id="@+id/text_step_instructions"
@@ -42,7 +46,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginEnd="24dp"
-            android:text="Please wet your hands thoroughly under running water."
+            android:text="Dry your hands completely with a clean towel or air dryer."
             android:textSize="20sp"
             android:gravity="center"
             android:layout_marginTop="20dp" />
@@ -102,7 +106,7 @@
         android:id="@+id/text_overall_timer_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="37s"
+        android:text="5s"
         android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

@@ -5,6 +5,7 @@
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorSecondaryVariant">@color/teal_200</item> <item name="colorOnSecondary">@color/black</item>
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="colorControlNormal">@color/white</item>
 
         <item name="myLeaderboardBackgroundColor">@color/section_background_dark</item>
         <item name="myOverviewSectionBackgroundColor">@color/section_background_overview_dark</item>

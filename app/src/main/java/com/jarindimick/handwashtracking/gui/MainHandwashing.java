@@ -1,9 +1,11 @@
 package com.jarindimick.handwashtracking.gui;
 
 import android.content.Intent;
+import android.content.res.Configuration; // Import for night mode check
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
+// import android.util.TypedValue; // Not needed if getColorFromAttr is removed
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,8 +21,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+// import androidx.annotation.AttrRes; // Not needed
+// import androidx.annotation.ColorInt;  // Not needed
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar; // Import Toolbar
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -46,35 +50,28 @@ public class MainHandwashing extends AppCompatActivity {
     private Runnable updateTimeRunnable;
     private DatabaseHelper dbHelper;
     private List<LeaderboardEntry> leaderboardData = new ArrayList<>();
-    private Toolbar mainToolbar; // Declare Toolbar
+    private Toolbar mainToolbar;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this); // Enable Edge-to-Edge display
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main_handwashing);
 
-        // Setup Toolbar
         mainToolbar = findViewById(R.id.main_toolbar);
         setSupportActionBar(mainToolbar);
-        // Optional: if you want to remove the title from the Toolbar itself
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
-
-        // Apply window insets listener to the root content view
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            // The root view (R.id.main) gets padding.
-            // The Toolbar is a child of R.id.main, so it will be pushed down by systemBars.top.
-            // The content below the toolbar will also be correctly positioned.
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        setupgui(); // Call after setContentView and Toolbar setup
+        setupgui();
         startUpdatingTime();
         setupListeners();
         dbHelper = new DatabaseHelper(this);
@@ -87,7 +84,6 @@ public class MainHandwashing extends AppCompatActivity {
     }
 
     private void setupgui() {
-        // Toolbar is already found and set in onCreate
         img_logo = findViewById(R.id.img_logo);
         txt_datetime = findViewById(R.id.txt_datetime);
         edit_employee_number = findViewById(R.id.edit_employee_number);
@@ -233,10 +229,20 @@ public class MainHandwashing extends AppCompatActivity {
         }
     }
 
+    // Removed getColorFromAttr method as R.attr.colorPrimary was not resolving
+
     private TextView createTableHeaderTextView(String text) {
         TextView textView = new TextView(this);
         textView.setText(text);
-        textView.setTextColor(ContextCompat.getColor(this, R.color.purple_700));
+
+        // Directly check for night mode and set color
+        int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
+            textView.setTextColor(ContextCompat.getColor(this, R.color.purple_200)); // Light purple for dark theme
+        } else {
+            textView.setTextColor(ContextCompat.getColor(this, R.color.purple_500)); // Medium purple for light theme
+        }
+
         textView.setTextSize(16);
         textView.setTypeface(Typeface.DEFAULT_BOLD);
         textView.setGravity(Gravity.CENTER);
@@ -250,6 +256,9 @@ public class MainHandwashing extends AppCompatActivity {
         textView.setTextSize(textSize);
         textView.setTypeface(null, textStyle);
         textView.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+        // Consider setting a theme-aware text color for data rows if needed, e.g.,
+        // textView.setTextColor(ContextCompat.getColor(this, android.R.color.primary_text_light));
+        // or using a theme attribute like ?android:attr/textColorPrimary
         return textView;
     }
 

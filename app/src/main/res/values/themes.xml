@@ -15,8 +15,11 @@
     <style name="Theme.HandwashTracking.NoActionBar" parent="Theme.HandwashTracking">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <!-- You might want to ensure the status bar is translucent or matches your toolbar color
-             if EdgeToEdge is making it draw underneath. EdgeToEdge.enable() usually handles this. -->
+    </style>
+
+    <style name="AppPopupMenu" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:textColorPrimary">@color/black</item>
+        <item name="android:textColorSecondary">@color/text_color_secondary_on_light_surface</item>
     </style>
 
 </resources>

@@ -18,10 +18,11 @@
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorSurface"
             android:elevation="4dp"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:popupTheme="@style/AppPopupMenu"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
+
         <ImageView
             android:id="@+id/img_logo"
             android:layout_width="80dp"
@@ -42,8 +43,7 @@
             android:layout_marginEnd="16dp"
             android:text="Sunday, May 4, 12:22 PM"
             android:textSize="22sp"
-            android:gravity="center_vertical|end"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:gravity="center" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/img_logo"
             app:layout_constraintTop_toBottomOf="@id/main_toolbar"
             app:layout_constraintBottom_toBottomOf="@id/img_logo"/>
@@ -119,12 +119,12 @@
                 android:id="@+id/txt_top_handwashers_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Top 5 Handwashers Today"
-                android:textSize="20sp"
-                android:textStyle="bold"
+                android:layout_marginBottom="12dp"
                 android:gravity="center"
-                android:textColor="?attr/colorPrimaryVariant"
-                android:layout_marginBottom="12dp"/>
+                android:text="Top 5 Handwashers Today"
+                android:textColor="@color/purple_200"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
             <TableLayout
                 android:id="@+id/table_top_handwashers"
