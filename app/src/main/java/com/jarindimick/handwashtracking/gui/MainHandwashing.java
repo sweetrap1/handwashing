@@ -84,7 +84,6 @@ public class MainHandwashing extends AppCompatActivity {
     }
 
     private void setupgui() {
-        img_logo = findViewById(R.id.img_logo);
         txt_datetime = findViewById(R.id.txt_datetime);
         edit_employee_number = findViewById(R.id.edit_employee_number);
         btn_start = findViewById(R.id.btn_start);

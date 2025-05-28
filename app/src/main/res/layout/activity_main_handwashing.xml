@@ -10,7 +10,8 @@
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="0dp" tools:context=".gui.MainHandwashing">
+        android:padding="0dp"
+        tools:context=".gui.MainHandwashing">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/main_toolbar"
@@ -23,42 +24,31 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <ImageView
-            android:id="@+id/img_logo"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:src="@drawable/colorlogo"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/main_toolbar"
-            android:contentDescription="App Logo" />
-
         <TextView
             android:id="@+id/txt_datetime"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:text="Sunday, May 4, 12:22 PM"
             android:textSize="22sp"
-            android:gravity="center" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/img_logo"
-            app:layout_constraintTop_toBottomOf="@id/main_toolbar"
-            app:layout_constraintBottom_toBottomOf="@id/img_logo"/>
+            android:gravity="center"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/main_toolbar" />
 
         <TextView
             android:id="@+id/txt_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Maddox Handwashing System"
+            android:text="Employee Handwashing Tracker"
             android:textSize="24sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/img_logo" />
+            app:layout_constraintTop_toBottomOf="@id/txt_datetime" />
 
         <TextView
             android:id="@+id/lbl_employee_number"

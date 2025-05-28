@@ -6,9 +6,24 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
+
     <queries>
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="text/csv" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.OPEN_DOCUMENT" />
+            <category android:name="android.intent.category.OPENABLE" />
+            <data android:mimeType="text/csv" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.GET_CONTENT" />
+            <category android:name="android.intent.category.OPENABLE" />
+            <data android:mimeType="text/csv" />
         </intent>
     </queries>
 
@@ -26,7 +41,8 @@
         <activity
             android:name=".gui.MainHandwashing"
             android:exported="true"
-            android:screenOrientation="fullSensor" android:theme="@style/Theme.HandwashTracking.NoActionBar">
+            android:screenOrientation="fullSensor"
+            android:theme="@style/Theme.HandwashTracking.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -37,10 +53,24 @@
             android:name=".gui.AdminLoginActivity"
             android:exported="false"
             android:screenOrientation="sensorPortrait"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar"/> <activity
-        android:name=".gui.AdminDashboardActivity"
-        android:exported="false"
-        android:screenOrientation="unspecified"/>
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
+        <activity
+            android:name=".gui.AdminDashboardActivity"
+            android:exported="false"
+            android:screenOrientation="unspecified"
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"/> {/* ADD THIS LINE */}
+
+        <activity
+            android:name=".gui.ManageEmployeesActivity"
+            android:exported="false"
+            android:label="Manage Employees"
+            android:parentActivityName=".gui.AdminDashboardActivity"
+            android:screenOrientation="unspecified"
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"> {/* Ensure NoActionBar theme is applied */}
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".gui.AdminDashboardActivity" />
+        </activity>
 
 
         <activity

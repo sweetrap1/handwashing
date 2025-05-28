@@ -1,11 +1,20 @@
 package com.jarindimick.handwashtracking.gui;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.DatePickerDialog;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,51 +22,56 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar; // Import for Toolbar
+import androidx.coordinatorlayout.widget.CoordinatorLayout; // Import for CoordinatorLayout
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.appbar.MaterialToolbar; // Import for MaterialToolbar
 import com.google.android.material.textfield.TextInputEditText;
 
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
-import com.jarindimick.handwashtracking.gui.Employee; // Ensure this matches Employee.java package
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
-public class AdminDashboardActivity extends AppCompatActivity implements EmployeeAdminAdapter.OnEmployeeEditListener {
+public class AdminDashboardActivity extends AppCompatActivity {
     private static final String TAG = "AdminDashboardActivity";
+    private static final int PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 101;
+    private static final int REQUEST_CODE_SELECT_CSV = 102;
 
     // UI elements for Overview
     private TextView txt_overview_total_washes_today;
     private TextView txt_overview_active_employees;
     private TextView txt_overview_top_washer_today;
-
-    // UI elements for Download Data
-    private EditText edit_download_start_date;
-    private EditText edit_download_end_date;
-    private RadioGroup radio_download_type;
-    private Button btn_download_data;
 
     // UI elements for Search Handwashes
     private EditText edit_search_first_name;
@@ -70,50 +84,61 @@ public class AdminDashboardActivity extends AppCompatActivity implements Employe
     private HandwashLogAdapter handwashLogAdapter;
 
     private TextView txt_message;
+    private MaterialToolbar toolbarAdminDashboard; // NEW: For the toolbar
 
-    // UI elements for Other Buttons
+    // UI elements for Action Buttons
     private Button btn_logout;
     private Button btn_delete_data;
     private Button btn_import_employees;
+    private Button btn_go_to_manage_employees;
 
-    // UI elements for changing admin password
-    private EditText edit_old_password;
-    private EditText edit_new_password;
-    private EditText edit_confirm_new_password;
-    private Button btn_change_password;
-
-    // UI elements for adding new employee
-    private EditText edit_add_employee_number;
-    private EditText edit_add_first_name;
-    private EditText edit_add_last_name;
-    private EditText edit_add_department;
-    private Button btn_add_employee;
-
-    // UI Elements for Manage Employees List
-    private RecyclerView recycler_employee_list;
-    private EmployeeAdminAdapter employeeAdminAdapter;
-    // The list of employees will be managed by the adapter internally after initial load
+    // Buttons for Dialog Triggers
+    private Button btn_show_add_employee_dialog;
+    private Button btn_show_change_password_dialog;
+    private Button btn_show_download_data_dialog;
 
     private DatabaseHelper dbHelper;
 
+    private String pendingCsvData;
+    private String pendingFileName;
+    private AlertDialog pendingDialogToDismiss;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this); // Enable edge-to-edge
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_admin_dashboard);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(
-                    systemBars.left + v.getPaddingLeft(),
-                    systemBars.top + v.getPaddingTop(),
-                    systemBars.right + v.getPaddingRight(),
-                    systemBars.bottom + v.getPaddingBottom()
-            );
-            return insets;
-        });
+        toolbarAdminDashboard = findViewById(R.id.toolbar_admin_dashboard); // Initialize the new Toolbar
+        setSupportActionBar(toolbarAdminDashboard); // Set it as the ActionBar
+        // The title is set in XML: app:title="Admin Dashboard"
 
-        // if (getSupportActionBar() != null) getSupportActionBar().hide(); // Assuming NoActionBar theme
+        // Apply insets to the CoordinatorLayout (the new root)
+        CoordinatorLayout coordinatorLayout = findViewById(R.id.coordinator_layout_admin_dashboard);
+        ViewCompat.setOnApplyWindowInsetsListener(coordinatorLayout, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            // Apply padding to the CoordinatorLayout for system bars.
+            // AppBarLayout with fitsSystemWindows="true" will typically handle its own top inset.
+            // The NestedScrollView with appbar_scrolling_view_behavior will be positioned below it.
+            // We primarily need to ensure the CoordinatorLayout itself is padded if content might go behind nav bar.
+            // Or, ensure the NestedScrollView's bottom is padded.
+
+            // Let's apply left, right, and bottom to the CoordinatorLayout.
+            // The AppBarLayout is expected to handle the top inset due to fitsSystemWindows="true".
+            v.setPadding(insets.left, 0, insets.right, insets.bottom);
+
+            // Alternatively, if AppBarLayout doesn't perfectly handle top with fitsSystemWindows="true" under all E2E scenarios:
+            // Apply top margin to AppBarLayout directly if needed (less common with Material components)
+            // com.google.android.material.appbar.AppBarLayout appBarLayout = findViewById(R.id.app_bar_layout_admin_dashboard);
+            // ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) appBarLayout.getLayoutParams();
+            // params.topMargin = insets.top;
+            // appBarLayout.setLayoutParams(params);
+            // And then root padding would be: v.setPadding(insets.left, 0, insets.right, insets.bottom);
+
+
+            return windowInsets; // Return original insets
+        });
 
         dbHelper = new DatabaseHelper(this);
         setupgui();
@@ -124,17 +149,15 @@ public class AdminDashboardActivity extends AppCompatActivity implements Employe
     protected void onResume() {
         super.onResume();
         loadAdminOverviewData();
-        loadEmployeeList();
     }
 
     private void setupgui() {
+        // lbl_admin_dashboard_title is GONE
+
         txt_overview_total_washes_today = findViewById(R.id.txt_overview_total_washes_today);
         txt_overview_active_employees = findViewById(R.id.txt_overview_active_employees);
         txt_overview_top_washer_today = findViewById(R.id.txt_overview_top_washer_today);
-        edit_download_start_date = findViewById(R.id.edit_download_start_date);
-        edit_download_end_date = findViewById(R.id.edit_download_end_date);
-        radio_download_type = findViewById(R.id.radio_download_type);
-        btn_download_data = findViewById(R.id.btn_download_data);
+
         edit_search_first_name = findViewById(R.id.edit_search_first_name);
         edit_search_last_name = findViewById(R.id.edit_search_last_name);
         edit_search_employee_id = findViewById(R.id.edit_search_employee_id);
@@ -143,189 +166,176 @@ public class AdminDashboardActivity extends AppCompatActivity implements Employe
         btn_search_handwashes = findViewById(R.id.btn_search_handwashes);
         recycler_search_results = findViewById(R.id.recycler_search_results);
         recycler_search_results.setLayoutManager(new LinearLayoutManager(this));
+
         btn_logout = findViewById(R.id.btn_logout);
         btn_delete_data = findViewById(R.id.btn_delete_data);
         btn_import_employees = findViewById(R.id.btn_import_employees);
         txt_message = findViewById(R.id.txt_message);
-        edit_old_password = findViewById(R.id.edit_old_password);
-        edit_new_password = findViewById(R.id.edit_new_password);
-        edit_confirm_new_password = findViewById(R.id.edit_confirm_new_password);
-        btn_change_password = findViewById(R.id.btn_change_password);
-        edit_add_employee_number = findViewById(R.id.edit_add_employee_number);
-        edit_add_first_name = findViewById(R.id.edit_add_first_name);
-        edit_add_last_name = findViewById(R.id.edit_add_last_name);
-        edit_add_department = findViewById(R.id.edit_add_department);
-        btn_add_employee = findViewById(R.id.btn_add_employee);
 
-        // Setup for Employee List RecyclerView
-        recycler_employee_list = findViewById(R.id.recycler_employee_list);
-        recycler_employee_list.setLayoutManager(new LinearLayoutManager(this));
-        employeeAdminAdapter = new EmployeeAdminAdapter(this, new ArrayList<>(), this); // Initialize with empty list
-        recycler_employee_list.setAdapter(employeeAdminAdapter);
+        btn_go_to_manage_employees = findViewById(R.id.btn_go_to_manage_employees);
+
+        btn_show_add_employee_dialog = findViewById(R.id.btn_show_add_employee_dialog);
+        btn_show_change_password_dialog = findViewById(R.id.btn_show_change_password_dialog);
+        btn_show_download_data_dialog = findViewById(R.id.btn_show_download_data_dialog);
     }
 
-    private void loadEmployeeList() {
-        Log.d(TAG, "Loading employee list...");
-        if (dbHelper == null) dbHelper = new DatabaseHelper(this);
+    // ... (rest of your AdminDashboardActivity.java methods remain the same as the last version I provided)
+    // Make sure to include all methods from showDatePickerDialog down to onDestroy
+    // (I'm omitting them here for brevity as they don't change from the previous full version I sent for
+    // the "Import Employees from device" step, but you need them in your actual file)
 
-        List<Employee> employees = dbHelper.getAllEmployees();
-        if (employeeAdminAdapter != null) {
-            employeeAdminAdapter.updateEmployeeList(employees);
-        }
+    private void setupListeners() {
+        edit_search_start_date.setOnClickListener(v -> showDatePickerDialog(edit_search_start_date, "Set Search Start Date"));
+        edit_search_end_date.setOnClickListener(v -> showDatePickerDialog(edit_search_end_date, "Set Search End Date"));
+        btn_search_handwashes.setOnClickListener(v -> searchHandwashes());
 
-        if (employees.isEmpty()) {
-            Log.d(TAG, "No employees found.");
-        } else {
-            Log.d(TAG, "Loaded " + employees.size() + " employees.");
-        }
-    }
+        btn_logout.setOnClickListener(v -> logout());
+        btn_delete_data.setOnClickListener(v -> deleteDataWithConfirmation());
+        btn_import_employees.setOnClickListener(v -> importEmployeesFromDevice());
 
-    @Override
-    public void onEditEmployee(Employee employee) {
-        Log.d(TAG, "Edit clicked for employee: " + employee.getEmployeeNumber() + " - " + employee.getFullName());
-        showEditEmployeeDialog(employee);
-    }
-
-    private void showEditEmployeeDialog(final Employee employeeToEdit) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = this.getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_edit_employee, null);
-        builder.setView(dialogView);
-
-        final TextView dialogTxtEmployeeNumber = dialogView.findViewById(R.id.dialog_txt_employee_number);
-        final TextInputEditText dialogEditFirstName = dialogView.findViewById(R.id.dialog_edit_first_name);
-        final TextInputEditText dialogEditLastName = dialogView.findViewById(R.id.dialog_edit_last_name);
-        final TextInputEditText dialogEditDepartment = dialogView.findViewById(R.id.dialog_edit_department);
-        final SwitchMaterial dialogSwitchIsActive = dialogView.findViewById(R.id.dialog_switch_is_active);
-
-        dialogTxtEmployeeNumber.setText(employeeToEdit.getEmployeeNumber());
-        dialogEditFirstName.setText(employeeToEdit.getFirstName());
-        dialogEditLastName.setText(employeeToEdit.getLastName());
-        dialogEditDepartment.setText(employeeToEdit.getDepartment());
-        dialogSwitchIsActive.setChecked(employeeToEdit.isActive());
-
-        builder.setTitle("Edit Employee: " + employeeToEdit.getEmployeeNumber());
-        builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String firstName = dialogEditFirstName.getText().toString().trim();
-                String lastName = dialogEditLastName.getText().toString().trim();
-                String department = dialogEditDepartment.getText().toString().trim();
-                boolean isActive = dialogSwitchIsActive.isChecked();
-
-                if (TextUtils.isEmpty(firstName) || TextUtils.isEmpty(lastName)) {
-                    Toast.makeText(AdminDashboardActivity.this, "First and Last name cannot be empty.", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                employeeToEdit.setFirstName(firstName);
-                employeeToEdit.setLastName(lastName);
-                employeeToEdit.setDepartment(department.isEmpty() ? "Unassigned" : department);
-                employeeToEdit.setActive(isActive);
-
-                boolean success = dbHelper.updateEmployee(employeeToEdit);
-                if (success) {
-                    Toast.makeText(AdminDashboardActivity.this, "Employee updated successfully.", Toast.LENGTH_SHORT).show();
-                    loadEmployeeList();
-                    loadAdminOverviewData();
-                } else {
-                    Toast.makeText(AdminDashboardActivity.this, "Failed to update employee.", Toast.LENGTH_SHORT).show();
-                }
-            }
+        btn_go_to_manage_employees.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminDashboardActivity.this, ManageEmployeesActivity.class);
+            startActivity(intent);
         });
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
-        AlertDialog alertDialog = builder.create();
-        alertDialog.show();
+        btn_show_add_employee_dialog.setOnClickListener(v -> showAddEmployeeDialog());
+        btn_show_change_password_dialog.setOnClickListener(v -> showChangePasswordDialog());
+        btn_show_download_data_dialog.setOnClickListener(v -> showDownloadDataDialog());
     }
-
 
     private void loadAdminOverviewData() {
         Log.d(TAG, "Loading admin overview data...");
-        if (dbHelper == null) {
-            dbHelper = new DatabaseHelper(this);
-        }
-        int totalWashesToday = dbHelper.getTotalHandwashesToday();
-        txt_overview_total_washes_today.setText(String.format(Locale.getDefault(), "Total Handwashes Today: %d", totalWashesToday));
-        int activeEmployees = dbHelper.getTotalActiveEmployeesCount();
-        txt_overview_active_employees.setText(String.format(Locale.getDefault(), "Active Employees: %d", activeEmployees));
+        if (dbHelper == null) dbHelper = new DatabaseHelper(this);
+        txt_overview_total_washes_today.setText(String.format(Locale.getDefault(), "Total Handwashes Today: %d", dbHelper.getTotalHandwashesToday()));
+        txt_overview_active_employees.setText(String.format(Locale.getDefault(), "Active Employees: %d", dbHelper.getTotalActiveEmployeesCount()));
         List<LeaderboardEntry> topWashers = dbHelper.getTopHandwashers();
         if (!topWashers.isEmpty()) {
-            LeaderboardEntry topWasher = topWashers.get(0);
-            txt_overview_top_washer_today.setText(String.format(Locale.getDefault(), "Top Washer Today: %s (%d washes)",
-                    topWasher.employeeName, topWasher.handwashCount));
+            txt_overview_top_washer_today.setText(String.format(Locale.getDefault(), "Top Washer Today: %s (%d washes)", topWashers.get(0).employeeName, topWashers.get(0).handwashCount));
         } else {
             txt_overview_top_washer_today.setText("Top Washer Today: N/A");
         }
         Log.d(TAG, "Admin overview data loaded.");
     }
 
-
-    private void setupListeners() {
-        btn_download_data.setOnClickListener(v -> downloadData());
-        edit_download_start_date.setOnClickListener(v -> showDatePickerDialog(edit_download_start_date));
-        edit_download_end_date.setOnClickListener(v -> showDatePickerDialog(edit_download_end_date));
-        edit_search_start_date.setOnClickListener(v -> showDatePickerDialog(edit_search_start_date));
-        edit_search_end_date.setOnClickListener(v -> showDatePickerDialog(edit_search_end_date));
-        btn_search_handwashes.setOnClickListener(v -> searchHandwashes());
-        btn_logout.setOnClickListener(v -> logout());
-        btn_delete_data.setOnClickListener(v -> deleteDataWithConfirmation());
-        btn_import_employees.setOnClickListener(v -> importEmployees());
-        btn_change_password.setOnClickListener(v -> changeAdminPassword());
-        btn_add_employee.setOnClickListener(v -> addEmployee());
-    }
-
-    private void showDatePickerDialog(final EditText editText) {
+    private void showDatePickerDialog(final EditText editTextToSetDate, String title) {
         final Calendar c = Calendar.getInstance();
-        int year = c.get(Calendar.YEAR);
-        int month = c.get(Calendar.MONTH);
-        int day = c.get(Calendar.DAY_OF_MONTH);
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 AdminDashboardActivity.this,
-                (view, year1, monthOfYear, dayOfMonth) -> {
-                    String formattedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year1, monthOfYear + 1, dayOfMonth);
-                    editText.setText(formattedDate);
+                (view, year, monthOfYear, dayOfMonth) -> {
+                    String formattedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, monthOfYear + 1, dayOfMonth);
+                    editTextToSetDate.setText(formattedDate);
                 },
-                year, month, day);
+                c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
+        datePickerDialog.setTitle(title);
         datePickerDialog.show();
     }
 
-    private void downloadData() {
-        String startDate = edit_download_start_date.getText().toString();
-        String endDate = edit_download_end_date.getText().toString();
-        int selectedId = radio_download_type.getCheckedRadioButtonId();
+    private void showDownloadDataDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_download_data, null);
+        builder.setView(dialogView);
+        builder.setTitle("Download Data Options");
+
+        final TextInputEditText dialogEditDownloadStartDate = dialogView.findViewById(R.id.dialog_edit_download_start_date);
+        final TextInputEditText dialogEditDownloadEndDate = dialogView.findViewById(R.id.dialog_edit_download_end_date);
+        final RadioGroup dialogRadioDownloadType = dialogView.findViewById(R.id.dialog_radio_download_type);
+        final Button dialogBtnDownloadConfirm = dialogView.findViewById(R.id.dialog_btn_download_data_confirm);
+
+        dialogEditDownloadStartDate.setOnClickListener(v -> showDatePickerDialog(dialogEditDownloadStartDate, "Select Start Date"));
+        dialogEditDownloadEndDate.setOnClickListener(v -> showDatePickerDialog(dialogEditDownloadEndDate, "Select End Date"));
+
+        AlertDialog alertDialog = builder.create();
+        dialogBtnDownloadConfirm.setOnClickListener(v -> {
+            performDataDownloadFromDialog(Objects.requireNonNull(dialogEditDownloadStartDate.getText()).toString(),
+                    Objects.requireNonNull(dialogEditDownloadEndDate.getText()).toString(),
+                    dialogRadioDownloadType,
+                    alertDialog);
+        });
+        alertDialog.show();
+    }
+
+    private void performDataDownloadFromDialog(String startDate, String endDate, RadioGroup radioGroup, AlertDialog dialogToDismiss) {
+        int selectedId = radioGroup.getCheckedRadioButtonId();
         String downloadType;
-        if (selectedId == R.id.radio_summary) {
+
+        if (selectedId == R.id.dialog_radio_summary) {
             downloadType = "summary";
-        } else if (selectedId == R.id.radio_detailed) {
+        } else if (selectedId == R.id.dialog_radio_detailed) {
             downloadType = "detailed";
         } else {
-            txt_message.setText("Please select a download type.");
-            Toast.makeText(this, "Please select a download type", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please select a download type.", Toast.LENGTH_SHORT).show();
+            txt_message.setText("Download Error: Please select a download type.");
             return;
         }
+
         if (startDate.isEmpty() || endDate.isEmpty()) {
-            txt_message.setText("Please enter start and end dates.");
-            Toast.makeText(this, "Please enter start and end dates.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please select start and end dates.", Toast.LENGTH_SHORT).show();
+            txt_message.setText("Download Error: Please select start and end dates.");
             return;
         }
+
         List<DatabaseHelper.HandwashLog> logs = dbHelper.getHandwashLogs(startDate, endDate, downloadType);
         if (logs.isEmpty()) {
-            txt_message.setText("No data found for the selected criteria.");
+            txt_message.setText("No data for " + startDate + " to " + endDate + " (" + downloadType + ").");
+            Toast.makeText(this, "No data found for download.", Toast.LENGTH_SHORT).show();
             return;
         }
+
         String csvData = formatDataToCsv(logs, downloadType);
-        try {
-            File csvFile = createAndSaveCsvFile(csvData, downloadType, startDate, endDate);
-            if (csvFile != null) {
-                openCsvFile(csvFile);
-                txt_message.setText("Data exported successfully to: " + csvFile.getName());
-            } else {
-                txt_message.setText("Error creating CSV file.");
+        String fileName = "handwash_" + downloadType + "_" + startDate + "_to_" + endDate + "_" + System.currentTimeMillis() + ".csv";
+
+        this.pendingCsvData = csvData;
+        this.pendingFileName = fileName;
+        this.pendingDialogToDismiss = dialogToDismiss;
+
+        saveCsvFile(csvData, fileName, dialogToDismiss);
+    }
+
+    private void saveCsvFile(String csvData, String fileName, AlertDialog dialogToDismiss) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
+                return;
             }
+        }
+        proceedWithSavingCsv(csvData, fileName, dialogToDismiss);
+    }
+
+    private void proceedWithSavingCsv(String csvData, String fileName, AlertDialog dialogToDismiss) {
+        Uri fileUri = null;
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+                Uri collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                fileUri = getContentResolver().insert(collection, values);
+                if (fileUri != null) {
+                    try (OutputStream os = getContentResolver().openOutputStream(fileUri)) {
+                        if (os != null) os.write(csvData.getBytes());
+                        else throw new IOException("OutputStream null for MediaStore URI.");
+                    }
+                } else throw new IOException("MediaStore insert returned null URI.");
+            } else {
+                File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                if (!downloadsDir.exists() && !downloadsDir.mkdirs()) throw new IOException("Failed to create public Downloads dir.");
+                File csvFile = new File(downloadsDir, fileName);
+                try (FileWriter writer = new FileWriter(csvFile)) { writer.write(csvData); }
+                fileUri = FileProvider.getUriForFile(this, "com.jarindimick.handwashtracking.fileprovider", csvFile);
+            }
+
+            if (fileUri != null) {
+                openCsvFile(fileUri);
+                txt_message.setText("Data exported to Downloads: " + fileName);
+                Toast.makeText(this, "CSV Export successful.", Toast.LENGTH_SHORT).show();
+                if (dialogToDismiss != null) dialogToDismiss.dismiss();
+            } else throw new IOException("Failed to get valid URI for saved CSV.");
         } catch (IOException e) {
-            txt_message.setText("Error saving data: " + e.getMessage());
+            txt_message.setText("Error saving CSV: " + e.getMessage());
             Log.e(TAG, "Error saving CSV", e);
+            Toast.makeText(this, "Error saving CSV: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -347,60 +357,28 @@ public class AdminDashboardActivity extends AppCompatActivity implements Employe
                         .append(log.lastName == null ? "" : log.lastName).append(",")
                         .append(log.washDate).append(",")
                         .append(log.washTime).append(",")
-                        .append(log.photoPath).append("\n");
+                        .append(log.photoPath == null ? "" : log.photoPath).append("\n");
             }
         }
         return csvBuilder.toString();
     }
 
-    private File createAndSaveCsvFile(String csvData, String downloadType, String startDate, String endDate) throws IOException {
-        String datePart = (!startDate.isEmpty() && !endDate.isEmpty()) ? startDate + "_to_" + endDate : "alltime";
-        String fileName = "handwash_" + downloadType + "_" + datePart + "_" + System.currentTimeMillis() + ".csv";
-        File documentsDir = getExternalFilesDir(null);
-        if (documentsDir == null) {
-            documentsDir = getFilesDir();
-        }
-        File exportDir = new File(documentsDir, "exports");
-        if (!exportDir.exists()) {
-            exportDir.mkdirs();
-        }
-        File csvFile = new File(exportDir, fileName);
-        Log.d(TAG, "Creating CSV file at: " + csvFile.getAbsolutePath());
-        try (FileWriter writer = new FileWriter(csvFile)) {
-            writer.write(csvData);
-        }
-        return csvFile;
-    }
-
-    private void openCsvFile(File csvFile) {
-        Log.d(TAG, "Attempting to open CSV file: " + csvFile.getAbsolutePath());
+    private void openCsvFile(Uri fileUri) {
+        Log.d(TAG, "Attempting to open CSV with Uri: " + fileUri.toString());
         try {
-            if (!csvFile.exists()) {
-                txt_message.setText("CSV file does not exist.");
-                Log.e(TAG, "CSV file does not exist: " + csvFile.getAbsolutePath());
-                return;
-            }
-            Uri fileUri = FileProvider.getUriForFile(
-                    this,
-                    "com.jarindimick.handwashtracking.fileprovider",
-                    csvFile
-            );
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(fileUri, "text/csv");
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             if (intent.resolveActivity(getPackageManager()) != null) {
                 startActivity(Intent.createChooser(intent, "Open CSV with"));
-                Log.d(TAG, "Intent sent to open CSV file.");
             } else {
                 txt_message.setText("No app found to open CSV file.");
-                Log.e(TAG, "No app found to open CSV file.");
+                Toast.makeText(this, "No app to open CSV.", Toast.LENGTH_LONG).show();
             }
-        } catch (IllegalArgumentException e) {
-            txt_message.setText("FileProvider error. Ensure provider_paths.xml is correct for exports directory.");
-            Log.e(TAG, "FileProvider error", e);
         } catch (Exception e) {
             txt_message.setText("Error opening CSV file: " + e.getMessage());
-            Log.e(TAG, "General error opening file", e);
+            Log.e(TAG, "Error opening CSV file with Uri " + fileUri.toString(), e);
+            Toast.makeText(this, "Could not open CSV file: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -411,16 +389,16 @@ public class AdminDashboardActivity extends AppCompatActivity implements Employe
         String startDate = edit_search_start_date.getText().toString().trim();
         String endDate = edit_search_end_date.getText().toString().trim();
         if (firstName.isEmpty() && lastName.isEmpty() && employeeId.isEmpty() && startDate.isEmpty() && endDate.isEmpty()) {
-            txt_message.setText("Please enter at least one search criterion or a date range.");
+            txt_message.setText("Please enter search criteria or a date range.");
             recycler_search_results.setVisibility(View.GONE);
             return;
         }
         List<DatabaseHelper.HandwashLog> results = dbHelper.searchHandwashLogs(firstName, lastName, employeeId, startDate, endDate);
         if (results.isEmpty()) {
-            txt_message.setText("No handwash logs found matching the search criteria.");
+            txt_message.setText("No handwash logs found for search criteria.");
             recycler_search_results.setVisibility(View.GONE);
         } else {
-            txt_message.setText(String.format(Locale.getDefault(),"Found %d handwash log(s).", results.size()));
+            txt_message.setText(String.format(Locale.getDefault(),"Found %d matching log(s).", results.size()));
             recycler_search_results.setVisibility(View.VISIBLE);
             handwashLogAdapter = new HandwashLogAdapter(results, this);
             recycler_search_results.setAdapter(handwashLogAdapter);
@@ -428,168 +406,215 @@ public class AdminDashboardActivity extends AppCompatActivity implements Employe
     }
 
     private void logout() {
-        Toast.makeText(this, "Logging out...", Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(AdminDashboardActivity.this, MainHandwashing.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        finish();
+        new AlertDialog.Builder(this).setTitle("Logout").setMessage("Are you sure?")
+                .setPositiveButton("Logout", (dialog, which) -> {
+                    Toast.makeText(this, "Logging out...", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(this, MainHandwashing.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    finish();
+                }).setNegativeButton("Cancel", null).show();
     }
 
     private void deleteDataWithConfirmation() {
-        String startDate = edit_download_start_date.getText().toString();
-        String endDate = edit_download_end_date.getText().toString();
-        if (startDate.isEmpty() || endDate.isEmpty()) {
-            txt_message.setText("Please enter start and end dates for deletion.");
-            Toast.makeText(this, "Please enter start and end dates for deletion.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        new AlertDialog.Builder(this)
-                .setTitle("Confirm Delete")
-                .setMessage("Are you sure you want to delete handwash logs between " + startDate + " and " + endDate + "? This action cannot be undone.")
-                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                    int rowsDeleted = dbHelper.deleteHandwashLogs(startDate, endDate);
-                    txt_message.setText(String.format(Locale.getDefault(),"Deleted %d handwash log(s).", rowsDeleted));
-                    loadAdminOverviewData();
-                    if (handwashLogAdapter != null) {
-                        searchHandwashes();
+        final EditText inputStartDate = new EditText(this); inputStartDate.setHint("YYYY-MM-DD (Start)");
+        inputStartDate.setFocusable(false); inputStartDate.setClickable(true);
+        inputStartDate.setOnClickListener(v -> showDatePickerDialog(inputStartDate, "Select Deletion Start Date"));
+        final EditText inputEndDate = new EditText(this); inputEndDate.setHint("YYYY-MM-DD (End)");
+        inputEndDate.setFocusable(false); inputEndDate.setClickable(true);
+        inputEndDate.setOnClickListener(v -> showDatePickerDialog(inputEndDate, "Select Deletion End Date"));
+        LinearLayout layout = new LinearLayout(this); layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(dpToPx(20), dpToPx(10), dpToPx(20), dpToPx(10));
+        layout.addView(inputStartDate); layout.addView(inputEndDate);
+        new AlertDialog.Builder(this).setTitle("Delete Handwash Logs")
+                .setMessage("Select date range to delete. THIS CANNOT BE UNDONE.").setView(layout)
+                .setPositiveButton("DELETE", (dialog, which) -> {
+                    String startDate = inputStartDate.getText().toString().trim(); String endDate = inputEndDate.getText().toString().trim();
+                    if (startDate.isEmpty() || endDate.isEmpty()) {
+                        Toast.makeText(this, "Start and End dates are required for deletion.", Toast.LENGTH_LONG).show(); return;
                     }
-                })
-                .setNegativeButton(android.R.string.no, (dialog, which) -> {
-                    txt_message.setText("Deletion cancelled.");
-                })
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show();
+                    new AlertDialog.Builder(this).setTitle("FINAL CONFIRMATION")
+                            .setMessage("REALLY delete logs from " + startDate + " to " + endDate + "?")
+                            .setPositiveButton("Yes, Delete Them", (d, w) -> {
+                                int rowsDeleted = dbHelper.deleteHandwashLogs(startDate, endDate);
+                                txt_message.setText(String.format(Locale.getDefault(),"Deleted %d log(s).", rowsDeleted));
+                                Toast.makeText(this, "Deleted " + rowsDeleted + " log(s).", Toast.LENGTH_SHORT).show();
+                                loadAdminOverviewData();
+                                if (recycler_search_results.getVisibility() == View.VISIBLE) searchHandwashes();
+                            }).setNegativeButton("No, Cancel", null).setIcon(android.R.drawable.ic_dialog_alert).show();
+                }).setNegativeButton("Cancel", null).setIcon(android.R.drawable.ic_dialog_alert).show();
     }
 
-    private void importEmployees() {
-        String csvFileName = "employees.csv";
+    private int dpToPx(int dp) { return (int) (dp * getResources().getDisplayMetrics().density); }
+
+    private void importEmployeesFromDevice() {
+        String csvFormatInfo = "Please select a CSV file with the following columns in order:<br>" +
+                "1. <b>EmployeeNumber</b> (e.g., 101)<br>" +
+                "2. <b>FirstName</b> (e.g., John)<br>" +
+                "3. <b>LastName</b> (e.g., Doe)<br>" +
+                "4. <b>Department</b> (e.g., Kitchen) <i>(Optional, defaults to 'Imported')</i><br><br>" +
+                "No header row is expected in the CSV file.";
+        new AlertDialog.Builder(this)
+                .setTitle("CSV Import Information")
+                .setMessage(Html.fromHtml(csvFormatInfo, Html.FROM_HTML_MODE_LEGACY))
+                .setPositiveButton("Select File", (dialog, which) -> launchCsvFilePicker())
+                .setNegativeButton("Cancel", null).show();
+    }
+
+    private void launchCsvFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("text/csv");
+        try {
+            startActivityForResult(Intent.createChooser(intent, "Select a CSV file"), REQUEST_CODE_SELECT_CSV);
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void processSelectedCsv(Uri csvFileUri) {
         List<EmployeeFromCsv> employeesToImport;
         try {
-            employeesToImport = readEmployeesFromCsvAsset(csvFileName);
+            employeesToImport = readEmployeesFromCsvUri(csvFileUri);
         } catch (IOException e) {
-            txt_message.setText("Error reading employees.csv from assets: " + e.getMessage());
-            Log.e(TAG, "Error reading CSV", e);
-            return;
+            txt_message.setText("Error reading selected CSV: " + e.getMessage()); Log.e(TAG, "Error reading CSV URI", e); return;
         }
-        int importedCount = 0;
-        int errorCount = 0;
-        for (EmployeeFromCsv employee : employeesToImport) {
-            long result = dbHelper.insertEmployee(employee.employeeNumber, employee.firstName, employee.lastName, "Imported");
-            if (result > 0) {
-                importedCount++;
-            } else if (result == -1 && dbHelper.isEmployeeNumberTaken(employee.employeeNumber)) {
-                // Already exists
+        if (employeesToImport.isEmpty()) {
+            txt_message.setText("Selected CSV is empty or has no valid data."); return;
+        }
+        int newCount = 0, skippedCount = 0, errorCount = 0;
+        for (EmployeeFromCsv empData : employeesToImport) {
+            if (dbHelper.isEmployeeNumberTaken(empData.employeeNumber)) {
+                skippedCount++;
             } else {
-                errorCount++;
+                if (dbHelper.insertEmployee(empData.employeeNumber, empData.firstName, empData.lastName, empData.department) > 0) newCount++; else errorCount++;
             }
         }
-        txt_message.setText(String.format(Locale.getDefault(), "Employee Import: Processed %d. New/Updated: %d, Errors/Skipped: %d",
-                employeesToImport.size(), importedCount, errorCount));
-        Toast.makeText(this, "Employee import process completed.", Toast.LENGTH_SHORT).show();
+        txt_message.setText(String.format(Locale.getDefault(), "CSV Import: New: %d, Skipped: %d, Errors: %d", newCount, skippedCount, errorCount));
+        Toast.makeText(this, "Employee import from file finished.", Toast.LENGTH_SHORT).show();
         loadAdminOverviewData();
-        loadEmployeeList();
     }
 
-    private List<EmployeeFromCsv> readEmployeesFromCsvAsset(String csvFileName) throws IOException {
+    private List<EmployeeFromCsv> readEmployeesFromCsvUri(Uri csvFileUri) throws IOException {
         List<EmployeeFromCsv> employees = new ArrayList<>();
-        AssetManager assetManager = getAssets();
-        try (InputStream inputStream = assetManager.open(csvFileName);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+        try (InputStream inputStream = getContentResolver().openInputStream(csvFileUri);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(inputStream)))) {
             String line;
-            boolean isFirstLine = true;
             while ((line = reader.readLine()) != null) {
-                if (isFirstLine) {
-                    isFirstLine = false;
-                    continue;
-                }
+                if (line.trim().isEmpty()) continue;
                 String[] tokens = line.split(",");
                 if (tokens.length >= 3) {
-                    String employeeNumber = tokens[0].trim();
-                    String firstName = tokens[1].trim();
-                    String lastName = tokens[2].trim();
-                    employees.add(new EmployeeFromCsv(employeeNumber, firstName, lastName));
-                } else {
-                    Log.w(TAG, "Skipping malformed CSV line: " + line);
-                }
+                    String empNo = tokens[0].trim(); String fName = tokens[1].trim(); String lName = tokens[2].trim();
+                    String dept = (tokens.length >= 4) ? tokens[3].trim() : "Imported";
+                    if (!empNo.isEmpty() && !fName.isEmpty() && !lName.isEmpty()) employees.add(new EmployeeFromCsv(empNo, fName, lName, dept));
+                    else Log.w(TAG, "Skipping CSV line (URI) with missing data: " + line);
+                } else Log.w(TAG, "Skipping malformed CSV line (URI): " + line);
             }
-        }
+        } catch (NullPointerException e) { throw new IOException("Failed to open input stream from URI.", e); }
         return employees;
     }
 
-    private void changeAdminPassword() {
-        String oldPassword = edit_old_password.getText().toString();
-        String newPassword = edit_new_password.getText().toString();
-        String confirmNewPassword = edit_confirm_new_password.getText().toString();
-        if (oldPassword.isEmpty() || newPassword.isEmpty() || confirmNewPassword.isEmpty()) {
-            txt_message.setText("Please fill in all password fields.");
-            return;
-        }
-        if (newPassword.length() < 6) {
-            txt_message.setText("New password must be at least 6 characters.");
-            return;
-        }
-        if (!newPassword.equals(confirmNewPassword)) {
-            txt_message.setText("New passwords do not match.");
-            return;
-        }
-        if (dbHelper.validateAdminLogin("admin", oldPassword)) {
-            boolean updated = dbHelper.updateAdminPassword("admin", newPassword);
-            if (updated) {
-                txt_message.setText("Password changed successfully.");
-                edit_old_password.setText("");
-                edit_new_password.setText("");
-                edit_confirm_new_password.setText("");
+    private void showChangePasswordDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_change_password, null);
+        builder.setView(dialogView);
+        final TextInputEditText oldPass = dialogView.findViewById(R.id.dialog_edit_old_password);
+        final TextInputEditText newPass = dialogView.findViewById(R.id.dialog_edit_new_password);
+        final TextInputEditText confirmNewPass = dialogView.findViewById(R.id.dialog_edit_confirm_new_password);
+        builder.setTitle("Change Admin Password");
+        builder.setPositiveButton("Save", null);
+        builder.setNegativeButton("Cancel", (d, w) -> d.dismiss());
+        AlertDialog alertDialog = builder.create();
+        alertDialog.setOnShowListener(dialogInterface -> {
+            Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            positiveButton.setOnClickListener(view -> {
+                String o = Objects.requireNonNull(oldPass.getText()).toString(), n = Objects.requireNonNull(newPass.getText()).toString(), c = Objects.requireNonNull(confirmNewPass.getText()).toString();
+                if (o.isEmpty() || n.isEmpty() || c.isEmpty()) { Toast.makeText(this, "All password fields required.", Toast.LENGTH_SHORT).show(); return; }
+                if (n.length() < 6) { Toast.makeText(this, "New password too short (min 6).", Toast.LENGTH_SHORT).show(); return; }
+                if (!n.equals(c)) { Toast.makeText(this, "New passwords don't match.", Toast.LENGTH_SHORT).show(); return; }
+                if (dbHelper.validateAdminLogin("admin", o)) {
+                    if (dbHelper.updateAdminPassword("admin", n)) {
+                        Toast.makeText(this, "Password changed.", Toast.LENGTH_SHORT).show();
+                        txt_message.setText("Admin password updated.");
+                        alertDialog.dismiss();
+                    } else txt_message.setText("DB error changing password.");
+                } else Toast.makeText(this, "Old password incorrect.", Toast.LENGTH_SHORT).show();
+            });
+        });
+        alertDialog.show();
+    }
+
+    private void showAddEmployeeDialog() { // This is the "Quick Add" dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_add_employee, null);
+        builder.setView(dialogView);
+        final TextInputEditText empNo = dialogView.findViewById(R.id.dialog_edit_add_employee_number);
+        final TextInputEditText fName = dialogView.findViewById(R.id.dialog_edit_add_first_name);
+        final TextInputEditText lName = dialogView.findViewById(R.id.dialog_edit_add_last_name);
+        final TextInputEditText dept = dialogView.findViewById(R.id.dialog_edit_add_department);
+        builder.setTitle("Add New Employee (Quick Add)");
+        builder.setPositiveButton("Add", null);
+        builder.setNegativeButton("Cancel", (d,w) -> d.dismiss());
+        AlertDialog alertDialog = builder.create();
+        alertDialog.setOnShowListener(dialogInterface -> {
+            Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            positiveButton.setOnClickListener(view -> {
+                String en = Objects.requireNonNull(empNo.getText()).toString().trim(), fn=Objects.requireNonNull(fName.getText()).toString().trim(), ln=Objects.requireNonNull(lName.getText()).toString().trim();
+                String dpt = Objects.requireNonNull(dept.getText()).toString().trim().isEmpty() ? "Unassigned" : Objects.requireNonNull(dept.getText()).toString().trim();
+                if (en.isEmpty() || fn.isEmpty() || ln.isEmpty()) { Toast.makeText(this, "Emp No, First & Last Name required.", Toast.LENGTH_SHORT).show(); return; }
+                if (dbHelper.isEmployeeNumberTaken(en)) { Toast.makeText(this, "Employee number " + en + " exists.", Toast.LENGTH_SHORT).show(); return; }
+                if (dbHelper.insertEmployee(en, fn, ln, dpt) != -1) {
+                    Toast.makeText(this, "Employee " + fn + " added.", Toast.LENGTH_SHORT).show();
+                    txt_message.setText("Quick Added: " + fn + " " + ln);
+                    loadAdminOverviewData();
+                    alertDialog.dismiss();
+                } else Toast.makeText(this, "Error adding employee.", Toast.LENGTH_SHORT).show();
+            });
+        });
+        alertDialog.show();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_SELECT_CSV && resultCode == Activity.RESULT_OK) {
+            if (data != null && data.getData() != null) {
+                Uri selectedFileUri = data.getData();
+                Log.d(TAG, "CSV file selected: " + selectedFileUri.toString());
+                txt_message.setText("Processing selected CSV: " + selectedFileUri.getLastPathSegment());
+                processSelectedCsv(selectedFileUri);
             } else {
-                txt_message.setText("Error updating password.");
+                txt_message.setText("No CSV file was selected or URI is null.");
+                Toast.makeText(this, "Failed to get CSV file.", Toast.LENGTH_SHORT).show();
             }
-        } else {
-            txt_message.setText("Incorrect old password.");
         }
     }
 
-    private void addEmployee() {
-        String employeeNumber = edit_add_employee_number.getText().toString().trim();
-        String firstName = edit_add_first_name.getText().toString().trim();
-        String lastName = edit_add_last_name.getText().toString().trim();
-        String department = edit_add_department.getText().toString().trim();
-        if (employeeNumber.isEmpty() || firstName.isEmpty() || lastName.isEmpty()) {
-            txt_message.setText("Employee Number, First Name, and Last Name are required.");
-            return;
-        }
-        if (department.isEmpty()) {
-            department = "Unassigned";
-        }
-        if (dbHelper.isEmployeeNumberTaken(employeeNumber)) {
-            txt_message.setText("Employee number " + employeeNumber + " already exists. Please use a unique number.");
-            return;
-        }
-        long result = dbHelper.insertEmployee(employeeNumber, firstName, lastName, department);
-        if (result != -1) {
-            txt_message.setText("Employee added successfully: " + firstName + " " + lastName);
-            edit_add_employee_number.setText("");
-            edit_add_first_name.setText("");
-            edit_add_last_name.setText("");
-            edit_add_department.setText("");
-            loadAdminOverviewData();
-            loadEmployeeList();
-        } else {
-            txt_message.setText("Error adding employee. Ensure employee number is unique.");
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "WRITE_EXTERNAL_STORAGE permission granted for CSV download.");
+                if (pendingCsvData != null && pendingFileName != null) {
+                    proceedWithSavingCsv(pendingCsvData, pendingFileName, pendingDialogToDismiss);
+                }
+            } else {
+                Log.w(TAG, "WRITE_EXTERNAL_STORAGE permission denied for CSV download.");
+                Toast.makeText(this, "Storage permission denied. Cannot save CSV to public Downloads.", Toast.LENGTH_LONG).show();
+                txt_message.setText("Storage permission needed to save to Downloads folder.");
+            }
+            pendingCsvData = null; pendingFileName = null; pendingDialogToDismiss = null;
         }
     }
 
     private static class EmployeeFromCsv {
-        String employeeNumber;
-        String firstName;
-        String lastName;
-        public EmployeeFromCsv(String employeeNumber, String firstName, String lastName) {
-            this.employeeNumber = employeeNumber;
-            this.firstName = firstName;
-            this.lastName = lastName;
+        String employeeNumber, firstName, lastName, department;
+        public EmployeeFromCsv(String en, String fn, String ln, String d) {
+            employeeNumber=en; firstName=fn; lastName=ln; department=d;
         }
-    }
-
-    private int dpToPx(int dp) {
-        return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
     @Override

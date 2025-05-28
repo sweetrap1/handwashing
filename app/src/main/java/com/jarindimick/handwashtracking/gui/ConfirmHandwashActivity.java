@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
+import android.view.WindowManager;
 
 public class ConfirmHandwashActivity extends AppCompatActivity {
 
@@ -59,6 +60,7 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_confirm_handwash);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
         employeeNumber = getIntent().getStringExtra("employee_number");

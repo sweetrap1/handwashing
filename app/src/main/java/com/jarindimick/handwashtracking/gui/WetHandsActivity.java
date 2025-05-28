@@ -10,6 +10,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast; // Included, though not explicitly used in this version's timers
 import android.util.Log;    // Added for debugging
+import android.view.WindowManager;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -43,6 +44,7 @@ public class WetHandsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         // Ensure you are using the layout file that has the centered LinearLayout structure
         setContentView(R.layout.activity_wet_hands);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
         employeeNumber = getIntent().getStringExtra("employee_number");
