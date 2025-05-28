@@ -1,13 +1,13 @@
 package com.jarindimick.handwashtracking.gui;
 
 import android.content.Intent;
-import android.content.SharedPreferences; // NEW IMPORT
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.BitmapFactory; // NEW IMPORT
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log; // NEW IMPORT for potential logging
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,7 +16,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView; // NEW IMPORT
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -24,6 +24,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull; // Added for @NonNull in onOptionsItemSelected
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
@@ -34,7 +35,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
-import java.io.File; // NEW IMPORT
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -43,8 +44,7 @@ import java.util.Locale;
 
 public class MainHandwashing extends AppCompatActivity {
 
-    // private ImageView img_logo; // This was the old static logo, now removed from here
-    private ImageView img_custom_logo; // NEW: For the customizable logo
+    private ImageView img_custom_logo;
     private TextView txt_datetime;
     private EditText edit_employee_number;
     private Button btn_start;
@@ -72,15 +72,12 @@ public class MainHandwashing extends AppCompatActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            // Apply padding to the root of the ScrollView's child ConstraintLayout for EdgeToEdge
-            // This seems to be applying to the ConstraintLayout within the ScrollView
-            // The toolbar might need specific handling if it's not already considering insets
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
         setupgui();
-        loadCustomLogo(); // NEW: Load custom logo
+        loadCustomLogo();
         startUpdatingTime();
         setupListeners();
         dbHelper = new DatabaseHelper(this);
@@ -90,19 +87,17 @@ public class MainHandwashing extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         populateLeaderboardTable();
-        loadCustomLogo(); // NEW: Reload custom logo in onResume as well
+        loadCustomLogo();
     }
 
     private void setupgui() {
-        // img_logo = findViewById(R.id.img_logo); // Old static logo removed
-        img_custom_logo = findViewById(R.id.img_custom_logo); // Initialize new custom logo ImageView
+        img_custom_logo = findViewById(R.id.img_custom_logo);
         txt_datetime = findViewById(R.id.txt_datetime);
         edit_employee_number = findViewById(R.id.edit_employee_number);
         btn_start = findViewById(R.id.btn_start);
         table_top_handwashers = findViewById(R.id.table_top_handwashers);
     }
 
-    // NEW: Method to load and display the custom logo
     private void loadCustomLogo() {
         SharedPreferences prefs = getSharedPreferences(AdminDashboardActivity.PREFS_NAME, MODE_PRIVATE);
         String logoPath = prefs.getString(AdminDashboardActivity.KEY_CUSTOM_LOGO_PATH, null);
@@ -179,7 +174,7 @@ public class MainHandwashing extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) { // Added @NonNull
         if (item.getItemId() == R.id.menu_admin_login) {
             Intent intent = new Intent(MainHandwashing.this, AdminLoginActivity.class);
             startActivity(intent);
@@ -224,7 +219,7 @@ public class MainHandwashing extends AppCompatActivity {
             TableRow.LayoutParams emptyParams = new TableRow.LayoutParams(
                     TableRow.LayoutParams.MATCH_PARENT,
                     TableRow.LayoutParams.WRAP_CONTENT);
-            emptyParams.span = 3;
+            emptyParams.span = 3; // Make the message span all columns
             emptyRow.addView(emptyMsg, emptyParams);
             table_top_handwashers.addView(emptyRow);
         } else {
@@ -238,18 +233,20 @@ public class MainHandwashing extends AppCompatActivity {
 
                 LinearLayout nameCellLayout = new LinearLayout(this);
                 nameCellLayout.setOrientation(LinearLayout.HORIZONTAL);
-                nameCellLayout.setGravity(Gravity.CENTER_VERTICAL); // Align items vertically in center
+                nameCellLayout.setGravity(Gravity.CENTER); // This centers the icon and nameView *within* this LinearLayout
 
                 ImageView starIcon = new ImageView(this);
                 starIcon.setImageResource(R.drawable.ic_star_leaderboard);
                 LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(20), dpToPx(20));
-                iconParams.setMarginEnd(dpToPx(8));
+                iconParams.setMarginEnd(dpToPx(8)); // Add some space between icon and name
                 starIcon.setLayoutParams(iconParams);
-                // Set icon tint based on theme (optional, if your star should adapt)
-                // starIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.your_star_color_or_attribute)));
-
 
                 TextView nameView = createDataTextView(entry.employeeName, 18, Typeface.NORMAL);
+                // To center the text itself within the TextView, if the TextView has extra space:
+                // nameView.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
+                // However, since it's next to an icon, START alignment for text is often preferred.
+                // The centering of the *group* (icon + name) is handled by nameCellLayout's gravity
+                // and the TableRow.LayoutParams gravity for the cell.
                 nameView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
 
 
@@ -259,9 +256,20 @@ public class MainHandwashing extends AppCompatActivity {
                 TextView countView = createDataTextView(String.valueOf(entry.handwashCount), 18, Typeface.BOLD);
                 countView.setGravity(Gravity.CENTER);
 
-                dataRow.addView(rankView, new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f));
-                dataRow.addView(nameCellLayout, new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1.5f));
-                dataRow.addView(countView, new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f));
+                // Params for each cell
+                TableRow.LayoutParams rankCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f);
+                // rankCellParams.gravity = Gravity.CENTER; // rankView already sets its internal gravity
+
+                TableRow.LayoutParams nameCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1.5f);
+                nameCellParams.gravity = Gravity.CENTER; // THIS IS THE KEY CHANGE to center the LinearLayout in the cell
+
+                TableRow.LayoutParams countCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f);
+                // countCellParams.gravity = Gravity.CENTER; // countView already sets its internal gravity
+
+
+                dataRow.addView(rankView, rankCellParams);
+                dataRow.addView(nameCellLayout, nameCellParams); // Apply params with gravity
+                dataRow.addView(countView, countCellParams);
 
                 table_top_handwashers.addView(dataRow);
                 rank++;
@@ -293,6 +301,7 @@ public class MainHandwashing extends AppCompatActivity {
         textView.setText(text);
         textView.setTextSize(textSize);
         textView.setTypeface(null, textStyle);
+        // Let the specific addView call determine the gravity for the cell/content
         textView.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
         return textView;
     }
@@ -305,8 +314,6 @@ public class MainHandwashing extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         handler.removeCallbacks(updateTimeRunnable);
-        if (dbHelper != null) {
-            // dbHelper.close(); // SQLiteOpenHelper handles this
-        }
+        // dbHelper.close(); // SQLiteOpenHelper handles closing.
     }
 }
