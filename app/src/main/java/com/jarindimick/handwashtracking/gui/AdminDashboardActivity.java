@@ -558,10 +558,20 @@ public class AdminDashboardActivity extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("text/csv");
+        intent.setType("text/csv"); // Primary suggestion
+        String[] mimeTypes = {
+                "text/csv",
+                "text/comma-separated-values",
+                "application/csv",
+                "application/vnd.ms-excel" // Sometimes CSVs are associated with Excel MIME type
+                // You could also add "text/plain" if CSVs are often treated as plain text on the device
+        };
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
         try {
             startActivityForResult(Intent.createChooser(intent, "Select a CSV file"), REQUEST_CODE_SELECT_CSV);
         } catch (android.content.ActivityNotFoundException ex) {
             Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+            txt_message.setText("No File Manager found to select CSV.");
         }
     }
 

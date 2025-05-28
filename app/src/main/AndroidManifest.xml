@@ -52,21 +52,19 @@
         <activity
             android:name=".gui.AdminLoginActivity"
             android:exported="false"
-            android:screenOrientation="sensorPortrait"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
+            android:screenOrientation="unspecified"  android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
         <activity
             android:name=".gui.AdminDashboardActivity"
             android:exported="false"
             android:screenOrientation="unspecified"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar"/> {/* ADD THIS LINE */}
-
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
         <activity
             android:name=".gui.ManageEmployeesActivity"
             android:exported="false"
             android:label="Manage Employees"
             android:parentActivityName=".gui.AdminDashboardActivity"
             android:screenOrientation="unspecified"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar"> {/* Ensure NoActionBar theme is applied */}
+            android:theme="@style/Theme.HandwashTracking.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".gui.AdminDashboardActivity" />
