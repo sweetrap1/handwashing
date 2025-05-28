@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -9,8 +10,18 @@
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="16dp" tools:context=".gui.MainHandwashing">
+        android:padding="0dp" tools:context=".gui.MainHandwashing">
 
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/main_toolbar"
+            android:layout_width="0dp"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorSurface"
+            android:elevation="4dp"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
         <ImageView
             android:id="@+id/img_logo"
             android:layout_width="80dp"
@@ -19,24 +30,29 @@
             android:layout_marginTop="16dp"
             android:src="@drawable/colorlogo"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/main_toolbar"
             android:contentDescription="App Logo" />
 
         <TextView
             android:id="@+id/txt_datetime"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="16dp"
             android:text="Sunday, May 4, 12:22 PM"
-            android:textSize="22sp" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:textSize="22sp"
+            android:gravity="center_vertical|end"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/img_logo"
+            app:layout_constraintTop_toBottomOf="@id/main_toolbar"
+            app:layout_constraintBottom_toBottomOf="@id/img_logo"/>
 
         <TextView
             android:id="@+id/txt_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="24dp"
             android:text="Maddox Handwashing System"
             android:textSize="24sp"
             android:textStyle="bold"
@@ -48,7 +64,7 @@
             android:id="@+id/lbl_employee_number"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="24dp"
             android:text="Enter Employee Number:"
             android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
@@ -96,6 +112,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="16dp"
             app:layout_constraintVertical_bias="0.0" >
 
             <TextView
@@ -106,15 +123,14 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:textColor="?attr/colorOnPrimarySurface"
+                android:textColor="?attr/colorPrimaryVariant"
                 android:layout_marginBottom="12dp"/>
 
             <TableLayout
                 android:id="@+id/table_top_handwashers"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:stretchColumns="1">
-            </TableLayout>
+                android:stretchColumns="1"/>
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -5,21 +5,23 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.content.ContentValues;
+import android.util.Log;
 
-import com.jarindimick.handwashtracking.gui.LeaderboardEntry;
+import com.jarindimick.handwashtracking.gui.LeaderboardEntry; // Assuming this is in the gui package
 
-import java.time.LocalDate; // Import LocalDate
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale; // Import Locale
+import java.util.Locale;
 
 import org.mindrot.jbcrypt.BCrypt;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
+    private static final String TAG = "DatabaseHelper";
     private static final String DATABASE_NAME = "Handwash.db";
-    private static final int DATABASE_VERSION = 3; // Keep the database version at 3 from previous changes
+    private static final int DATABASE_VERSION = 3; // Keep version consistent, or increment if schema changes significantly
 
     // Table names
     public static final String TABLE_EMPLOYEES = "employees";
@@ -50,79 +52,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    public List<HandwashLog> searchHandwashLogs(String firstName, String lastName, String employeeNumber, String startDate, String endDate) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        List<HandwashLog> logs = new ArrayList<>();
-        String query = "SELECT * FROM " + TABLE_HANDWASH_LOG;
-        String whereClause = "";
-        List<String> whereArgs = new ArrayList<>();
-
-        // Build the WHERE clause dynamically
-        if (firstName != null && !firstName.isEmpty()) {
-            if (!whereClause.isEmpty()) whereClause += " AND ";
-            whereClause += COLUMN_EMPLOYEE_NUMBER + " IN (SELECT " + COLUMN_EMPLOYEE_NUMBER + " FROM " + TABLE_EMPLOYEES + " WHERE " + COLUMN_FIRST_NAME + " LIKE ?)";
-            whereArgs.add("%" + firstName + "%");
-        }
-        if (lastName != null && !lastName.isEmpty()) {
-            if (!whereClause.isEmpty()) whereClause += " AND ";
-            whereClause += COLUMN_EMPLOYEE_NUMBER + " IN (SELECT " + COLUMN_EMPLOYEE_NUMBER + " FROM " + TABLE_EMPLOYEES + " WHERE " + COLUMN_LAST_NAME + " LIKE ?)";
-            whereArgs.add("%" + lastName + "%");
-        }
-        if (employeeNumber != null && !employeeNumber.isEmpty()) {
-            if (!whereClause.isEmpty()) whereClause += " AND ";
-            whereClause += COLUMN_EMPLOYEE_NUMBER + " = ?";
-            whereArgs.add(employeeNumber);
-        }
-        if (startDate != null && !startDate.isEmpty() && endDate != null && !endDate.isEmpty()) {
-            if (!whereClause.isEmpty()) whereClause += " AND ";
-            whereClause += COLUMN_WASH_DATE + " BETWEEN ? AND ?";
-            whereArgs.add(startDate);
-            whereArgs.add(endDate);
-        } else if (startDate != null && !startDate.isEmpty()) {
-            if (!whereClause.isEmpty()) whereClause += " AND ";
-            whereClause += COLUMN_WASH_DATE + " >= ?";
-            whereArgs.add(startDate);
-        } else if (endDate != null && !endDate.isEmpty()) {
-            if (!whereClause.isEmpty()) whereClause += " AND ";
-            whereClause += COLUMN_WASH_DATE + " <= ?";
-            whereArgs.add(endDate);
-        }
-
-        if (!whereClause.isEmpty()) {
-            query += " WHERE " + whereClause;
-        }
-
-        Cursor cursor = db.rawQuery(query, whereArgs.toArray(new String[0]));
-
-        if (cursor.moveToFirst()) {
-            do {
-                HandwashLog log = new HandwashLog();
-                log.employeeNumber = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
-                log.washDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WASH_DATE));
-                log.washTime = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WASH_TIME));
-                log.photoPath = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PHOTO_PATH));
-                logs.add(log);
-            } while (cursor.moveToNext());
-        }
-
-        cursor.close();
-        db.close();
-        return logs;
-    }
-
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // Create Employees table
+        Log.d(TAG, "Creating database tables...");
         String CREATE_EMPLOYEES_TABLE = "CREATE TABLE " + TABLE_EMPLOYEES + "("
                 + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + COLUMN_EMPLOYEE_NUMBER + " TEXT UNIQUE,"
+                + COLUMN_EMPLOYEE_NUMBER + " TEXT UNIQUE NOT NULL,"
                 + COLUMN_FIRST_NAME + " TEXT,"
                 + COLUMN_LAST_NAME + " TEXT,"
                 + COLUMN_DEPARTMENT + " TEXT,"
-                + COLUMN_IS_ACTIVE + " INTEGER" + ")";
+                + COLUMN_IS_ACTIVE + " INTEGER DEFAULT 1" + ")";
         db.execSQL(CREATE_EMPLOYEES_TABLE);
 
-        // Create Handwash Log table
         String CREATE_HANDWASH_LOG_TABLE = "CREATE TABLE " + TABLE_HANDWASH_LOG + "("
                 + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + COLUMN_EMPLOYEE_NUMBER + " TEXT,"
@@ -131,40 +72,159 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_PHOTO_PATH + " TEXT" + ")";
         db.execSQL(CREATE_HANDWASH_LOG_TABLE);
 
-        // Create Admin Users table
         String CREATE_ADMIN_USERS_TABLE = "CREATE TABLE " + TABLE_ADMIN_USERS + "("
                 + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + COLUMN_USERNAME + " TEXT UNIQUE,"
-                + COLUMN_PASSWORD_HASH + " TEXT,"
+                + COLUMN_USERNAME + " TEXT UNIQUE NOT NULL,"
+                + COLUMN_PASSWORD_HASH + " TEXT NOT NULL,"
                 + COLUMN_ROLE + " TEXT" + ")";
         db.execSQL(CREATE_ADMIN_USERS_TABLE);
 
-        // Insert initial admin user (SECURELY with BCrypt)
-        String hashedPassword = BCrypt.hashpw("Maddox8545!", BCrypt.gensalt());
-        String INSERT_ADMIN = "INSERT INTO " + TABLE_ADMIN_USERS + "(" + COLUMN_USERNAME + ", " + COLUMN_PASSWORD_HASH + ", " + COLUMN_ROLE + ") VALUES ('admin', '" + hashedPassword + "', 'administrator')";
-        db.execSQL(INSERT_ADMIN);
+        // Insert initial admin user with new default password "admin"
+        String defaultPassword = "admin"; // CHANGED DEFAULT PASSWORD
+        String hashedPassword = BCrypt.hashpw(defaultPassword, BCrypt.gensalt());
+        ContentValues adminValues = new ContentValues();
+        adminValues.put(COLUMN_USERNAME, "admin");
+        adminValues.put(COLUMN_PASSWORD_HASH, hashedPassword);
+        adminValues.put(COLUMN_ROLE, "administrator");
+        db.insert(TABLE_ADMIN_USERS, null, adminValues);
+        Log.d(TAG, "Database tables created and initial admin user (admin/admin) inserted.");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Drop older tables if they exist
+        Log.w(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion + ", which will destroy all old data");
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_EMPLOYEES);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_HANDWASH_LOG);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_ADMIN_USERS);
-
-        // Create tables again
         onCreate(db);
     }
 
-    /**
-     * Inserts a new employee into the employees table.
-     *
-     * @param employeeNumber The employee's number.
-     * @param firstName      The employee's first name.
-     * @param lastName       The employee's last name.
-     * @param department     The employee's department.
-     * @return The row ID of the newly inserted row, or -1 if an error occurred.
-     */
+    // --- Overview Methods START ---
+    public int getTotalHandwashesToday() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        int count = 0;
+        LocalDate currentDate = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.getDefault());
+        String today = currentDate.format(formatter);
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_HANDWASH_LOG +
+                    " WHERE " + COLUMN_WASH_DATE + " = ?", new String[]{today});
+            if (cursor.moveToFirst()) {
+                count = cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting total handwashes today: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
+        }
+        return count;
+    }
+
+    public int getTotalActiveEmployeesCount() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        int count = 0;
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_EMPLOYEES +
+                    " WHERE " + COLUMN_IS_ACTIVE + " = 1", null);
+            if (cursor.moveToFirst()) {
+                count = cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting total active employees: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
+        }
+        return count;
+    }
+    // --- Overview Methods END ---
+
+    // --- Employee Number Check Method START ---
+    public boolean isEmployeeNumberTaken(String employeeNumber) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        boolean isTaken = false;
+        try {
+            cursor = db.query(TABLE_EMPLOYEES, new String[]{COLUMN_ID},
+                    COLUMN_EMPLOYEE_NUMBER + " = ?",
+                    new String[]{employeeNumber}, null, null, null);
+            isTaken = (cursor.getCount() > 0);
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking if employee number is taken: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
+        }
+        return isTaken;
+    }
+    // --- Employee Number Check Method END ---
+
+
+    public List<HandwashLog> searchHandwashLogs(String firstName, String lastName, String employeeNumber, String startDate, String endDate) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<HandwashLog> logs = new ArrayList<>();
+        StringBuilder queryBuilder = new StringBuilder("SELECT hl.*, e." + COLUMN_FIRST_NAME + ", e." + COLUMN_LAST_NAME +
+                " FROM " + TABLE_HANDWASH_LOG + " hl " +
+                " LEFT JOIN " + TABLE_EMPLOYEES + " e ON hl." + COLUMN_EMPLOYEE_NUMBER + " = e." + COLUMN_EMPLOYEE_NUMBER);
+        List<String> whereArgs = new ArrayList<>();
+        boolean hasWhere = false;
+
+        if (firstName != null && !firstName.isEmpty()) {
+            queryBuilder.append(hasWhere ? " AND " : " WHERE ").append("e." + COLUMN_FIRST_NAME + " LIKE ?");
+            whereArgs.add("%" + firstName + "%");
+            hasWhere = true;
+        }
+        if (lastName != null && !lastName.isEmpty()) {
+            queryBuilder.append(hasWhere ? " AND " : " WHERE ").append("e." + COLUMN_LAST_NAME + " LIKE ?");
+            whereArgs.add("%" + lastName + "%");
+            hasWhere = true;
+        }
+        if (employeeNumber != null && !employeeNumber.isEmpty()) {
+            queryBuilder.append(hasWhere ? " AND " : " WHERE ").append("hl." + COLUMN_EMPLOYEE_NUMBER + " = ?");
+            whereArgs.add(employeeNumber);
+            hasWhere = true;
+        }
+        if (startDate != null && !startDate.isEmpty()) {
+            queryBuilder.append(hasWhere ? " AND " : " WHERE ").append("hl." + COLUMN_WASH_DATE + " >= ?");
+            whereArgs.add(startDate);
+            hasWhere = true;
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            queryBuilder.append(hasWhere ? " AND " : " WHERE ").append("hl." + COLUMN_WASH_DATE + " <= ?");
+            whereArgs.add(endDate);
+        }
+        queryBuilder.append(" ORDER BY hl." + COLUMN_WASH_DATE + " DESC, hl." + COLUMN_WASH_TIME + " DESC");
+
+        Cursor cursor = null;
+        try {
+            Log.d(TAG, "SearchHandwashLogs Query: " + queryBuilder.toString());
+            cursor = db.rawQuery(queryBuilder.toString(), whereArgs.toArray(new String[0]));
+
+            if (cursor.moveToFirst()) {
+                do {
+                    HandwashLog log = new HandwashLog();
+                    log.employeeNumber = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
+                    log.washDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WASH_DATE));
+                    log.washTime = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WASH_TIME));
+                    log.photoPath = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PHOTO_PATH));
+                    log.firstName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIRST_NAME));
+                    log.lastName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_LAST_NAME));
+                    logs.add(log);
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error searching handwash logs: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
+        }
+        return logs;
+    }
+
+
     public long insertEmployee(String employeeNumber, String firstName, String lastName, String department) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -172,144 +232,148 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_FIRST_NAME, firstName);
         values.put(COLUMN_LAST_NAME, lastName);
         values.put(COLUMN_DEPARTMENT, department);
-        values.put(COLUMN_IS_ACTIVE, 1);    // Default active
+        values.put(COLUMN_IS_ACTIVE, 1);
 
-        // First, check if the employee number already exists
-        Cursor cursor = db.query(TABLE_EMPLOYEES, new String[]{COLUMN_ID}, COLUMN_EMPLOYEE_NUMBER + "=?", new String[]{employeeNumber}, null, null, null);
-        long id;
-        if (cursor.getCount() > 0) {
-            // Employee exists, so update
-            id = db.update(TABLE_EMPLOYEES, values, COLUMN_EMPLOYEE_NUMBER + "=?", new String[]{employeeNumber});
-            if (id == 0) {
-                id = -1; // Indicate error during update
+        long id = -1;
+        try {
+            id = db.insertWithOnConflict(TABLE_EMPLOYEES, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+            if (id == -1) {
+                Log.w(TAG, "Insert ignored for employee number (likely exists): " + employeeNumber);
+                Cursor existingCursor = null;
+                try {
+                    existingCursor = db.query(TABLE_EMPLOYEES, new String[]{COLUMN_ID}, COLUMN_EMPLOYEE_NUMBER + "=?", new String[]{employeeNumber}, null, null, null);
+                    if(existingCursor.moveToFirst()){
+                        id = existingCursor.getLong(existingCursor.getColumnIndexOrThrow(COLUMN_ID));
+                    }
+                } finally {
+                    if (existingCursor != null) existingCursor.close();
+                }
             }
-        } else {
-            // Employee doesn't exist, so insert
-            id = db.insert(TABLE_EMPLOYEES, null, values);
+        } catch (Exception e) {
+            Log.e(TAG, "Error inserting employee: " + e.getMessage());
+        } finally {
+            db.close();
         }
-        cursor.close();
-        db.close();
         return id;
     }
 
-    /**
-     * Overloaded method to insert a new employee with only the employee number.
-     * First name, last name, and department are set to empty strings.
-     *
-     * @param employeeNumber The employee's number.
-     * @return The row ID of the newly inserted row, or -1 if an error occurred.
-     */
-    public long insertEmployee(String employeeNumber) {
-        return insertEmployee(employeeNumber, "", "", "");
-    }
 
-    /**
-     * Retrieves handwash logs based on the specified date range and download type.
-     *
-     * @param startDate    The start date for the log range (YYYY-MM-DD).
-     * @param endDate      The end date for the log range (YYYY-MM-DD).
-     * @param downloadType The type of download ("summary" or "detailed").
-     * @return A List of HandwashLog objects containing the retrieved data.
-     */
     public List<HandwashLog> getHandwashLogs(String startDate, String endDate, String downloadType) {
         SQLiteDatabase db = this.getReadableDatabase();
         List<HandwashLog> logs = new ArrayList<>();
         String query;
+        ArrayList<String> selectionArgs = new ArrayList<>();
 
         if (downloadType.equals("summary")) {
-            // Summary: Employee number and total handwash count
-            query = "SELECT " + COLUMN_EMPLOYEE_NUMBER + ", COUNT(*) as total_washes " +
-                    "FROM " + TABLE_HANDWASH_LOG +
-                    " WHERE " + COLUMN_WASH_DATE + " BETWEEN ? AND ? " +
-                    "GROUP BY " + COLUMN_EMPLOYEE_NUMBER;
-        } else {
-            // Detailed: All columns from handwash_log
-            query = "SELECT * FROM " + TABLE_HANDWASH_LOG +
-                    " WHERE " + COLUMN_WASH_DATE + " BETWEEN ? AND ?";
+            query = "SELECT hl." + COLUMN_EMPLOYEE_NUMBER + ", e." + COLUMN_FIRST_NAME + ", e." + COLUMN_LAST_NAME +
+                    ", COUNT(hl." + COLUMN_EMPLOYEE_NUMBER + ") as total_washes " +
+                    "FROM " + TABLE_HANDWASH_LOG + " hl " +
+                    "LEFT JOIN " + TABLE_EMPLOYEES + " e ON hl." + COLUMN_EMPLOYEE_NUMBER + " = e." + COLUMN_EMPLOYEE_NUMBER;
+            if (startDate != null && !startDate.isEmpty() && endDate != null && !endDate.isEmpty()) {
+                query += " WHERE hl." + COLUMN_WASH_DATE + " BETWEEN ? AND ?";
+                selectionArgs.add(startDate);
+                selectionArgs.add(endDate);
+            } else if (startDate != null && !startDate.isEmpty()) {
+                query += " WHERE hl." + COLUMN_WASH_DATE + " >= ?";
+                selectionArgs.add(startDate);
+            } else if (endDate != null && !endDate.isEmpty()) {
+                query += " WHERE hl." + COLUMN_WASH_DATE + " <= ?";
+                selectionArgs.add(endDate);
+            }
+            query += " GROUP BY hl." + COLUMN_EMPLOYEE_NUMBER + ", e." + COLUMN_FIRST_NAME + ", e." + COLUMN_LAST_NAME +
+                    " ORDER BY total_washes DESC";
+        } else { // detailed
+            query = "SELECT hl.*, e." + COLUMN_FIRST_NAME + ", e." + COLUMN_LAST_NAME +
+                    " FROM " + TABLE_HANDWASH_LOG + " hl " +
+                    "LEFT JOIN " + TABLE_EMPLOYEES + " e ON hl." + COLUMN_EMPLOYEE_NUMBER + " = e." + COLUMN_EMPLOYEE_NUMBER;
+            if (startDate != null && !startDate.isEmpty() && endDate != null && !endDate.isEmpty()) {
+                query += " WHERE hl." + COLUMN_WASH_DATE + " BETWEEN ? AND ?";
+                selectionArgs.add(startDate);
+                selectionArgs.add(endDate);
+            } else if (startDate != null && !startDate.isEmpty()) {
+                query += " WHERE hl." + COLUMN_WASH_DATE + " >= ?";
+                selectionArgs.add(startDate);
+            } else if (endDate != null && !endDate.isEmpty()) {
+                query += " WHERE hl." + COLUMN_WASH_DATE + " <= ?";
+                selectionArgs.add(endDate);
+            }
+            query += " ORDER BY hl." + COLUMN_WASH_DATE + " DESC, hl." + COLUMN_WASH_TIME + " DESC";
         }
-
-        Cursor cursor = db.rawQuery(query, new String[]{startDate, endDate});
-
-        if (cursor.moveToFirst()) {
-            do {
-                HandwashLog log = new HandwashLog();
-                log.employeeNumber = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
-                if (downloadType.equals("summary")) {
-                    log.washCount = cursor.getInt(cursor.getColumnIndexOrThrow("total_washes"));
-                } else {
-                    log.washDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WASH_DATE));
-                    log.washTime = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WASH_TIME));
-                    log.photoPath = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PHOTO_PATH));
-                }
-                logs.add(log);
-            } while (cursor.moveToNext());
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(query, selectionArgs.toArray(new String[0]));
+            if (cursor.moveToFirst()) {
+                do {
+                    HandwashLog log = new HandwashLog();
+                    log.employeeNumber = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
+                    if (downloadType.equals("summary")) {
+                        log.washCount = cursor.getInt(cursor.getColumnIndexOrThrow("total_washes"));
+                        log.firstName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIRST_NAME));
+                        log.lastName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_LAST_NAME));
+                    } else {
+                        log.washDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WASH_DATE));
+                        log.washTime = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WASH_TIME));
+                        log.photoPath = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PHOTO_PATH));
+                        log.firstName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIRST_NAME));
+                        log.lastName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_LAST_NAME));
+                    }
+                    logs.add(log);
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting handwash logs for download: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
         }
-
-        cursor.close();
-        db.close();
         return logs;
     }
 
-    /**
-     * Helper class to represent HandwashLog data.
-     */
     public static class HandwashLog {
         public String employeeNumber;
         public String washDate;
         public String washTime;
         public String photoPath;
-        public int washCount; // For summary data
+        public int washCount;
+        public String firstName;
+        public String lastName;
     }
 
-    /**
-     * Retrieves the top 5 employees with the most handwashes for the current day.
-     *
-     * @return A List of LeaderboardEntry objects representing the top handwashers.
-     */
+
     public List<LeaderboardEntry> getTopHandwashers() {
         SQLiteDatabase db = this.getReadableDatabase();
         List<LeaderboardEntry> leaderboard = new ArrayList<>();
-
-        // Get the current date in yyyy-MM-DD format
         LocalDate currentDate = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.getDefault());
         String today = currentDate.format(formatter);
-
-        // SQL to get the top 5 employees by handwash count for the current day
-        String query = "SELECT " + TABLE_EMPLOYEES + "." + COLUMN_EMPLOYEE_NUMBER + ", "
-                + COLUMN_FIRST_NAME + ", " // Retrieving first name
-                + "COUNT(" + TABLE_HANDWASH_LOG + "." + COLUMN_EMPLOYEE_NUMBER + ") AS handwash_count "
-                + "FROM " + TABLE_EMPLOYEES + " INNER JOIN " + TABLE_HANDWASH_LOG
-                + " ON " + TABLE_EMPLOYEES + "." + COLUMN_EMPLOYEE_NUMBER + " = " + TABLE_HANDWASH_LOG + "." + COLUMN_EMPLOYEE_NUMBER
-                + " WHERE " + TABLE_HANDWASH_LOG + "." + COLUMN_WASH_DATE + " = '" + today + "' "
-                + " GROUP BY " + TABLE_EMPLOYEES + "." + COLUMN_EMPLOYEE_NUMBER + ", " + COLUMN_FIRST_NAME
-                + " ORDER BY handwash_count DESC LIMIT 5";
-
-        Cursor cursor = db.rawQuery(query, null);
-
-        if (cursor.moveToFirst()) {
-            do {
-                String employeeNumber = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
-                String firstName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIRST_NAME)); // Get first name
-                int handwashCount = cursor.getInt(cursor.getColumnIndexOrThrow("handwash_count"));
-                leaderboard.add(new LeaderboardEntry(employeeNumber, firstName, handwashCount)); // Pass first name
-            } while (cursor.moveToNext());
+        Cursor cursor = null;
+        try {
+            String query = "SELECT e." + COLUMN_EMPLOYEE_NUMBER + ", e." + COLUMN_FIRST_NAME + ", " +
+                    "COUNT(hl." + COLUMN_ID + ") AS handwash_count " +
+                    "FROM " + TABLE_EMPLOYEES + " e JOIN " + TABLE_HANDWASH_LOG + " hl " +
+                    "ON e." + COLUMN_EMPLOYEE_NUMBER + " = hl." + COLUMN_EMPLOYEE_NUMBER +
+                    " WHERE hl." + COLUMN_WASH_DATE + " = ? AND e." + COLUMN_IS_ACTIVE + " = 1" +
+                    " GROUP BY e." + COLUMN_EMPLOYEE_NUMBER + ", e." + COLUMN_FIRST_NAME +
+                    " ORDER BY handwash_count DESC LIMIT 5";
+            cursor = db.rawQuery(query, new String[]{today});
+            if (cursor.moveToFirst()) {
+                do {
+                    String empNumber = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
+                    String firstName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIRST_NAME));
+                    int count = cursor.getInt(cursor.getColumnIndexOrThrow("handwash_count"));
+                    leaderboard.add(new LeaderboardEntry(empNumber, firstName, count));
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting top handwashers: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
         }
-
-        cursor.close();
-        db.close();
         return leaderboard;
     }
 
-    /**
-     * Inserts a new handwash log entry.
-     *
-     * @param employeeNumber The employee's number.
-     * @param washDate       The date of the handwash (YYYY-MM-DD).
-     * @param washTime       The time of the handwash (HH:MM:SS).
-     * @param photoPath      The path to the photo (if any).
-     * @return The row ID of the newly inserted row, or -1 if an error occurred.
-     */
+
     public long insertHandwashLog(String employeeNumber, String washDate, String washTime, String photoPath) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -317,108 +381,108 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_WASH_DATE, washDate);
         values.put(COLUMN_WASH_TIME, washTime);
         values.put(COLUMN_PHOTO_PATH, photoPath);
-
-        long id = db.insert(TABLE_HANDWASH_LOG, null, values);
-        db.close();
+        long id = -1;
+        try {
+            id = db.insertOrThrow(TABLE_HANDWASH_LOG, null, values);
+        } catch (Exception e){
+            Log.e(TAG, "Error inserting handwash log: " + e.getMessage());
+        } finally {
+            db.close();
+        }
         return id;
     }
 
-    /**
-     * Updates the admin password in the admin_users table.
-     *
-     * @param username    The admin's username.
-     * @param newPassword The new password (will be hashed).
-     * @return True if the update was successful, false otherwise.
-     */
     public boolean updateAdminPassword(String username, String newPassword) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
         values.put(COLUMN_PASSWORD_HASH, hashedPassword);
-        int rowsAffected = db.update(TABLE_ADMIN_USERS, values, COLUMN_USERNAME + " = ?", new String[]{username});
-        db.close();
+        int rowsAffected = 0;
+        try {
+            rowsAffected = db.update(TABLE_ADMIN_USERS, values, COLUMN_USERNAME + " = ?", new String[]{username});
+        } catch (Exception e){
+            Log.e(TAG, "Error updating admin password: " + e.getMessage());
+        } finally {
+            db.close();
+        }
         return rowsAffected > 0;
     }
 
-    /**
-     * Validates the admin login credentials.
-     *
-     * @param username The admin's username.
-     * @param password The admin's password.
-     * @return True if the credentials are valid, false otherwise.
-     */
     public boolean validateAdminLogin(String username, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT " + COLUMN_PASSWORD_HASH + " FROM " + TABLE_ADMIN_USERS +
-                " WHERE " + COLUMN_USERNAME + " = ?";
-        Cursor cursor = db.rawQuery(query, new String[]{username});
-        if (cursor.moveToFirst()) {
-            String storedHash = cursor.getString(0);
-            cursor.close();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(TABLE_ADMIN_USERS, new String[]{COLUMN_PASSWORD_HASH},
+                    COLUMN_USERNAME + " = ?", new String[]{username}, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                String storedHash = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PASSWORD_HASH));
+                return BCrypt.checkpw(password, storedHash);
+            }
+        } catch (Exception e){
+            Log.e(TAG, "Error validating admin login: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
             db.close();
-            return BCrypt.checkpw(password, storedHash);
         }
-        cursor.close();
-        db.close();
         return false;
     }
 
-    /**
-     * Deletes handwash logs within the specified date range.
-     *
-     * @param startDate The start date (YYYY-MM-DD).
-     * @param endDate   The end date (YYYY-MM-DD).
-     * @return The number of rows deleted.
-     */
     public int deleteHandwashLogs(String startDate, String endDate) {
         SQLiteDatabase db = this.getWritableDatabase();
         String whereClause = COLUMN_WASH_DATE + " BETWEEN ? AND ?";
         String[] whereArgs = new String[]{startDate, endDate};
-
-        int rowsDeleted = db.delete(TABLE_HANDWASH_LOG, whereClause, whereArgs);
-        db.close();
-        return rowsDeleted;
+        int rowsAffected = 0;
+        try {
+            rowsAffected = db.delete(TABLE_HANDWASH_LOG, whereClause, whereArgs);
+        } catch (Exception e) {
+            Log.e(TAG, "Error deleting handwash logs: " + e.getMessage());
+        } finally {
+            db.close();
+        }
+        return rowsAffected;
     }
 
-    /**
-     * Checks if an employee with the given employee number exists in the database.
-     * @param employeeNumber The employee number to check.
-     * @return True if the employee exists, false otherwise.
-     */
     public boolean doesEmployeeExist(String employeeNumber) {
         SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT " + COLUMN_ID + " FROM " + TABLE_EMPLOYEES +
-                " WHERE " + COLUMN_EMPLOYEE_NUMBER + " = ?";
-        Cursor cursor = db.rawQuery(query, new String[]{employeeNumber});
-        boolean exists = (cursor.getCount() > 0);
-        cursor.close();
-        db.close();
+        Cursor cursor = null;
+        boolean exists = false;
+        try {
+            cursor = db.query(TABLE_EMPLOYEES, new String[]{COLUMN_ID},
+                    COLUMN_EMPLOYEE_NUMBER + " = ? AND " + COLUMN_IS_ACTIVE + " = 1",
+                    new String[]{employeeNumber}, null, null, null);
+            if (cursor != null) {
+                exists = (cursor.getCount() > 0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking if employee exists: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
+        }
         return exists;
     }
 
-    /**
-     * Retrieves the number of handwashes for a specific employee for the current day.
-     * @param employeeNumber The employee number.
-     * @return The count of handwashes for the employee today.
-     */
     public int getHandwashCountForEmployeeToday(String employeeNumber) {
         SQLiteDatabase db = this.getReadableDatabase();
         int count = 0;
-
         LocalDate currentDate = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.getDefault());
         String today = currentDate.format(formatter);
-
-        String query = "SELECT COUNT(*) FROM " + TABLE_HANDWASH_LOG +
-                " WHERE " + COLUMN_EMPLOYEE_NUMBER + " = ? AND " +
-                COLUMN_WASH_DATE + " = ?";
-        Cursor cursor = db.rawQuery(query, new String[]{employeeNumber, today});
-
-        if (cursor.moveToFirst()) {
-            count = cursor.getInt(0);
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_HANDWASH_LOG +
+                            " WHERE " + COLUMN_EMPLOYEE_NUMBER + " = ? AND " +
+                            COLUMN_WASH_DATE + " = ?",
+                    new String[]{employeeNumber, today});
+            if (cursor != null && cursor.moveToFirst()) {
+                count = cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting handwash count for employee today: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
         }
-        cursor.close();
-        db.close();
         return count;
     }
 }

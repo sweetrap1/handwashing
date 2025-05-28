@@ -2,15 +2,18 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_scrollview_admin_dashboard"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:padding="0dp"
+    tools:context=".gui.AdminDashboardActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
-        tools:context=".gui.AdminDashboardActivity">
+        android:padding="16dp">
 
         <TextView
             android:id="@+id/lbl_admin_dashboard_title"
@@ -19,9 +22,56 @@
             android:text="Admin Dashboard"
             android:textSize="24sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:gravity="center_horizontal" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/layout_admin_overview"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/overview_section_background"
+            app:layout_constraintTop_toBottomOf="@id/lbl_admin_dashboard_title"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Today's Overview"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"
+                android:textColor="?attr/colorPrimary"
+                android:layout_gravity="center_horizontal"/>
+
+            <TextView
+                android:id="@+id/txt_overview_total_washes_today"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Total Handwashes Today: N/A"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/txt_overview_active_employees"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Active Employees: N/A"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/txt_overview_top_washer_today"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Top Washer Today: N/A"
+                android:textSize="16sp"/>
+        </LinearLayout>
 
         <Button
             android:id="@+id/btn_logout"
@@ -30,11 +80,11 @@
             android:layout_marginTop="16dp"
             android:layout_marginEnd="8dp"
             android:text="Logout"
+            app:layout_constraintTop_toBottomOf="@id/layout_admin_overview"
             app:layout_constraintEnd_toStartOf="@+id/btn_delete_data"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintHorizontal_chainStyle="spread"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/lbl_admin_dashboard_title" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <Button
             android:id="@+id/btn_delete_data"
@@ -43,10 +93,10 @@
             android:layout_marginTop="16dp"
             android:layout_marginEnd="8dp"
             android:text="Delete Data"
+            app:layout_constraintTop_toBottomOf="@id/layout_admin_overview"
             app:layout_constraintEnd_toStartOf="@+id/btn_import_employees"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/btn_logout"
-            app:layout_constraintTop_toBottomOf="@id/lbl_admin_dashboard_title" />
+            app:layout_constraintStart_toEndOf="@+id/btn_logout" />
 
         <Button
             android:id="@+id/btn_import_employees"
@@ -54,10 +104,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Import Employees"
+            app:layout_constraintTop_toBottomOf="@id/layout_admin_overview"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/btn_delete_data"
-            app:layout_constraintTop_toBottomOf="@id/lbl_admin_dashboard_title" />
+            app:layout_constraintStart_toEndOf="@+id/btn_delete_data" />
 
         <View
             android:id="@+id/divider3"
@@ -65,9 +115,9 @@
             android:layout_height="1dp"
             android:layout_marginTop="16dp"
             android:background="@android:color/darker_gray"
+            app:layout_constraintTop_toBottomOf="@id/btn_import_employees"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btn_import_employees" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/lbl_download_data_title"
@@ -77,9 +127,9 @@
             android:text="Download Data"
             android:textSize="24sp"
             android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/divider3"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/divider3" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <EditText
             android:id="@+id/edit_download_start_date"
@@ -91,11 +141,11 @@
             android:focusable="false"
             android:hint="Start Date (YYYY-MM-DD)"
             android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@id/lbl_download_data_title"
             app:layout_constraintEnd_toStartOf="@+id/edit_download_end_date"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintHorizontal_chainStyle="spread"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/lbl_download_data_title" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <EditText
             android:id="@+id/edit_download_end_date"
@@ -106,10 +156,10 @@
             android:focusable="false"
             android:hint="End Date (YYYY-MM-DD)"
             android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@id/lbl_download_data_title"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/edit_download_start_date"
-            app:layout_constraintTop_toBottomOf="@id/lbl_download_data_title" />
+            app:layout_constraintStart_toEndOf="@+id/edit_download_start_date" />
 
         <TextView
             android:id="@+id/lbl_download_type"
@@ -117,8 +167,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="Download Type:"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_download_start_date" />
+            app:layout_constraintTop_toBottomOf="@id/edit_download_start_date"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <RadioGroup
             android:id="@+id/radio_download_type"
@@ -126,9 +176,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:orientation="horizontal"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/lbl_download_type"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/lbl_download_type">
+            app:layout_constraintEnd_toEndOf="parent">
 
             <RadioButton
                 android:id="@+id/radio_summary"
@@ -150,9 +200,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Download Data"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/radio_download_type"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/radio_download_type" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <View
             android:id="@+id/divider1"
@@ -160,9 +210,9 @@
             android:layout_height="1dp"
             android:layout_marginTop="16dp"
             android:background="@android:color/darker_gray"
+            app:layout_constraintTop_toBottomOf="@id/btn_download_data"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btn_download_data" />
+            app:layout_constraintStart_toStartOf="parent" />
 
 
         <TextView
@@ -173,9 +223,9 @@
             android:text="Search Handwashes"
             android:textSize="24sp"
             android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/divider1"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/divider1" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <EditText
             android:id="@+id/edit_search_first_name"
@@ -185,9 +235,9 @@
             android:hint="First Name"
             android:inputType="textPersonName"
             android:minHeight="48dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/lbl_search_handwashes_title"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/lbl_search_handwashes_title" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <EditText
             android:id="@+id/edit_search_last_name"
@@ -197,9 +247,9 @@
             android:hint="Last Name"
             android:inputType="textPersonName"
             android:minHeight="48dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_search_first_name"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_search_first_name" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <EditText
             android:id="@+id/edit_search_employee_id"
@@ -209,9 +259,9 @@
             android:hint="Employee ID"
             android:inputType="number"
             android:minHeight="48dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_search_last_name"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_search_last_name" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <EditText
             android:id="@+id/edit_search_start_date"
@@ -223,11 +273,11 @@
             android:focusable="false"
             android:hint="Start Date (YYYY-MM-DD)"
             android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@id/edit_search_employee_id"
             app:layout_constraintEnd_toStartOf="@+id/edit_search_end_date"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintHorizontal_chainStyle="spread"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_search_employee_id" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <EditText
             android:id="@+id/edit_search_end_date"
@@ -238,10 +288,10 @@
             android:focusable="false"
             android:hint="End Date (YYYY-MM-DD)"
             android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@id/edit_search_employee_id"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/edit_search_start_date"
-            app:layout_constraintTop_toBottomOf="@id/edit_search_employee_id" />
+            app:layout_constraintStart_toEndOf="@+id/edit_search_start_date" />
 
         <Button
             android:id="@+id/btn_search_handwashes"
@@ -249,9 +299,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Search Handwashes"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_search_end_date"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_search_end_date" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <View
             android:id="@+id/divider2"
@@ -259,10 +309,9 @@
             android:layout_height="1dp"
             android:layout_marginTop="16dp"
             android:background="@android:color/darker_gray"
+            app:layout_constraintTop_toBottomOf="@id/btn_search_handwashes"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btn_search_handwashes" />
-
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/lbl_message_area_title"
@@ -272,9 +321,9 @@
             android:text="Messages / Results"
             android:textSize="24sp"
             android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/divider2"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/divider2" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/txt_message"
@@ -282,9 +331,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="Status messages will appear here."
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/lbl_message_area_title"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/lbl_message_area_title" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_search_results"
@@ -292,11 +341,10 @@
             android:layout_height="wrap_content"
             android:minHeight="150dp"
             android:layout_marginTop="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/txt_message"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             android:visibility="gone" />
-
 
         <View
             android:id="@+id/divider_password"
@@ -304,9 +352,9 @@
             android:layout_height="1dp"
             android:layout_marginTop="16dp"
             android:background="@android:color/darker_gray"
+            app:layout_constraintTop_toBottomOf="@id/recycler_search_results"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/recycler_search_results" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/lbl_change_password_title"
@@ -316,9 +364,9 @@
             android:text="Change Admin Password"
             android:textSize="24sp"
             android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/divider_password"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/divider_password" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <EditText
             android:id="@+id/edit_old_password"
@@ -328,9 +376,9 @@
             android:hint="Old Password"
             android:inputType="textPassword"
             android:minHeight="48dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/lbl_change_password_title"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/lbl_change_password_title" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <EditText
             android:id="@+id/edit_new_password"
@@ -340,9 +388,9 @@
             android:hint="New Password"
             android:inputType="textPassword"
             android:minHeight="48dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_old_password"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_old_password" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <EditText
             android:id="@+id/edit_confirm_new_password"
@@ -352,9 +400,9 @@
             android:hint="Confirm New Password"
             android:inputType="textPassword"
             android:minHeight="48dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_new_password"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_new_password" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <Button
             android:id="@+id/btn_change_password"
@@ -362,9 +410,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Change Password"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_confirm_new_password"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_confirm_new_password" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <View
             android:id="@+id/divider_add_employee"
@@ -372,9 +420,9 @@
             android:layout_height="1dp"
             android:layout_marginTop="16dp"
             android:background="@android:color/darker_gray"
+            app:layout_constraintTop_toBottomOf="@id/btn_change_password"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btn_change_password" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/lbl_add_employee_title"
@@ -384,9 +432,9 @@
             android:text="Add New Employee"
             android:textSize="24sp"
             android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/divider_add_employee"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/divider_add_employee" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <EditText
             android:id="@+id/edit_add_employee_number"
@@ -396,9 +444,9 @@
             android:hint="Employee Number"
             android:inputType="number"
             android:minHeight="48dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/lbl_add_employee_title"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/lbl_add_employee_title" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <EditText
             android:id="@+id/edit_add_first_name"
@@ -408,9 +456,9 @@
             android:hint="First Name"
             android:inputType="textPersonName"
             android:minHeight="48dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_add_employee_number"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_add_employee_number" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <EditText
             android:id="@+id/edit_add_last_name"
@@ -420,9 +468,9 @@
             android:hint="Last Name"
             android:inputType="textPersonName"
             android:minHeight="48dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_add_first_name"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_add_first_name" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <EditText
             android:id="@+id/edit_add_department"
@@ -432,10 +480,9 @@
             android:hint="Department"
             android:inputType="textCapWords"
             android:minHeight="48dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_add_last_name"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_add_last_name" />
-
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <Button
             android:id="@+id/btn_add_employee"
@@ -443,10 +490,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Add Employee"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_add_department"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_add_department" />
-
-
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="16dp"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

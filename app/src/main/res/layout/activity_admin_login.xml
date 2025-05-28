@@ -2,15 +2,28 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_scrollview_admin_login"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#2C2B2B"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="?android:attr/colorBackground" android:padding="0dp"
+    tools:context=".gui.AdminLoginActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
+        android:id="@+id/main" android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:context=".gui.AdminLoginActivity">
+        android:padding="16dp"> <!--
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/admin_login_toolbar"
+            android:layout_width="0dp"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorSurface"
+            app:title="Admin Login"
+            app:titleTextColor="?attr/colorOnSurface"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+        -->
 
         <TextView
             android:id="@+id/txt_admin_login_title"
@@ -18,39 +31,43 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
             android:text="Admin Login"
-            android:textColor="?attr/colorOnBackground"
-            android:textSize="24sp"
+            android:textColor="?android:attr/textColorPrimary" android:textSize="24sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="HardcodedText" />
         <TextView
             android:id="@+id/lbl_username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
             android:text="Username:"
-            android:textColor="?attr/colorOnBackground"
-            android:textSize="16sp"
+            android:textColor="?android:attr/textColorSecondary" android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/txt_admin_login_title" />
+            app:layout_constraintTop_toBottomOf="@id/txt_admin_login_title"
+            tools:ignore="HardcodedText" />
 
         <EditText
             android:id="@+id/edit_username"
-            android:layout_width="200dp"
-            android:layout_height="48dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:background="@drawable/edit_text_border"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
             android:hint="Username"
             android:inputType="textPersonName"
-            android:padding="8dp"
-            android:textColor="?attr/colorOnBackground"
-            android:textColorHint="?attr/colorOnBackground"
+            android:minHeight="48dp"
+            android:padding="12dp"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textColorHint="?android:attr/textColorHint"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/lbl_username" />
+            app:layout_constraintTop_toBottomOf="@id/lbl_username"
+            android:autofillHints="username"
+            tools:ignore="HardcodedText" />
 
         <TextView
             android:id="@+id/lbl_password"
@@ -58,49 +75,56 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Password:"
-            android:textColor="?attr/colorOnBackground"
-            android:textSize="16sp"
+            android:textColor="?android:attr/textColorSecondary" android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_username" />
+            app:layout_constraintTop_toBottomOf="@id/edit_username"
+            tools:ignore="HardcodedText" />
 
         <EditText
             android:id="@+id/edit_password"
-            android:layout_width="200dp"
-            android:layout_height="48dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:background="@drawable/edit_text_border"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
             android:hint="Password"
             android:inputType="textPassword"
-            android:padding="8dp"
-            android:textColor="?attr/colorOnBackground"
-            android:textColorHint="?attr/colorOnBackground"
+            android:minHeight="48dp"
+            android:padding="12dp"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textColorHint="?android:attr/textColorHint"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/lbl_password" />
+            app:layout_constraintTop_toBottomOf="@id/lbl_password"
+            android:autofillHints="password"
+            tools:ignore="HardcodedText" />
 
         <Button
             android:id="@+id/btn_login"
+            style="@style/Widget.MaterialComponents.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="24dp"
             android:text="Login"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/edit_password" />
+            app:layout_constraintTop_toBottomOf="@id/edit_password"
+            tools:ignore="HardcodedText" />
 
         <Button
             android:id="@+id/btn_return_to_main"
-            android:layout_width="wrap_content"
+            style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:backgroundTint="?attr/colorSecondary"
             android:text="Return to Handwashing"
-            android:textColor="?attr/colorOnSecondary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btn_login" />
+            app:layout_constraintTop_toBottomOf="@id/btn_login"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="16dp"
+            tools:ignore="HardcodedText" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </ScrollView>

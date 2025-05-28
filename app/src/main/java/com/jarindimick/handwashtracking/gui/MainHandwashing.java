@@ -1,18 +1,18 @@
 package com.jarindimick.handwashtracking.gui;
 
 import android.content.Intent;
-import android.graphics.Typeface; // For text styling
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.Gravity; // For centering
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView; // For icons
-import android.widget.LinearLayout; // For icon and text in a row cell
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -20,16 +20,14 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat; // For getting colors and drawables
+import androidx.appcompat.widget.Toolbar; // Import Toolbar
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
-// Make sure LeaderboardEntry is imported if it's in a different package,
-// or accessible if in the same package (com.jarindimick.handwashtracking.gui)
-// import com.jarindimick.handwashtracking.gui.LeaderboardEntry; // Usually not needed if in same package
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -47,21 +45,36 @@ public class MainHandwashing extends AppCompatActivity {
     private Handler handler = new Handler();
     private Runnable updateTimeRunnable;
     private DatabaseHelper dbHelper;
-    // This assumes LeaderboardEntry.java exists in com.jarindimick.handwashtracking.gui
     private List<LeaderboardEntry> leaderboardData = new ArrayList<>();
+    private Toolbar mainToolbar; // Declare Toolbar
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+        EdgeToEdge.enable(this); // Enable Edge-to-Edge display
         setContentView(R.layout.activity_main_handwashing);
+
+        // Setup Toolbar
+        mainToolbar = findViewById(R.id.main_toolbar);
+        setSupportActionBar(mainToolbar);
+        // Optional: if you want to remove the title from the Toolbar itself
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
+
+
+        // Apply window insets listener to the root content view
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            // The root view (R.id.main) gets padding.
+            // The Toolbar is a child of R.id.main, so it will be pushed down by systemBars.top.
+            // The content below the toolbar will also be correctly positioned.
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        setupgui();
+
+        setupgui(); // Call after setContentView and Toolbar setup
         startUpdatingTime();
         setupListeners();
         dbHelper = new DatabaseHelper(this);
@@ -74,6 +87,7 @@ public class MainHandwashing extends AppCompatActivity {
     }
 
     private void setupgui() {
+        // Toolbar is already found and set in onCreate
         img_logo = findViewById(R.id.img_logo);
         txt_datetime = findViewById(R.id.txt_datetime);
         edit_employee_number = findViewById(R.id.edit_employee_number);
@@ -83,7 +97,7 @@ public class MainHandwashing extends AppCompatActivity {
 
     private void updateDateTime() {
         LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, uuuu", Locale.getDefault()); // uuuu for year
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, uuuu", Locale.getDefault());
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault());
         String formattedDate = now.format(dateFormatter);
         String formattedTime = now.format(timeFormatter);
@@ -95,10 +109,10 @@ public class MainHandwashing extends AppCompatActivity {
             @Override
             public void run() {
                 updateDateTime();
-                handler.postDelayed(this, 1000); // Update every second
+                handler.postDelayed(this, 1000);
             }
         };
-        handler.postDelayed(updateTimeRunnable, 0); // Start immediately
+        handler.postDelayed(updateTimeRunnable, 0);
     }
 
     private void setupListeners() {
@@ -113,8 +127,6 @@ public class MainHandwashing extends AppCompatActivity {
                 if (dbHelper.doesEmployeeExist(employeeNumberStr)) {
                     Intent intent = new Intent(MainHandwashing.this, WetHandsActivity.class);
                     intent.putExtra("employee_number", employeeNumberStr);
-                    // Reset total process duration for the new handwashing sequence
-                    // This now correctly accesses the public static field
                     intent.putExtra("overall_time_remaining", WetHandsActivity.TOTAL_PROCESS_DURATION_MS);
                     startActivity(intent);
                     edit_employee_number.setText("");
@@ -144,9 +156,8 @@ public class MainHandwashing extends AppCompatActivity {
 
 
     private void populateLeaderboardTable() {
-        table_top_handwashers.removeAllViews(); // Clear previous entries
+        table_top_handwashers.removeAllViews();
 
-        // Add Header Row
         TableRow headerRow = new TableRow(this);
         TableRow.LayoutParams headerParams = new TableRow.LayoutParams(
                 TableRow.LayoutParams.MATCH_PARENT,
@@ -184,7 +195,7 @@ public class MainHandwashing extends AppCompatActivity {
             table_top_handwashers.addView(emptyRow);
         } else {
             int rank = 1;
-            for (LeaderboardEntry entry : leaderboardData) { // LeaderboardEntry type used here
+            for (LeaderboardEntry entry : leaderboardData) {
                 TableRow dataRow = new TableRow(this);
                 dataRow.setPadding(dpToPx(8), dpToPx(10), dpToPx(8), dpToPx(10));
 
@@ -193,7 +204,6 @@ public class MainHandwashing extends AppCompatActivity {
 
                 LinearLayout nameCellLayout = new LinearLayout(this);
                 nameCellLayout.setOrientation(LinearLayout.HORIZONTAL);
-                // CORRECTED LINE: Center the LinearLayout (icon + name) within its table cell
                 nameCellLayout.setGravity(Gravity.CENTER);
 
 
@@ -203,9 +213,7 @@ public class MainHandwashing extends AppCompatActivity {
                 iconParams.setMarginEnd(dpToPx(8));
                 starIcon.setLayoutParams(iconParams);
 
-                // TextView for the name, its own gravity will align text next to icon
                 TextView nameView = createDataTextView(entry.employeeName, 18, Typeface.NORMAL);
-                // Gravity.START or Gravity.LEFT is fine here for text alignment within the nameView itself
                 nameView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
 
 
@@ -225,7 +233,6 @@ public class MainHandwashing extends AppCompatActivity {
         }
     }
 
-    // Helper method to create TextView for table header
     private TextView createTableHeaderTextView(String text) {
         TextView textView = new TextView(this);
         textView.setText(text);
@@ -237,20 +244,15 @@ public class MainHandwashing extends AppCompatActivity {
         return textView;
     }
 
-    // Overloaded helper method for table data TextViews
     private TextView createDataTextView(String text, int textSize, int textStyle) {
         TextView textView = new TextView(this);
         textView.setText(text);
         textView.setTextSize(textSize);
         textView.setTypeface(null, textStyle);
         textView.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
-        // You might want to set a default text color for data rows as well, e.g.:
-        // textView.setTextColor(ContextCompat.getColor(this, R.color.black)); // Or another appropriate color
         return textView;
     }
 
-
-    // Helper to convert dp to pixels
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density);
     }

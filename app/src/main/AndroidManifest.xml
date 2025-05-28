@@ -4,14 +4,8 @@
 
     <uses-feature android:name="android.hardware.camera" android:required="true" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <!-- WRITE_EXTERNAL_STORAGE is generally not needed for API 29+ if using app-specific storage
-         or MediaStore. For FileProvider with getFilesDir(), it's not needed.
-         Keeping maxSdkVersion="28" is a common way to handle legacy needs if any. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
-    <!-- For apps targeting Android 11 (API level 30) or higher,
-         if you query for or interact with other apps (like a camera app),
-         you need to declare package visibility. -->
     <queries>
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE" />
@@ -32,39 +26,48 @@
         <activity
             android:name=".gui.MainHandwashing"
             android:exported="true"
-            android:screenOrientation="sensorPortrait"> <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
+            android:screenOrientation="fullSensor" android:theme="@style/Theme.HandwashTracking.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
         <activity
             android:name=".gui.AdminLoginActivity"
             android:exported="false"
-            android:screenOrientation="sensorPortrait"/>
-        <activity
-            android:name=".gui.AdminDashboardActivity"
-            android:exported="false"
-            android:screenOrientation="sensorLandscape"/> <activity
-        android:name=".gui.WetHandsActivity"
+            android:screenOrientation="sensorPortrait"
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"/> <activity
+        android:name=".gui.AdminDashboardActivity"
         android:exported="false"
-        android:screenOrientation="sensorPortrait"/>
+        android:screenOrientation="unspecified"/>
+
+
+        <activity
+            android:name=".gui.WetHandsActivity"
+            android:exported="false"
+            android:screenOrientation="sensorPortrait"
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
         <activity
             android:name=".gui.ApplySoapActivity"
             android:exported="false"
-            android:screenOrientation="sensorPortrait"/>
+            android:screenOrientation="sensorPortrait"
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
         <activity
             android:name=".gui.RinseHandsActivity"
             android:exported="false"
-            android:screenOrientation="sensorPortrait"/>
+            android:screenOrientation="sensorPortrait"
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
         <activity
             android:name=".gui.DryHandsActivity"
             android:exported="false"
-            android:screenOrientation="sensorPortrait"/>
+            android:screenOrientation="sensorPortrait"
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
         <activity
             android:name=".gui.ConfirmHandwashActivity"
             android:exported="false"
-            android:screenOrientation="sensorPortrait"/>
+            android:screenOrientation="sensorPortrait"
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"
