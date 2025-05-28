@@ -1,19 +1,22 @@
 package com.jarindimick.handwashtracking.gui;
 
 import android.content.Intent;
-import android.content.res.Configuration; // Import for night mode check
+import android.content.SharedPreferences; // NEW IMPORT
+import android.content.res.Configuration;
+import android.graphics.BitmapFactory; // NEW IMPORT
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
-// import android.util.TypedValue; // Not needed if getColorFromAttr is removed
+import android.util.Log; // NEW IMPORT for potential logging
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.ImageView; // NEW IMPORT
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -21,8 +24,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-// import androidx.annotation.AttrRes; // Not needed
-// import androidx.annotation.ColorInt;  // Not needed
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
@@ -33,6 +34,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
+import java.io.File; // NEW IMPORT
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -41,7 +43,8 @@ import java.util.Locale;
 
 public class MainHandwashing extends AppCompatActivity {
 
-    private ImageView img_logo;
+    // private ImageView img_logo; // This was the old static logo, now removed from here
+    private ImageView img_custom_logo; // NEW: For the customizable logo
     private TextView txt_datetime;
     private EditText edit_employee_number;
     private Button btn_start;
@@ -59,6 +62,8 @@ public class MainHandwashing extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main_handwashing);
 
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         mainToolbar = findViewById(R.id.main_toolbar);
         setSupportActionBar(mainToolbar);
         if (getSupportActionBar() != null) {
@@ -67,11 +72,15 @@ public class MainHandwashing extends AppCompatActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            // Apply padding to the root of the ScrollView's child ConstraintLayout for EdgeToEdge
+            // This seems to be applying to the ConstraintLayout within the ScrollView
+            // The toolbar might need specific handling if it's not already considering insets
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
         setupgui();
+        loadCustomLogo(); // NEW: Load custom logo
         startUpdatingTime();
         setupListeners();
         dbHelper = new DatabaseHelper(this);
@@ -81,13 +90,43 @@ public class MainHandwashing extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         populateLeaderboardTable();
+        loadCustomLogo(); // NEW: Reload custom logo in onResume as well
     }
 
     private void setupgui() {
+        // img_logo = findViewById(R.id.img_logo); // Old static logo removed
+        img_custom_logo = findViewById(R.id.img_custom_logo); // Initialize new custom logo ImageView
         txt_datetime = findViewById(R.id.txt_datetime);
         edit_employee_number = findViewById(R.id.edit_employee_number);
         btn_start = findViewById(R.id.btn_start);
         table_top_handwashers = findViewById(R.id.table_top_handwashers);
+    }
+
+    // NEW: Method to load and display the custom logo
+    private void loadCustomLogo() {
+        SharedPreferences prefs = getSharedPreferences(AdminDashboardActivity.PREFS_NAME, MODE_PRIVATE);
+        String logoPath = prefs.getString(AdminDashboardActivity.KEY_CUSTOM_LOGO_PATH, null);
+
+        if (logoPath != null) {
+            File logoFile = new File(logoPath);
+            if (logoFile.exists()) {
+                try {
+                    android.graphics.Bitmap bitmap = BitmapFactory.decodeFile(logoFile.getAbsolutePath());
+                    img_custom_logo.setImageBitmap(bitmap);
+                    img_custom_logo.setVisibility(View.VISIBLE);
+                    Log.d("MainHandwashing", "Custom logo loaded from: " + logoPath);
+                } catch (Exception e) {
+                    Log.e("MainHandwashing", "Error loading custom logo bitmap: " + e.getMessage());
+                    img_custom_logo.setVisibility(View.GONE);
+                }
+            } else {
+                Log.w("MainHandwashing", "Custom logo path exists in prefs, but file not found: " + logoPath);
+                img_custom_logo.setVisibility(View.GONE);
+            }
+        } else {
+            Log.d("MainHandwashing", "No custom logo path found in prefs.");
+            img_custom_logo.setVisibility(View.GONE);
+        }
     }
 
     private void updateDateTime() {
@@ -199,14 +238,16 @@ public class MainHandwashing extends AppCompatActivity {
 
                 LinearLayout nameCellLayout = new LinearLayout(this);
                 nameCellLayout.setOrientation(LinearLayout.HORIZONTAL);
-                nameCellLayout.setGravity(Gravity.CENTER);
-
+                nameCellLayout.setGravity(Gravity.CENTER_VERTICAL); // Align items vertically in center
 
                 ImageView starIcon = new ImageView(this);
                 starIcon.setImageResource(R.drawable.ic_star_leaderboard);
                 LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(20), dpToPx(20));
                 iconParams.setMarginEnd(dpToPx(8));
                 starIcon.setLayoutParams(iconParams);
+                // Set icon tint based on theme (optional, if your star should adapt)
+                // starIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.your_star_color_or_attribute)));
+
 
                 TextView nameView = createDataTextView(entry.employeeName, 18, Typeface.NORMAL);
                 nameView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
@@ -228,18 +269,16 @@ public class MainHandwashing extends AppCompatActivity {
         }
     }
 
-    // Removed getColorFromAttr method as R.attr.colorPrimary was not resolving
 
     private TextView createTableHeaderTextView(String text) {
         TextView textView = new TextView(this);
         textView.setText(text);
 
-        // Directly check for night mode and set color
         int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
-            textView.setTextColor(ContextCompat.getColor(this, R.color.purple_200)); // Light purple for dark theme
+            textView.setTextColor(ContextCompat.getColor(this, R.color.purple_200));
         } else {
-            textView.setTextColor(ContextCompat.getColor(this, R.color.purple_500)); // Medium purple for light theme
+            textView.setTextColor(ContextCompat.getColor(this, R.color.purple_500));
         }
 
         textView.setTextSize(16);
@@ -255,9 +294,6 @@ public class MainHandwashing extends AppCompatActivity {
         textView.setTextSize(textSize);
         textView.setTypeface(null, textStyle);
         textView.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
-        // Consider setting a theme-aware text color for data rows if needed, e.g.,
-        // textView.setTextColor(ContextCompat.getColor(this, android.R.color.primary_text_light));
-        // or using a theme attribute like ?android:attr/textColorPrimary
         return textView;
     }
 
@@ -270,7 +306,7 @@ public class MainHandwashing extends AppCompatActivity {
         super.onDestroy();
         handler.removeCallbacks(updateTimeRunnable);
         if (dbHelper != null) {
-            dbHelper.close();
+            // dbHelper.close(); // SQLiteOpenHelper handles this
         }
     }
 }

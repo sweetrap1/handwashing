@@ -169,13 +169,23 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 
+            <Button
+                android:id="@+id/btn_upload_logo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Upload/Change App Logo"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@id/btn_show_download_data_dialog"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
             <View
                 android:id="@+id/divider1"
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_marginTop="16dp"
                 android:background="?android:attr/listDivider"
-                app:layout_constraintTop_toBottomOf="@id/btn_show_download_data_dialog"
+                app:layout_constraintTop_toBottomOf="@id/btn_upload_logo"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 

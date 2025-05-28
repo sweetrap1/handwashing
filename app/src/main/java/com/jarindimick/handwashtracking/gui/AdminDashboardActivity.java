@@ -7,8 +7,11 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences; // NEW IMPORT
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap; // NEW IMPORT
+import android.graphics.BitmapFactory; // NEW IMPORT
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,8 +35,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar; // Import for Toolbar
-import androidx.coordinatorlayout.widget.CoordinatorLayout; // Import for CoordinatorLayout
+import androidx.appcompat.widget.Toolbar;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
@@ -43,7 +46,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.appbar.MaterialToolbar; // Import for MaterialToolbar
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.textfield.TextInputEditText;
 
 import com.jarindimick.handwashtracking.R;
@@ -51,6 +54,7 @@ import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException; // NEW IMPORT
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -67,6 +71,13 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private static final String TAG = "AdminDashboardActivity";
     private static final int PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 101;
     private static final int REQUEST_CODE_SELECT_CSV = 102;
+    private static final int REQUEST_CODE_SELECT_LOGO_IMAGE = 103; // NEW: For logo image picker
+
+    // NEW: SharedPreferences and logo constants
+    public static final String PREFS_NAME = "HandwashAppPrefs";
+    public static final String KEY_CUSTOM_LOGO_PATH = "custom_logo_path";
+    public static final String CUSTOM_LOGO_FILENAME = "custom_app_logo.png";
+
 
     // UI elements for Overview
     private TextView txt_overview_total_washes_today;
@@ -84,13 +95,14 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private HandwashLogAdapter handwashLogAdapter;
 
     private TextView txt_message;
-    private MaterialToolbar toolbarAdminDashboard; // NEW: For the toolbar
+    private MaterialToolbar toolbarAdminDashboard;
 
     // UI elements for Action Buttons
     private Button btn_logout;
     private Button btn_delete_data;
     private Button btn_import_employees;
     private Button btn_go_to_manage_employees;
+    private Button btn_upload_logo; // NEW: Button for logo upload
 
     // Buttons for Dialog Triggers
     private Button btn_show_add_employee_dialog;
@@ -106,38 +118,18 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        EdgeToEdge.enable(this); // Enable edge-to-edge
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_dashboard);
 
-        toolbarAdminDashboard = findViewById(R.id.toolbar_admin_dashboard); // Initialize the new Toolbar
-        setSupportActionBar(toolbarAdminDashboard); // Set it as the ActionBar
-        // The title is set in XML: app:title="Admin Dashboard"
+        toolbarAdminDashboard = findViewById(R.id.toolbar_admin_dashboard);
+        setSupportActionBar(toolbarAdminDashboard);
 
-        // Apply insets to the CoordinatorLayout (the new root)
         CoordinatorLayout coordinatorLayout = findViewById(R.id.coordinator_layout_admin_dashboard);
         ViewCompat.setOnApplyWindowInsetsListener(coordinatorLayout, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-            // Apply padding to the CoordinatorLayout for system bars.
-            // AppBarLayout with fitsSystemWindows="true" will typically handle its own top inset.
-            // The NestedScrollView with appbar_scrolling_view_behavior will be positioned below it.
-            // We primarily need to ensure the CoordinatorLayout itself is padded if content might go behind nav bar.
-            // Or, ensure the NestedScrollView's bottom is padded.
-
-            // Let's apply left, right, and bottom to the CoordinatorLayout.
-            // The AppBarLayout is expected to handle the top inset due to fitsSystemWindows="true".
             v.setPadding(insets.left, 0, insets.right, insets.bottom);
-
-            // Alternatively, if AppBarLayout doesn't perfectly handle top with fitsSystemWindows="true" under all E2E scenarios:
-            // Apply top margin to AppBarLayout directly if needed (less common with Material components)
-            // com.google.android.material.appbar.AppBarLayout appBarLayout = findViewById(R.id.app_bar_layout_admin_dashboard);
-            // ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) appBarLayout.getLayoutParams();
-            // params.topMargin = insets.top;
-            // appBarLayout.setLayoutParams(params);
-            // And then root padding would be: v.setPadding(insets.left, 0, insets.right, insets.bottom);
-
-
-            return windowInsets; // Return original insets
+            return windowInsets;
         });
 
         dbHelper = new DatabaseHelper(this);
@@ -152,8 +144,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
     }
 
     private void setupgui() {
-        // lbl_admin_dashboard_title is GONE
-
         txt_overview_total_washes_today = findViewById(R.id.txt_overview_total_washes_today);
         txt_overview_active_employees = findViewById(R.id.txt_overview_active_employees);
         txt_overview_top_washer_today = findViewById(R.id.txt_overview_top_washer_today);
@@ -173,16 +163,12 @@ public class AdminDashboardActivity extends AppCompatActivity {
         txt_message = findViewById(R.id.txt_message);
 
         btn_go_to_manage_employees = findViewById(R.id.btn_go_to_manage_employees);
+        btn_upload_logo = findViewById(R.id.btn_upload_logo); // Initialize new button
 
         btn_show_add_employee_dialog = findViewById(R.id.btn_show_add_employee_dialog);
         btn_show_change_password_dialog = findViewById(R.id.btn_show_change_password_dialog);
         btn_show_download_data_dialog = findViewById(R.id.btn_show_download_data_dialog);
     }
-
-    // ... (rest of your AdminDashboardActivity.java methods remain the same as the last version I provided)
-    // Make sure to include all methods from showDatePickerDialog down to onDestroy
-    // (I'm omitting them here for brevity as they don't change from the previous full version I sent for
-    // the "Import Employees from device" step, but you need them in your actual file)
 
     private void setupListeners() {
         edit_search_start_date.setOnClickListener(v -> showDatePickerDialog(edit_search_start_date, "Set Search Start Date"));
@@ -192,6 +178,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_logout.setOnClickListener(v -> logout());
         btn_delete_data.setOnClickListener(v -> deleteDataWithConfirmation());
         btn_import_employees.setOnClickListener(v -> importEmployeesFromDevice());
+        btn_upload_logo.setOnClickListener(v -> openImagePicker()); // Set listener for new button
 
         btn_go_to_manage_employees.setOnClickListener(v -> {
             Intent intent = new Intent(AdminDashboardActivity.this, ManageEmployeesActivity.class);
@@ -202,6 +189,112 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_show_change_password_dialog.setOnClickListener(v -> showChangePasswordDialog());
         btn_show_download_data_dialog.setOnClickListener(v -> showDownloadDataDialog());
     }
+
+    // NEW: Method to open image picker
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT); // Or ACTION_GET_CONTENT
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        try {
+            startActivityForResult(intent, REQUEST_CODE_SELECT_LOGO_IMAGE);
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(this, "Please install a File Manager or Gallery app.", Toast.LENGTH_SHORT).show();
+            txt_message.setText("No app found to select an image.");
+        }
+    }
+
+    // NEW: Method to save selected logo to internal storage and update SharedPreferences
+    private void saveLogoToAppStorage(Uri sourceUri) {
+        if (sourceUri == null) {
+            Toast.makeText(this, "Failed to get image.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        File internalDir = getFilesDir(); // App's internal files directory
+        File logoFile = new File(internalDir, CUSTOM_LOGO_FILENAME);
+
+        try (InputStream inputStream = getContentResolver().openInputStream(sourceUri);
+             OutputStream outputStream = new FileOutputStream(logoFile)) {
+
+            if (inputStream == null) {
+                throw new IOException("Unable to open input stream from URI");
+            }
+
+            // You might want to resize the bitmap here if it's very large
+            // For simplicity, we're copying directly.
+            // For production, consider resizing to a reasonable dimension.
+            // Example:
+            // Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+            // Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, 200, 200, true); // Example: scale to 200x200
+            // scaledBitmap.compress(Bitmap.CompressFormat.PNG, 90, outputStream);
+
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, length);
+            }
+
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(KEY_CUSTOM_LOGO_PATH, logoFile.getAbsolutePath());
+            editor.apply();
+
+            Toast.makeText(this, "App logo updated successfully!", Toast.LENGTH_SHORT).show();
+            txt_message.setText("Logo updated. It will show on the main screen.");
+            Log.d(TAG, "Logo saved to: " + logoFile.getAbsolutePath());
+
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, "File not found for logo saving: " + e.getMessage(), e);
+            Toast.makeText(this, "Error: Source image not found.", Toast.LENGTH_LONG).show();
+            txt_message.setText("Error: Could not find the selected image.");
+        } catch (IOException e) {
+            Log.e(TAG, "Error saving logo: " + e.getMessage(), e);
+            Toast.makeText(this, "Error saving logo. Please try again.", Toast.LENGTH_LONG).show();
+            txt_message.setText("Error saving logo to app storage.");
+        }
+    }
+
+
+    // ... (loadAdminOverviewData, showDatePickerDialog, showDownloadDataDialog, performDataDownloadFromDialog, etc. methods remain the same)
+    // ... I will include them again for completeness of this file if requested, but the logic inside them doesn't change for this specific feature.
+    // ... For brevity, I'll assume they are present from the previous step. If you need the full file with them, let me know.
+
+    // MODIFIED: onActivityResult to handle both CSV and LOGO image selection
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+            if (requestCode == REQUEST_CODE_SELECT_CSV) {
+                Uri selectedFileUri = data.getData();
+                Log.d(TAG, "CSV file selected: " + selectedFileUri.toString());
+                txt_message.setText("Processing selected CSV: " + selectedFileUri.getLastPathSegment());
+                processSelectedCsv(selectedFileUri);
+            } else if (requestCode == REQUEST_CODE_SELECT_LOGO_IMAGE) {
+                Uri selectedImageUri = data.getData();
+                Log.d(TAG, "Logo image selected: " + selectedImageUri.toString());
+                txt_message.setText("Processing selected logo...");
+                saveLogoToAppStorage(selectedImageUri);
+            }
+        } else if (resultCode == Activity.RESULT_CANCELED) {
+            Log.d(TAG, "File/Image selection cancelled. Request code: " + requestCode);
+            // Optionally show a message if selection was cancelled
+            if (requestCode == REQUEST_CODE_SELECT_LOGO_IMAGE) {
+                txt_message.setText("Logo selection cancelled.");
+            }
+        } else {
+            Log.w(TAG, "onActivityResult with resultCode: " + resultCode + " and no data or null URI for requestCode: " + requestCode);
+            if (requestCode == REQUEST_CODE_SELECT_LOGO_IMAGE) {
+                txt_message.setText("Failed to select logo image.");
+                Toast.makeText(this, "Failed to get image.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    // --- All other methods like loadAdminOverviewData, showDatePickerDialog, download dialogs, search, logout, delete, import CSV logic, password/employee dialogs, onRequestPermissionsResult, EmployeeFromCsv class, onDestroy ---
+    // --- should remain as they were in the previous version. ---
+    // --- For brevity, I'm not re-pasting all of them here but ensure they are present in your file. ---
+    // --- The key additions are openImagePicker(), saveLogoToAppStorage(), and the new case in onActivityResult(). ---
+
 
     private void loadAdminOverviewData() {
         Log.d(TAG, "Loading admin overview data...");
@@ -545,7 +638,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         alertDialog.show();
     }
 
-    private void showAddEmployeeDialog() { // This is the "Quick Add" dialog
+    private void showAddEmployeeDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = this.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_add_employee, null);
@@ -574,22 +667,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
             });
         });
         alertDialog.show();
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_SELECT_CSV && resultCode == Activity.RESULT_OK) {
-            if (data != null && data.getData() != null) {
-                Uri selectedFileUri = data.getData();
-                Log.d(TAG, "CSV file selected: " + selectedFileUri.toString());
-                txt_message.setText("Processing selected CSV: " + selectedFileUri.getLastPathSegment());
-                processSelectedCsv(selectedFileUri);
-            } else {
-                txt_message.setText("No CSV file was selected or URI is null.");
-                Toast.makeText(this, "Failed to get CSV file.", Toast.LENGTH_SHORT).show();
-            }
-        }
     }
 
     @Override
