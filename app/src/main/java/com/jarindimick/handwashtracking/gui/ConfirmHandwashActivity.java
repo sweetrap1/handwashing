@@ -50,8 +50,8 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
     private static final String TAG = "ConfirmHandwashActivity";
     private static final int PERMISSION_REQUEST_CODE_CAMERA = 101;
     private static final long INITIAL_SETUP_DELAY_MS = 1500; // Delay before starting camera setup (allows UI to settle)
-    private static final long PHOTO_CAPTURE_DELAY_MS = 3000; // 3 seconds after camera is "ready" (use cases bound)
-    private static final long CONFIRMATION_DISPLAY_MS = 4000;
+    private static final long PHOTO_CAPTURE_DELAY_MS = 2000; // 3 seconds after camera is "ready" (use cases bound)
+    private static final long CONFIRMATION_DISPLAY_MS = 1500;
 
     private String employeeNumber;
     private String currentPhotoPath = "";
@@ -170,10 +170,14 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
             cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, imageCapture);
             Log.d(TAG, "Camera ImageCapture use case bound (no preview).");
 
-            // UI update: Hide spinner, initial instructions text remains visible for guidance
+            // UI update: Hide spinner, update instructions text
             initialProgressSpinner.setVisibility(View.GONE);
-            // layoutInitialInstructions can remain visible as guidance
-            // cameraPreviewView.setVisibility(View.VISIBLE); // REMOVED
+            TextView textInstructions = findViewById(R.id.text_step_instructions_initial);
+            if (textInstructions != null) {
+                textInstructions.setText("Capturing photo... Please hold still."); // NEW TEXT
+            }
+            // layoutInitialInstructions remains visible with the updated instruction.
+            // The title "Step 5: Confirm Handwash" also remains.
 
             // Schedule auto-capture after a delay
             mainHandler.postDelayed(this::takeAutoPicture, PHOTO_CAPTURE_DELAY_MS);

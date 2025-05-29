@@ -42,6 +42,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import android.view.inputmethod.EditorInfo;
+import android.view.KeyEvent;
+import android.widget.TextView; // For TextView.OnEditorActionListener
+import android.view.inputmethod.InputMethodManager;
+import android.content.Context;
+
 public class MainHandwashing extends AppCompatActivity {
 
     private ImageView img_custom_logo;
@@ -158,10 +164,36 @@ public class MainHandwashing extends AppCompatActivity {
                     intent.putExtra("employee_number", employeeNumberStr);
                     intent.putExtra("overall_time_remaining", WetHandsActivity.TOTAL_PROCESS_DURATION_MS);
                     startActivity(intent);
-                    edit_employee_number.setText("");
+                    edit_employee_number.setText(""); // Clear the input after starting
                 } else {
                     Toast.makeText(MainHandwashing.this, "Employee number not found", Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+
+        // NEW: Add listener for the EditText action button
+        edit_employee_number.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                // Check if the action is "Done" (from soft keyboard)
+                // or if the "Enter" key was pressed (for physical keyboards or some soft keyboards)
+                if (actionId == EditorInfo.IME_ACTION_DONE ||
+                        (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+
+                    // Perform the same action as clicking the "Start" button
+                    if (btn_start != null) {
+                        btn_start.performClick();
+                    }
+
+                    // Hide the keyboard
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null && getCurrentFocus() != null) {
+                        imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+                    }
+
+                    return true; // Indicate that the event was handled
+                }
+                return false; // Let the system handle other actions
             }
         });
     }
@@ -194,9 +226,9 @@ public class MainHandwashing extends AppCompatActivity {
         headerRow.setLayoutParams(headerParams);
         headerRow.setPadding(dpToPx(8), dpToPx(12), dpToPx(8), dpToPx(12));
 
-        TextView rankHeader = createTableHeaderTextView("Rank");
-        TextView nameHeader = createTableHeaderTextView("Name");
-        TextView countHeader = createTableHeaderTextView("Washes");
+        TextView rankHeader = createTableHeaderTextView("Rank"); // Header text size is 16sp
+        TextView nameHeader = createTableHeaderTextView("Name");   // Header text size is 16sp
+        TextView countHeader = createTableHeaderTextView("Washes"); // Header text size is 16sp
 
         rankHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f));
         nameHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1.5f));
@@ -213,13 +245,13 @@ public class MainHandwashing extends AppCompatActivity {
             TableRow emptyRow = new TableRow(this);
             TextView emptyMsg = new TextView(this);
             emptyMsg.setText("No handwashes recorded yet today!");
-            emptyMsg.setTextSize(16);
+            emptyMsg.setTextSize(16); // Size for the "empty" message
             emptyMsg.setPadding(dpToPx(8), dpToPx(16), dpToPx(8), dpToPx(16));
             emptyMsg.setGravity(Gravity.CENTER);
             TableRow.LayoutParams emptyParams = new TableRow.LayoutParams(
                     TableRow.LayoutParams.MATCH_PARENT,
                     TableRow.LayoutParams.WRAP_CONTENT);
-            emptyParams.span = 3; // Make the message span all columns
+            emptyParams.span = 3;
             emptyRow.addView(emptyMsg, emptyParams);
             table_top_handwashers.addView(emptyRow);
         } else {
@@ -228,47 +260,46 @@ public class MainHandwashing extends AppCompatActivity {
                 TableRow dataRow = new TableRow(this);
                 dataRow.setPadding(dpToPx(8), dpToPx(10), dpToPx(8), dpToPx(10));
 
-                TextView rankView = createDataTextView(String.valueOf(rank) + ".", 18, Typeface.BOLD);
+                // Increase text size here for data rows, e.g., from 18 to 20
+                int dataTextSize = 20; // Define your desired size
+
+                TextView rankView = createDataTextView(String.valueOf(rank) + ".", dataTextSize, Typeface.BOLD);
                 rankView.setGravity(Gravity.CENTER);
 
                 LinearLayout nameCellLayout = new LinearLayout(this);
                 nameCellLayout.setOrientation(LinearLayout.HORIZONTAL);
-                nameCellLayout.setGravity(Gravity.CENTER); // This centers the icon and nameView *within* this LinearLayout
+                nameCellLayout.setGravity(Gravity.CENTER_VERTICAL);
 
                 ImageView starIcon = new ImageView(this);
                 starIcon.setImageResource(R.drawable.ic_star_leaderboard);
-                LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(20), dpToPx(20));
-                iconParams.setMarginEnd(dpToPx(8)); // Add some space between icon and name
+                LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
+                        dpToPx(20),
+                        dpToPx(20)
+                );
+                iconParams.setMarginEnd(dpToPx(4));
                 starIcon.setLayoutParams(iconParams);
 
-                TextView nameView = createDataTextView(entry.employeeName, 18, Typeface.NORMAL);
-                // To center the text itself within the TextView, if the TextView has extra space:
-                // nameView.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
-                // However, since it's next to an icon, START alignment for text is often preferred.
-                // The centering of the *group* (icon + name) is handled by nameCellLayout's gravity
-                // and the TableRow.LayoutParams gravity for the cell.
-                nameView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
-
+                TextView nameView = createDataTextView(entry.employeeName, dataTextSize, Typeface.NORMAL);
+                LinearLayout.LayoutParams nameViewParams = new LinearLayout.LayoutParams(
+                        0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1.0f
+                );
+                nameView.setLayoutParams(nameViewParams);
+                nameView.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
 
                 nameCellLayout.addView(starIcon);
                 nameCellLayout.addView(nameView);
 
-                TextView countView = createDataTextView(String.valueOf(entry.handwashCount), 18, Typeface.BOLD);
+                TextView countView = createDataTextView(String.valueOf(entry.handwashCount), dataTextSize, Typeface.BOLD);
                 countView.setGravity(Gravity.CENTER);
 
-                // Params for each cell
                 TableRow.LayoutParams rankCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f);
-                // rankCellParams.gravity = Gravity.CENTER; // rankView already sets its internal gravity
-
-                TableRow.LayoutParams nameCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1.5f);
-                nameCellParams.gravity = Gravity.CENTER; // THIS IS THE KEY CHANGE to center the LinearLayout in the cell
-
+                TableRow.LayoutParams nameCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.MATCH_PARENT, 1.5f);
                 TableRow.LayoutParams countCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f);
-                // countCellParams.gravity = Gravity.CENTER; // countView already sets its internal gravity
-
 
                 dataRow.addView(rankView, rankCellParams);
-                dataRow.addView(nameCellLayout, nameCellParams); // Apply params with gravity
+                dataRow.addView(nameCellLayout, nameCellParams);
                 dataRow.addView(countView, countCellParams);
 
                 table_top_handwashers.addView(dataRow);
@@ -276,7 +307,6 @@ public class MainHandwashing extends AppCompatActivity {
             }
         }
     }
-
 
     private TextView createTableHeaderTextView(String text) {
         TextView textView = new TextView(this);

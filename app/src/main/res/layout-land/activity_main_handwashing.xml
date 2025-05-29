@@ -19,45 +19,53 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_vertical_split"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.50" />
+
     <TextView
         android:id="@+id/txt_datetime"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         android:text="Sunday, May 4, 12:22 PM"
-        android:textSize="18sp"
+        android:textSize="16sp"
         android:gravity="center"
         android:visibility="visible"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/guideline_vertical_split"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/main_toolbar"
-        app:layout_constraintBottom_toTopOf="@+id/upper_content_container"
+        app:layout_constraintBottom_toTopOf="@+id/left_column_container"
         app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintVertical_bias="0.5" />
 
     <LinearLayout
-        android:id="@+id/upper_content_container"
+        android:id="@+id/left_column_container"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
+        android:padding="12dp"
         android:background="@drawable/leaderboard_background"
-        android:padding="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
         app:layout_constraintTop_toBottomOf="@id/txt_datetime"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/leaderboard_section">
+        app:layout_constraintEnd_toStartOf="@id/guideline_vertical_split">
 
         <ImageView
             android:id="@+id/img_custom_logo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:maxHeight="60dp"
+            android:maxHeight="50dp"
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
             android:visibility="gone"
@@ -69,34 +77,31 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Employee Handwash Tracker"
-            android:textSize="22sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="12dp"/>
 
         <TextView
             android:id="@+id/lbl_employee_number"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Enter Your Employee Number"
-            android:textSize="17sp"
+            android:textSize="15sp"
             android:gravity="center"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="6dp"/>
 
         <EditText
             android:id="@+id/edit_employee_number"
-            android:layout_width="200dp"
+            android:layout_width="match_parent"
+            android:maxWidth="230dp"
             android:layout_height="48dp"
-            android:layout_marginTop="4dp"
             android:background="@drawable/edit_text_border"
             android:inputType="number"
-            android:imeOptions="actionDone"  android:padding="8dp"
+            android:padding="8dp"
             android:gravity="center"
             android:textSize="15sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/lbl_employee_number"
-            app:layout_constraintBottom_toTopOf="@+id/btn_start"
+            android:layout_marginBottom="12dp"
             android:autofillHints="employeeId"
             android:hint="Employee #"/>
 
@@ -106,7 +111,7 @@
             android:layout_height="wrap_content"
             android:backgroundTint="#4CAF50"
             android:text="Start"
-            android:textSize="17sp"
+            android:textSize="15sp"
             android:textColor="#FFFFFF"/>
     </LinearLayout>
 
@@ -114,41 +119,36 @@
     <LinearLayout
         android:id="@+id/leaderboard_section"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:padding="12dp"
+        android:layout_height="0dp"  android:orientation="vertical"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:padding="8dp"
         android:background="@drawable/leaderboard_background"
-        app:layout_constraintTop_toBottomOf="@id/upper_content_container"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/main_toolbar" app:layout_constraintStart_toEndOf="@id/guideline_vertical_split"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constrainedHeight="true">
-
+        app:layout_constraintBottom_toBottomOf="parent">
         <TextView
             android:id="@+id/txt_top_handwashers_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="4dp"
             android:gravity="center"
             android:text="Top 5 Handwashers Today"
             android:textColor="?attr/colorPrimary"
-            android:textSize="24sp"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">     <TableLayout
+            android:id="@+id/table_top_handwashers"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fillViewport="true">
-
-            <TableLayout
-                android:id="@+id/table_top_handwashers"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:stretchColumns="1"/>
+            android:stretchColumns="1"/>
         </androidx.core.widget.NestedScrollView>
     </LinearLayout>
 

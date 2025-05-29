@@ -15,13 +15,12 @@
         android:orientation="vertical"
         android:gravity="center_horizontal"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/text_overall_timer_label"
+        app:layout_constraintBottom_toTopOf="@+id/overall_timer_text_group"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.4"
+        app:layout_constraintVertical_bias="0.45"
         android:paddingStart="16dp"
         android:paddingEnd="16dp">
-
 
         <TextView
             android:id="@+id/text_step_title"
@@ -78,14 +77,33 @@
         </FrameLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/text_overall_timer_label"
+    <LinearLayout
+        android:id="@+id/overall_timer_text_group"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Overall Time Remaining:"
-        android:textSize="16sp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/progress_overall_timer"
-        app:layout_constraintStart_toStartOf="parent"  app:layout_constraintEnd_toEndOf="parent"    android:layout_marginStart="16dp"             android:layout_marginEnd="16dp"               android:layout_marginBottom="8dp"/>
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:id="@+id/text_overall_timer_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Overall Time Remaining:"
+            android:textSize="16sp"
+            android:layout_marginEnd="4dp"/>
+
+        <TextView
+            android:id="@+id/text_overall_timer_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="37s"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+    </LinearLayout>
 
     <ProgressBar
         android:id="@+id/progress_overall_timer"
@@ -95,21 +113,10 @@
         android:max="37000"
         android:progress="0"
         android:rotation="180"
-        app:layout_constraintBottom_toTopOf="@id/text_overall_timer_value"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="4dp"/>
-
-    <TextView
-        android:id="@+id/text_overall_timer_value"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="37s"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"/>
 
