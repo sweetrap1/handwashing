@@ -49,8 +49,8 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
 
     private static final String TAG = "ConfirmHandwashActivity";
     private static final int PERMISSION_REQUEST_CODE_CAMERA = 101;
-    private static final long INITIAL_SETUP_DELAY_MS = 1500; // Delay before starting camera setup (allows UI to settle)
-    private static final long PHOTO_CAPTURE_DELAY_MS = 2000; // 3 seconds after camera is "ready" (use cases bound)
+    private static final long INITIAL_SETUP_DELAY_MS = 1000; // Delay before starting camera setup (allows UI to settle)
+    private static final long PHOTO_CAPTURE_DELAY_MS = 1000; // 3 seconds after camera is "ready" (use cases bound)
     private static final long CONFIRMATION_DISPLAY_MS = 1500;
 
     private String employeeNumber;

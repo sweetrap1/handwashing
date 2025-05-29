@@ -36,7 +36,7 @@
             android:id="@+id/image_step_animation"
             android:layout_width="120dp"
             android:layout_height="120dp"
-            android:src="@drawable/ic_apply_soap_anim"
+            android:src="@drawable/img_step_apply_soap"
             android:layout_marginTop="20dp"
             android:contentDescription="Apply soap and scrub animation"/>
 

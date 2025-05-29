@@ -44,12 +44,10 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="12dp"
-                android:layout_marginBottom="16dp"
                 android:background="@drawable/overview_section_background"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="0dp">
+                app:layout_constraintEnd_toEndOf="parent">
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -83,112 +81,143 @@
 
             <Button
                 android:id="@+id/btn_logout"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:layout_marginEnd="8dp"
                 android:text="Logout"
                 app:layout_constraintTop_toBottomOf="@id/layout_admin_overview"
-                app:layout_constraintEnd_toStartOf="@+id/btn_delete_data"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintHorizontal_chainStyle="spread"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintHorizontal_weight="1" />
+                app:layout_constraintEnd_toStartOf="@+id/btn_delete_data"
+                app:layout_constraintHorizontal_chainStyle="packed" />
 
             <Button
                 android:id="@+id/btn_delete_data"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
                 android:text="Delete Data Range"
-                app:layout_constraintTop_toBottomOf="@id/layout_admin_overview"
-                app:layout_constraintEnd_toStartOf="@+id/btn_import_employees"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/btn_logout"
-                app:layout_constraintHorizontal_weight="1" />
+                app:layout_constraintTop_toTopOf="@id/btn_logout"
+                app:layout_constraintStart_toEndOf="@id/btn_logout"
+                app:layout_constraintEnd_toEndOf="parent" />
 
             <Button
                 android:id="@+id/btn_import_employees"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Import Employees"
-                app:layout_constraintTop_toBottomOf="@id/layout_admin_overview"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/btn_delete_data"
-                app:layout_constraintHorizontal_weight="1" />
-
-            <View
-                android:id="@+id/divider_actions"
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:background="?android:attr/listDivider"
-                app:layout_constraintTop_toBottomOf="@id/btn_import_employees"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
-
-            <Button
-                android:id="@+id/btn_go_to_manage_employees"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="Manage Employees"
-                android:layout_marginTop="16dp"
-                app:layout_constraintTop_toBottomOf="@id/divider_actions"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <Button
-                android:id="@+id/btn_show_add_employee_dialog"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="Add New Employee (Quick Add)"
                 android:layout_marginTop="8dp"
-                app:layout_constraintTop_toBottomOf="@id/btn_go_to_manage_employees"
+                android:text="Import Employees"
+                app:layout_constraintTop_toBottomOf="@id/btn_logout"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                app:layout_constraintEnd_toStartOf="@+id/btn_show_change_password_dialog"
+                app:layout_constraintHorizontal_chainStyle="packed" />
 
             <Button
                 android:id="@+id/btn_show_change_password_dialog"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Change Admin Password"
-                android:layout_marginTop="8dp"
-                app:layout_constraintTop_toBottomOf="@id/btn_show_add_employee_dialog"
-                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginStart="8dp"
+                android:text="Change Password"
+                app:layout_constraintTop_toTopOf="@id/btn_import_employees"
+                app:layout_constraintStart_toEndOf="@id/btn_import_employees"
                 app:layout_constraintEnd_toEndOf="parent"/>
 
             <Button
                 android:id="@+id/btn_show_download_data_dialog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Download Data Report"
+                app:layout_constraintTop_toBottomOf="@id/btn_import_employees"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <View
+                android:id="@+id/divider_after_general_actions"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:background="?android:attr/listDivider"
+                app:layout_constraintTop_toBottomOf="@id/btn_show_download_data_dialog"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/lbl_database_section_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Download Data Report"
+                android:text="Database Management"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/divider_after_general_actions"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <Button
+                android:id="@+id/btn_go_to_manage_employees"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Manage Employees"
                 android:layout_marginTop="8dp"
-                app:layout_constraintTop_toBottomOf="@id/btn_show_change_password_dialog"
+                app:layout_constraintTop_toBottomOf="@id/lbl_database_section_title"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/btn_show_add_employee_dialog"
+                app:layout_constraintHorizontal_chainStyle="packed"/>
+
+            <Button
+                android:id="@+id/btn_show_add_employee_dialog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quick Add Emp"
+                android:layout_marginStart="8dp"
+                app:layout_constraintTop_toTopOf="@id/btn_go_to_manage_employees"
+                app:layout_constraintStart_toEndOf="@id/btn_go_to_manage_employees"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <View
+                android:id="@+id/divider_after_database"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:background="?android:attr/listDivider"
+                app:layout_constraintTop_toBottomOf="@id/btn_go_to_manage_employees"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/lbl_branding_section_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Branding"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/divider_after_database"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 
             <Button
                 android:id="@+id/btn_upload_logo"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Upload/Change App Logo"
                 android:layout_marginTop="8dp"
-                app:layout_constraintTop_toBottomOf="@id/btn_show_download_data_dialog"
+                app:layout_constraintTop_toBottomOf="@id/lbl_branding_section_title"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 
             <View
-                android:id="@+id/divider1"
+                android:id="@+id/divider_after_branding"
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_marginTop="16dp"
                 android:background="?android:attr/listDivider"
                 app:layout_constraintTop_toBottomOf="@id/btn_upload_logo"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
 
             <TextView
                 android:id="@+id/lbl_search_handwashes_title"
@@ -199,7 +228,7 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textAlignment="center"
-                app:layout_constraintTop_toBottomOf="@id/divider1"
+                app:layout_constraintTop_toBottomOf="@id/divider_after_branding"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
             <EditText
@@ -282,7 +311,6 @@
                 app:layout_constraintTop_toBottomOf="@id/btn_search_handwashes"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
-
             <TextView
                 android:id="@+id/lbl_message_area_title"
                 android:layout_width="0dp"
@@ -304,7 +332,6 @@
                 app:layout_constraintTop_toBottomOf="@id/lbl_message_area_title"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
-
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_search_results"
                 android:layout_width="0dp"

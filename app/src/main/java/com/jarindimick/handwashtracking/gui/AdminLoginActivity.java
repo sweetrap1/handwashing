@@ -17,6 +17,12 @@ import androidx.core.view.WindowInsetsCompat;
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
+import android.view.inputmethod.EditorInfo;
+import android.view.KeyEvent;
+import android.widget.TextView; // For TextView.OnEditorActionListener
+import android.view.inputmethod.InputMethodManager;
+import android.content.Context;
+
 public class AdminLoginActivity extends AppCompatActivity {
 
     private EditText edit_username;
@@ -98,6 +104,37 @@ public class AdminLoginActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(AdminLoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+
+        btn_return_to_main.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+        // NEW: Add listener for the password EditText action button
+        edit_password.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE ||
+                        (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+
+                    // Perform the same action as clicking the "Login" button
+                    if (btn_login != null) {
+                        btn_login.performClick();
+                    }
+
+                    // Hide the keyboard
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null && getCurrentFocus() != null) {
+                        imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+                    }
+
+                    return true; // Indicate that the event was handled
+                }
+                return false; // Let the system handle other actions
             }
         });
 

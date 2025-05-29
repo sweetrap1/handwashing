@@ -57,10 +57,7 @@ public class WetHandsActivity extends AppCompatActivity {
         textStepTimerValue = findViewById(R.id.text_step_timer_value);
         progressOverallTimer = findViewById(R.id.progress_overall_timer);
         textOverallTimerValue = findViewById(R.id.text_overall_timer_value);
-        imageStepAnimation = findViewById(R.id.image_step_animation);
 
-        // Set correct animation/image for this step
-        imageStepAnimation.setImageResource(R.drawable.ic_wet_hands_anim);
 
 
         // Configure ProgressBars Max and initial Text
