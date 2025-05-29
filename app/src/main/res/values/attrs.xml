@@ -2,4 +2,5 @@
 <resources>
     <attr name="myLeaderboardBackgroundColor" format="color" />
     <attr name="myOverviewSectionBackgroundColor" format="color" />
+    <attr name="myOverlayBackgroundColor" format="color" />
 </resources>

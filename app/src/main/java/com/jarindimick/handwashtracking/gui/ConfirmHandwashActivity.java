@@ -1,255 +1,301 @@
 package com.jarindimick.handwashtracking.gui;
 
 import android.Manifest;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build; // Needed for Build version check
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
+// import androidx.camera.core.Preview; // REMOVED Preview import
+import androidx.camera.lifecycle.ProcessCameraProvider;
+// import androidx.camera.view.PreviewView; // REMOVED PreviewView import
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.lifecycle.LifecycleOwner;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
-import android.view.WindowManager;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ConfirmHandwashActivity extends AppCompatActivity {
 
     private static final String TAG = "ConfirmHandwashActivity";
-    private static final int REQUEST_IMAGE_CAPTURE = 1;
-    private static final int PERMISSION_REQUEST_CODE = 2;
-    private static final long CAMERA_LAUNCH_DELAY_MS = 3000;
-    private static final long CONFIRMATION_DISPLAY_DELAY_MS = 4000;
+    private static final int PERMISSION_REQUEST_CODE_CAMERA = 101;
+    private static final long INITIAL_SETUP_DELAY_MS = 1500; // Delay before starting camera setup (allows UI to settle)
+    private static final long PHOTO_CAPTURE_DELAY_MS = 3000; // 3 seconds after camera is "ready" (use cases bound)
+    private static final long CONFIRMATION_DISPLAY_MS = 4000;
 
     private String employeeNumber;
     private String currentPhotoPath = "";
+    private Uri currentPhotoUri;
 
     private DatabaseHelper dbHelper;
-
-    private TextView textStepTitleInitial;
-    private TextView textStepInstructionsInitial;
+    // private PreviewView cameraPreviewView; // REMOVED
     private LinearLayout layoutInitialInstructions;
-
     private LinearLayout layoutConfirmationMessage;
     private TextView textConfirmationMainMessage;
     private TextView textDailyCountMessage;
+    private ProgressBar initialProgressSpinner;
 
+    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+    private ProcessCameraProvider cameraProvider;
+    private ImageCapture imageCapture;
+    private ExecutorService cameraExecutor;
+
+    private Handler mainHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_confirm_handwash);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
         employeeNumber = getIntent().getStringExtra("employee_number");
         dbHelper = new DatabaseHelper(this);
+        mainHandler = new Handler(Looper.getMainLooper());
+        cameraExecutor = Executors.newSingleThreadExecutor();
 
+        // cameraPreviewView = findViewById(R.id.camera_preview_view); // REMOVED
         layoutInitialInstructions = findViewById(R.id.layout_initial_instructions);
-        textStepTitleInitial = findViewById(R.id.text_step_title_initial);
-        textStepInstructionsInitial = findViewById(R.id.text_step_instructions_initial);
         layoutConfirmationMessage = findViewById(R.id.layout_confirmation_message);
         textConfirmationMainMessage = findViewById(R.id.text_confirmation_main_message);
         textDailyCountMessage = findViewById(R.id.text_daily_count_message);
+        initialProgressSpinner = findViewById(R.id.initial_progress_spinner);
 
         layoutInitialInstructions.setVisibility(View.VISIBLE);
+        initialProgressSpinner.setVisibility(View.VISIBLE);
+        // cameraPreviewView.setVisibility(View.GONE); // REMOVED
         layoutConfirmationMessage.setVisibility(View.GONE);
 
-        Log.d(TAG, "onCreate: Activity created. Launching camera after delay.");
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Log.d(TAG, "Camera launch delay finished. Checking permissions.");
-                checkCameraPermissionAndDispatchTakePictureIntent();
+        // Add a small delay before permission check/camera setup to ensure UI is stable
+        mainHandler.postDelayed(() -> {
+            if (checkCameraPermission()) {
+                Log.d(TAG, "Camera permission already granted. Setting up camera.");
+                setupCamera();
+            } else {
+                Log.d(TAG, "Camera permission NOT granted. Requesting...");
+                requestCameraPermission();
             }
-        }, CAMERA_LAUNCH_DELAY_MS);
+        }, INITIAL_SETUP_DELAY_MS);
     }
 
-    private void checkCameraPermissionAndDispatchTakePictureIntent() {
-        Log.d(TAG, "Checking camera permission...");
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            Log.d(TAG, "Camera permission NOT granted. Requesting...");
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE);
-        } else {
-            Log.d(TAG, "Camera permission already granted. Dispatching picture intent.");
-            dispatchTakePictureIntent();
-        }
+    private boolean checkCameraPermission() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestCameraPermission() {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE_CAMERA);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        Log.d(TAG, "onRequestPermissionsResult called. RequestCode: " + requestCode);
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            boolean cameraPermissionGranted = false;
+        if (requestCode == PERMISSION_REQUEST_CODE_CAMERA) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "Camera permission GRANTED by user.");
-                cameraPermissionGranted = true;
+                setupCamera();
             } else {
-                Log.d(TAG, "Camera permission DENIED by user.");
-            }
-
-            if (cameraPermissionGranted) {
-                dispatchTakePictureIntent();
-            } else {
-                Toast.makeText(this, "Camera permission denied. Logging without photo.", Toast.LENGTH_SHORT).show();
-                processHandwashResult("");
+                Log.w(TAG, "Camera permission DENIED by user.");
+                Toast.makeText(this, "Camera permission is required. Logging without photo.", Toast.LENGTH_LONG).show();
+                processHandwashCompletion(null, "Camera Permission Denied");
             }
         }
     }
 
-    private void dispatchTakePictureIntent() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        Log.d(TAG, "dispatchTakePictureIntent: Intent created for ACTION_IMAGE_CAPTURE.");
-
-        // Attempt to use the front camera
-        // For older APIs
-        takePictureIntent.putExtra("android.intent.extras.CAMERA_FACING", android.hardware.Camera.CameraInfo.CAMERA_FACING_FRONT);
-        // For newer APIs (though the above often still works or is preferred by some camera apps)
-        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { // Camera.CameraInfo is deprecated but widely supported
-        takePictureIntent.putExtra("android.intent.extras.LENS_FACING_FRONT", 1);
-        takePictureIntent.putExtra("android.intent.extra.USE_FRONT_CAMERA", true);
-        // }
-
-
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            Log.d(TAG, "dispatchTakePictureIntent: Camera app IS available (resolveActivity is NOT null).");
-            File photoFile = null;
+    private void setupCamera() {
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        cameraProviderFuture.addListener(() -> {
             try {
-                photoFile = createImageFile();
-                Log.d(TAG, "Photo file created at: " + currentPhotoPath);
-            } catch (IOException ex) {
-                Log.e(TAG, "Error creating image file", ex);
-                Toast.makeText(this, "Error creating photo file. Logging without photo.", Toast.LENGTH_LONG).show();
-                processHandwashResult("");
+                cameraProvider = cameraProviderFuture.get();
+                bindCameraUseCases();
+            } catch (ExecutionException | InterruptedException e) {
+                Log.e(TAG, "Error setting up camera provider: " + e.getMessage(), e);
+                Toast.makeText(this, "Error initializing camera.", Toast.LENGTH_SHORT).show();
+                processHandwashCompletion(null, "Camera Init Error");
+            }
+        }, ContextCompat.getMainExecutor(this));
+    }
+
+    private void bindCameraUseCases() {
+        if (cameraProvider == null) {
+            Log.e(TAG, "Camera provider not available.");
+            Toast.makeText(this, "Camera not available.", Toast.LENGTH_SHORT).show();
+            processHandwashCompletion(null, "Camera Provider Null");
+            return;
+        }
+
+        // Preview use case is REMOVED
+        // Preview preview = new Preview.Builder().build();
+        // preview.setSurfaceProvider(cameraPreviewView.getSurfaceProvider());
+
+        imageCapture = new ImageCapture.Builder()
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                .build();
+
+        CameraSelector cameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_FRONT)
+                .build();
+
+        try {
+            cameraProvider.unbindAll();
+            // Bind only ImageCapture, no Preview
+            cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, imageCapture);
+            Log.d(TAG, "Camera ImageCapture use case bound (no preview).");
+
+            // UI update: Hide spinner, initial instructions text remains visible for guidance
+            initialProgressSpinner.setVisibility(View.GONE);
+            // layoutInitialInstructions can remain visible as guidance
+            // cameraPreviewView.setVisibility(View.VISIBLE); // REMOVED
+
+            // Schedule auto-capture after a delay
+            mainHandler.postDelayed(this::takeAutoPicture, PHOTO_CAPTURE_DELAY_MS);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Use case binding failed (no preview): " + e.getMessage(), e);
+            Toast.makeText(this, "Failed to start camera for capture.", Toast.LENGTH_SHORT).show();
+            processHandwashCompletion(null, "Camera Binding Error");
+        }
+    }
+
+    private void takeAutoPicture() {
+        if (imageCapture == null) {
+            Log.e(TAG, "ImageCapture use case is null. Cannot take picture.");
+            processHandwashCompletion(null, "ImageCapture Null");
+            return;
+        }
+
+        ImageCapture.OutputFileOptions outputFileOptions;
+        String photoFileName = "HANDWASH_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, photoFileName);
+            contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
+            contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + File.separator + "HandwashApp");
+
+            outputFileOptions = new ImageCapture.OutputFileOptions.Builder(
+                    getContentResolver(),
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    contentValues
+            ).build();
+        } else {
+            File appSpecificDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            if (appSpecificDir == null) {
+                Log.e(TAG, "App-specific external pictures directory not available for pre-Q.");
+                Toast.makeText(this, "Storage not available (pre-Q).", Toast.LENGTH_SHORT).show();
+                processHandwashCompletion(null, "Storage Error (pre-Q)");
                 return;
             }
-            if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(this,
-                        "com.jarindimick.handwashtracking.fileprovider",
-                        photoFile);
-                Log.d(TAG, "Photo URI: " + photoURI.toString());
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-                Log.d(TAG, "startActivityForResult for camera called.");
+            if (!appSpecificDir.exists() && !appSpecificDir.mkdirs()) {
+                Log.e(TAG, "Failed to create app-specific pictures directory for pre-Q: " + appSpecificDir.getAbsolutePath());
             }
-        } else {
-            Log.e(TAG, "dispatchTakePictureIntent: Camera app NOT available (resolveActivity is null).");
-            Toast.makeText(this, "No camera app found! Logging without photo.", Toast.LENGTH_SHORT).show();
-            processHandwashResult("");
+            File photoFile = new File(appSpecificDir, photoFileName + ".jpg");
+            currentPhotoPath = photoFile.getAbsolutePath();
+            outputFileOptions = new ImageCapture.OutputFileOptions.Builder(photoFile).build();
         }
-    }
 
-    private File createImageFile() throws IOException {
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = new File(getFilesDir(), "pictures");
-        if (!storageDir.exists()) {
-            if (!storageDir.mkdirs()) {
-                Log.e(TAG, "Failed to create directory for pictures: " + storageDir.getAbsolutePath());
-                throw new IOException("Failed to create directory: " + storageDir.getAbsolutePath());
-            }
-        }
-        File image = File.createTempFile(imageFileName, ".jpg", storageDir);
-        currentPhotoPath = image.getAbsolutePath();
-        return image;
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        Log.d(TAG, "onActivityResult: RequestCode: " + requestCode + ", ResultCode: " + resultCode);
-        String finalPhotoPath = "";
-
-        if (requestCode == REQUEST_IMAGE_CAPTURE) {
-            if (resultCode == RESULT_OK) {
-                finalPhotoPath = currentPhotoPath;
-                Log.d(TAG, "Photo captured successfully: " + finalPhotoPath);
-            } else if (resultCode == RESULT_CANCELED) {
-                Log.d(TAG, "Photo capture cancelled by user.");
-                if (!currentPhotoPath.isEmpty()) {
-                    File emptyFile = new File(currentPhotoPath);
-                    if (emptyFile.exists() && emptyFile.length() == 0) {
-                        Log.d(TAG, "Deleting empty/cancelled photo file: " + currentPhotoPath);
-                        emptyFile.delete();
+        Log.d(TAG, "Attempting to take picture automatically (no preview)...");
+        imageCapture.takePicture(outputFileOptions, cameraExecutor, new ImageCapture.OnImageSavedCallback() {
+            @Override
+            public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                currentPhotoUri = outputFileResults.getSavedUri();
+                if (currentPhotoUri == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    if (!currentPhotoPath.isEmpty()) {
+                        File imageFile = new File(currentPhotoPath);
+                        try {
+                            currentPhotoUri = FileProvider.getUriForFile(ConfirmHandwashActivity.this,
+                                    getApplicationContext().getPackageName() + ".fileprovider",
+                                    imageFile);
+                        } catch (IllegalArgumentException e) {
+                            Log.e(TAG, "FileProvider error for pre-Q image: " + e.getMessage(), e);
+                        }
                     }
                 }
-                currentPhotoPath = "";
-            } else {
-                Log.e(TAG, "Photo capture failed with resultCode: " + resultCode);
-                if (!currentPhotoPath.isEmpty()) {
-                    File photoFile = new File(currentPhotoPath);
-                    if (photoFile.exists()) {
-                        Log.d(TAG, "Deleting failed photo file: " + currentPhotoPath);
-                        photoFile.delete();
-                    }
-                }
-                currentPhotoPath = "";
+
+                String photoIdentifier = (currentPhotoUri != null) ? currentPhotoUri.toString() : currentPhotoPath;
+                Log.d(TAG, "Photo capture successful: " + photoIdentifier);
+                mainHandler.post(() -> processHandwashCompletion(photoIdentifier, null));
             }
-            processHandwashResult(finalPhotoPath);
-        }
+
+            @Override
+            public void onError(@NonNull ImageCaptureException exception) {
+                Log.e(TAG, "Photo capture failed: " + exception.getMessage(), exception);
+                mainHandler.post(() -> {
+                    Toast.makeText(ConfirmHandwashActivity.this, "Failed to capture photo: " + exception.getImageCaptureError(), Toast.LENGTH_LONG).show();
+                    processHandwashCompletion(null, "Capture Error: " + exception.getImageCaptureError());
+                });
+            }
+        });
     }
 
-    private void processHandwashResult(String photoPath) {
-        Log.d(TAG, "Processing handwash result. Photo path: " + (photoPath == null || photoPath.isEmpty() ? "N/A" : photoPath));
-        saveHandwashLogWithPhoto(photoPath);
-        int dailyCount = dbHelper.getHandwashCountForEmployeeToday(employeeNumber);
+    private void processHandwashCompletion(String photoIdentifier, String errorMessage) {
+        // cameraPreviewView.setVisibility(View.GONE); // REMOVED
+        layoutInitialInstructions.setVisibility(View.GONE); // Hide initial instructions now
 
-        layoutInitialInstructions.setVisibility(View.GONE);
-        layoutConfirmationMessage.setVisibility(View.VISIBLE);
+        if (cameraProvider != null) {
+            cameraProvider.unbindAll();
+        }
 
-        if (photoPath != null && !photoPath.isEmpty()) {
+        String finalPhotoPathForDb = "";
+        if (photoIdentifier != null && !photoIdentifier.isEmpty()) {
+            finalPhotoPathForDb = photoIdentifier;
             textConfirmationMainMessage.setText("Handwash Logged!");
         } else {
             textConfirmationMainMessage.setText("Handwash Logged (No Photo)");
-        }
-        textDailyCountMessage.setText(String.format(Locale.getDefault(), "Your daily count: %d", dailyCount));
-        Log.d(TAG, "Displaying confirmation message. Daily count: " + dailyCount);
-
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Log.d(TAG, "Confirmation display delay finished. Navigating to main screen.");
-                navigateToMainScreen();
+            if (errorMessage != null) {
+                textConfirmationMainMessage.append("\nError: " + errorMessage);
             }
-        }, CONFIRMATION_DISPLAY_DELAY_MS);
+        }
+
+        saveHandwashLogToDb(finalPhotoPathForDb);
+        int dailyCount = dbHelper.getHandwashCountForEmployeeToday(employeeNumber);
+        textDailyCountMessage.setText(String.format(Locale.getDefault(), "Your daily count: %d", dailyCount));
+
+        layoutConfirmationMessage.setVisibility(View.VISIBLE);
+
+        mainHandler.postDelayed(this::navigateToMainScreen, CONFIRMATION_DISPLAY_MS);
     }
 
-
-    private void saveHandwashLogWithPhoto(String photoPath) {
+    private void saveHandwashLogToDb(String photoPathForDb) {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.getDefault());
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.getDefault());
         String washDate = now.format(dateFormatter);
         String washTime = now.format(timeFormatter);
 
-        long logResult = dbHelper.insertHandwashLog(employeeNumber, washDate, washTime, photoPath == null ? "" : photoPath);
-
+        long logResult = dbHelper.insertHandwashLog(employeeNumber, washDate, washTime, photoPathForDb);
         if (logResult == -1) {
-            Log.e(TAG, "Error saving handwash log to database. Employee: " + employeeNumber + ", Path: " + photoPath);
+            Log.e(TAG, "Error saving handwash log to database. Emp: " + employeeNumber + ", Path: " + photoPathForDb);
         } else {
-            Log.d(TAG, "Handwash log saved successfully. ID: " + logResult);
+            Log.d(TAG, "Handwash log saved successfully to DB. ID: " + logResult);
         }
     }
 
@@ -263,8 +309,8 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (dbHelper != null) {
-            dbHelper.close();
+        if (cameraExecutor != null) {
+            cameraExecutor.shutdown();
         }
         Log.d(TAG, "onDestroy called.");
     }

@@ -3,7 +3,7 @@ package com.jarindimick.handwashtracking.gui;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.util.Log; // Import Log
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,13 +11,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.FileProvider;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView; // Was androidx.core.content.FileProvider; - this import is not needed here
 
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
-import java.io.File;
+// import java.io.File; // No longer strictly needed here for this functionality
+// import java.io.FileNotFoundException; // Only if you add explicit content resolver checks
+// import java.io.InputStream; // Only if you add explicit content resolver checks
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -45,71 +46,92 @@ public class HandwashLogAdapter extends RecyclerView.Adapter<HandwashLogAdapter.
     public void onBindViewHolder(@NonNull HandwashLogViewHolder holder, int position) {
         DatabaseHelper.HandwashLog log = logs.get(position);
 
-        // --- ADD LOGGING HERE TO INSPECT DATA ---
-        Log.d("HandwashLogAdapter", "Log " + position + ":");
-        Log.d("HandwashLogAdapter", "  Employee Number: " + log.employeeNumber);
-        Log.d("HandwashLogAdapter", "  Wash Date: " + log.washDate);
-        Log.d("HandwashLogAdapter", "  Wash Time: " + log.washTime);
-        Log.d("HandwashLogAdapter", "  Photo Path: " + log.photoPath);
-        // --- END LOGGING ---
-
+        Log.d("HandwashLogAdapter", "Binding log for Emp: " + log.employeeNumber + ", PhotoPath: " + log.photoPath);
 
         holder.txt_employee_number.setText("Employee Number: " + log.employeeNumber);
 
-        // Format the date
         SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM dd,yyyy", Locale.getDefault());
+        SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault()); // Corrected year pattern
         try {
             Date date = inputFormat.parse(log.washDate);
             if (date != null) {
                 holder.txt_wash_date.setText("Wash Date: " + outputFormat.format(date));
             } else {
-                holder.txt_wash_date.setText("Wash Date: " + log.washDate); // Original if parsing fails
+                holder.txt_wash_date.setText("Wash Date: " + log.washDate);
             }
         } catch (ParseException e) {
-            holder.txt_wash_date.setText("Wash Date: " + log.washDate); // Original if parsing fails
-            Log.e("HandwashLogAdapter", "Error parsing date: " + log.washDate, e); // Log the error
+            holder.txt_wash_date.setText("Wash Date: " + log.washDate);
+            Log.e("HandwashLogAdapter", "Error parsing date: " + log.washDate, e);
         }
 
         holder.txt_wash_time.setText("Wash Time: " + log.washTime);
-        holder.txt_photo_path.setText("Photo Path: " + (log.photoPath.isEmpty() ? "N/A" : "View Photo"));
 
-        holder.txt_photo_path.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!log.photoPath.isEmpty()) {
-                    File photoFile = new File(log.photoPath);
-                    if (photoFile.exists()) {
+        // Determine if a photo path/URI exists and is not empty or explicitly "null" (as a string)
+        boolean hasPhotoIdentifier = log.photoPath != null && !log.photoPath.isEmpty() && !log.photoPath.equalsIgnoreCase("null");
+
+        holder.txt_photo_path.setText("Photo: " + (hasPhotoIdentifier ? "View Photo" : "N/A"));
+        holder.txt_photo_path.setClickable(hasPhotoIdentifier);
+        holder.txt_photo_path.setFocusable(hasPhotoIdentifier);
+
+
+        if (hasPhotoIdentifier) {
+            holder.txt_photo_path.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Uri photoUriToView = null;
+                    try {
+                        // The stored log.photoPath is expected to be a URI string
+                        photoUriToView = Uri.parse(log.photoPath);
+                    } catch (Exception e) {
+                        Log.e("HandwashLogAdapter", "Error parsing stored photo path as URI: " + log.photoPath, e);
+                        Toast.makeText(context, "Invalid photo reference in database.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    if (photoUriToView != null) {
+                        Log.d("HandwashLogAdapter", "Attempting to view photo with URI: " + photoUriToView.toString());
                         try {
-                            Uri photoUri = FileProvider.getUriForFile(context,
-                                    "com.jarindimick.handwashtracking.fileprovider",
-                                    photoFile);
+                            // Optional: A quick check to see if content resolver can open it (catches some bad URIs)
+                            // This check can be useful for debugging but might be too strict if some apps can handle URIs
+                            // that openInputStream might fail for (e.g. due to temporary permissions needed by the viewer app)
+                            //
+                            // InputStream inputStream = context.getContentResolver().openInputStream(photoUriToView);
+                            // if (inputStream != null) {
+                            //     inputStream.close();
+                            // } else {
+                            //     throw new FileNotFoundException("Content resolver returned null stream for URI.");
+                            // }
 
                             Intent intent = new Intent(Intent.ACTION_VIEW);
-                            intent.setDataAndType(photoUri, "image/*");
+                            intent.setDataAndType(photoUriToView, "image/*");
+                            // Grant permission to the receiving app to read this URI
+                            // This is crucial for FileProvider URIs and good practice for MediaStore URIs too.
                             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                             if (intent.resolveActivity(context.getPackageManager()) != null) {
                                 context.startActivity(intent);
                             } else {
                                 Toast.makeText(context, "No app found to view this photo.", Toast.LENGTH_SHORT).show();
+                                Log.w("HandwashLogAdapter", "No activity found to handle ACTION_VIEW for image URI: " + photoUriToView.toString());
                             }
-                        } catch (IllegalArgumentException e) {
-                            Toast.makeText(context, "Error: Could not open photo (FileProvider issue).", Toast.LENGTH_SHORT).show();
-                            Log.e("HandwashLogAdapter", "FileProvider error: " + e.getMessage(), e);
-                        } catch (Exception e) {
-                            Toast.makeText(context, "Error opening photo: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                            Log.e("HandwashLogAdapter", "General error opening photo: " + e.getMessage(), e);
+                        } catch (SecurityException se) {
+                            Toast.makeText(context, "Permission denied: Cannot open photo.", Toast.LENGTH_LONG).show();
+                            Log.e("HandwashLogAdapter", "SecurityException opening photo URI: " + photoUriToView.toString(), se);
+                        } catch (Exception e) { // Catch other exceptions like ActivityNotFoundException, FileNotFoundException from optional check
+                            Toast.makeText(context, "Could not open photo: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            Log.e("HandwashLogAdapter", "Error opening photo URI: " + photoUriToView.toString(), e);
                         }
                     } else {
-                        Toast.makeText(context, "Photo file not found on device.", Toast.LENGTH_SHORT).show();
-                        Log.w("HandwashLogAdapter", "Photo file path exists in DB but file not found on disk: " + log.photoPath);
+                        // This case might be reached if log.photoPath was an empty string that somehow passed the initial check
+                        // or if Uri.parse returns null for some malformed strings (though it usually throws an exception).
+                        Toast.makeText(context, "Photo reference is invalid (null after parse).", Toast.LENGTH_LONG).show();
                     }
-                } else {
-                    Toast.makeText(context, "No photo available for this log.", Toast.LENGTH_SHORT).show();
                 }
-            }
-        });
+            });
+        } else {
+            // If no photo identifier, ensure no listener is set (or remove if set previously)
+            holder.txt_photo_path.setOnClickListener(null);
+        }
     }
 
     @Override

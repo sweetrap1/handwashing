@@ -48,7 +48,15 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation ("org.mindrot:jbcrypt:0.4")
-    implementation ("androidx.recyclerview:recyclerview:1.4.0") // Or the latest version
+    implementation ("androidx.recyclerview:recyclerview:1.4.0")
+    // Or the latest vers
+    // CameraX libraries
+    val cameraxVersion = "1.3.0" // Or check for the latest stable version
+    implementation("androidx.camera:camera-core:${cameraxVersion}")
+    implementation("androidx.camera:camera-camera2:${cameraxVersion}")
+    implementation("androidx.camera:camera-lifecycle:${cameraxVersion}")
+    implementation("androidx.camera:camera-view:${cameraxVersion}") // For PreviewViewion
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

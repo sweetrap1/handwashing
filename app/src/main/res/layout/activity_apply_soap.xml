@@ -84,9 +84,7 @@
         android:text="Overall Time Remaining:"
         android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@id/progress_overall_timer"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginStart="16dp"
-        android:layout_marginBottom="8dp"/>
+        app:layout_constraintStart_toStartOf="parent"  app:layout_constraintEnd_toEndOf="parent"    android:layout_marginStart="16dp"             android:layout_marginEnd="16dp"               android:layout_marginBottom="8dp"/>
 
     <ProgressBar
         android:id="@+id/progress_overall_timer"
@@ -95,6 +93,7 @@
         android:layout_height="wrap_content"
         android:max="37000"
         android:progress="0"
+        android:rotation="180"
         app:layout_constraintBottom_toTopOf="@id/text_overall_timer_value"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
