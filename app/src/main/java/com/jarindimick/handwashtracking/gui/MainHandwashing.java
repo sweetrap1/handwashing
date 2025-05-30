@@ -155,49 +155,49 @@ public class MainHandwashing extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String employeeNumberStr = edit_employee_number.getText().toString().trim();
+
+                // Clear previous errors
+                edit_employee_number.setError(null);
+
                 if (employeeNumberStr.isEmpty()) {
-                    Toast.makeText(MainHandwashing.this, "Please enter employee number", Toast.LENGTH_SHORT).show();
+                    // Toast.makeText(MainHandwashing.this, "Please enter employee number", Toast.LENGTH_SHORT).show(); // OLD
+                    edit_employee_number.setError("Please enter employee number"); // NEW
+                    edit_employee_number.requestFocus(); // Optional: bring focus to the field
                     return;
                 }
-                if (dbHelper.doesEmployeeExist(employeeNumberStr)) {
-                    Intent intent = new Intent(MainHandwashing.this, WetHandsActivity.class);
-                    intent.putExtra("employee_number", employeeNumberStr);
-                    intent.putExtra("overall_time_remaining", WetHandsActivity.TOTAL_PROCESS_DURATION_MS);
-                    startActivity(intent);
-                    edit_employee_number.setText(""); // Clear the input after starting
+
+                if (dbHelper.doesEmployeeExist(employeeNumberStr)) { //
+                    Intent intent = new Intent(MainHandwashing.this, WetHandsActivity.class); //
+                    intent.putExtra("employee_number", employeeNumberStr); //
+                    intent.putExtra("overall_time_remaining", WetHandsActivity.TOTAL_PROCESS_DURATION_MS); //
+                    startActivity(intent); //
+                    edit_employee_number.setText("");
                 } else {
-                    Toast.makeText(MainHandwashing.this, "Employee number not found", Toast.LENGTH_SHORT).show();
+                    // Toast.makeText(MainHandwashing.this, "Employee number not found", Toast.LENGTH_SHORT).show(); // OLD
+                    edit_employee_number.setError("Employee number not found"); // NEW
+                    edit_employee_number.requestFocus(); // Optional
                 }
             }
         });
 
-        // NEW: Add listener for the EditText action button
-        edit_employee_number.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        edit_employee_number.setOnEditorActionListener(new TextView.OnEditorActionListener() { //
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                // Check if the action is "Done" (from soft keyboard)
-                // or if the "Enter" key was pressed (for physical keyboards or some soft keyboards)
                 if (actionId == EditorInfo.IME_ACTION_DONE ||
                         (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
-
-                    // Perform the same action as clicking the "Start" button
                     if (btn_start != null) {
                         btn_start.performClick();
                     }
-
-                    // Hide the keyboard
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE); //
                     if (imm != null && getCurrentFocus() != null) {
                         imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
                     }
-
-                    return true; // Indicate that the event was handled
+                    return true;
                 }
-                return false; // Let the system handle other actions
+                return false;
             }
         });
     }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();

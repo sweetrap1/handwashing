@@ -1,27 +1,25 @@
 package com.jarindimick.handwashtracking.gui;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
+import android.widget.TextView;
+import android.widget.Toast; // Keep for successful login Toast
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar; // Optional: if you add a Toolbar
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
-
-import android.view.inputmethod.EditorInfo;
-import android.view.KeyEvent;
-import android.widget.TextView; // For TextView.OnEditorActionListener
-import android.view.inputmethod.InputMethodManager;
-import android.content.Context;
 
 public class AdminLoginActivity extends AppCompatActivity {
 
@@ -30,21 +28,15 @@ public class AdminLoginActivity extends AppCompatActivity {
     private Button btn_login;
     private Button btn_return_to_main;
     private DatabaseHelper dbHelper;
-    // Optional: private Toolbar adminLoginToolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_admin_login);
+        EdgeToEdge.enable(this); //
+        setContentView(R.layout.activity_admin_login); //
 
-        // Apply window insets listener to the root content view (R.id.main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            // The R.id.main is the ConstraintLayout which already has padding="16dp"
-            // We add the system bar insets to this existing padding.
-            // Or, if R.id.main had padding 0dp, it would be:
-            // v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> { //
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars()); //
             v.setPadding(
                     systemBars.left + v.getPaddingLeft(),
                     systemBars.top + v.getPaddingTop(),
@@ -54,94 +46,80 @@ public class AdminLoginActivity extends AppCompatActivity {
             return insets;
         });
 
-        // If you applied NoActionBar theme in Manifest and added a Toolbar to XML:
-        // adminLoginToolbar = findViewById(R.id.admin_login_toolbar);
-        // setSupportActionBar(adminLoginToolbar);
-        // if (getSupportActionBar() != null) {
-        // getSupportActionBar().setDisplayShowTitleEnabled(true); // Or false, or set title on Toolbar
-        // getSupportActionBar().setTitle("Admin Login"); // Example
-        // }
-
-        // If NoActionBar theme is applied via Manifest, no default ActionBar to hide.
-        // If you are using the default theme (with DarkActionBar), then getSupportActionBar().hide() is needed.
-        // Assuming Theme.HandwashTracking.NoActionBar is applied via Manifest from previous step:
-        // if (getSupportActionBar() != null) getSupportActionBar().hide(); // Not needed with NoActionBar theme
-
-        setupgui();
-        dbHelper = new DatabaseHelper(this);
-        setupListeners();
+        setupgui(); //
+        dbHelper = new DatabaseHelper(this); //
+        setupListeners(); //
     }
 
     private void setupgui() {
-        edit_username = findViewById(R.id.edit_username);
-        edit_password = findViewById(R.id.edit_password);
-        btn_login = findViewById(R.id.btn_login);
-        btn_return_to_main = findViewById(R.id.btn_return_to_main);
-
-        // If NOT using NoActionBar theme from Manifest and want to hide default ActionBar:
-        // if (getSupportActionBar() != null) {
-        //     getSupportActionBar().hide();
-        // }
+        edit_username = findViewById(R.id.edit_username); //
+        edit_password = findViewById(R.id.edit_password); //
+        btn_login = findViewById(R.id.btn_login); //
+        btn_return_to_main = findViewById(R.id.btn_return_to_main); //
     }
 
     private void setupListeners() {
-        btn_login.setOnClickListener(new View.OnClickListener() {
+        btn_login.setOnClickListener(new View.OnClickListener() { //
             @Override
             public void onClick(View v) {
                 String username = edit_username.getText().toString().trim();
                 String password = edit_password.getText().toString().trim();
 
-                if (username.isEmpty() || password.isEmpty()) {
-                    Toast.makeText(AdminLoginActivity.this, "Please enter username and password", Toast.LENGTH_SHORT).show();
+                // Clear previous errors
+                edit_username.setError(null);
+                edit_password.setError(null);
+
+                boolean isValid = true;
+                if (username.isEmpty()) {
+                    edit_username.setError("Please enter username");
+                    isValid = false;
+                }
+                if (password.isEmpty()) {
+                    edit_password.setError("Please enter password");
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    if (username.isEmpty()) edit_username.requestFocus();
+                    else if (password.isEmpty()) edit_password.requestFocus();
                     return;
                 }
 
-                if (dbHelper.validateAdminLogin(username, password)) {
-                    Toast.makeText(AdminLoginActivity.this, "Login Successful", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(AdminLoginActivity.this, AdminDashboardActivity.class);
-                    startActivity(intent);
-                    finish();
+                if (dbHelper.validateAdminLogin(username, password)) { //
+                    Toast.makeText(AdminLoginActivity.this, "Login Successful", Toast.LENGTH_SHORT).show(); //
+                    Intent intent = new Intent(AdminLoginActivity.this, AdminDashboardActivity.class); //
+                    startActivity(intent); //
+                    finish(); //
                 } else {
-                    Toast.makeText(AdminLoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                    // Toast.makeText(AdminLoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show(); // OLD
+                    edit_password.setError("Invalid username or password"); // NEW
+                    edit_password.requestFocus();
                 }
             }
         });
 
-        btn_return_to_main.setOnClickListener(new View.OnClickListener() {
+        btn_return_to_main.setOnClickListener(new View.OnClickListener() { //
             @Override
             public void onClick(View v) {
-                finish();
+                finish(); //
             }
         });
 
-        // NEW: Add listener for the password EditText action button
-        edit_password.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        edit_password.setOnEditorActionListener(new TextView.OnEditorActionListener() { //
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE ||
                         (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
-
-                    // Perform the same action as clicking the "Login" button
                     if (btn_login != null) {
                         btn_login.performClick();
                     }
-
-                    // Hide the keyboard
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE); //
                     if (imm != null && getCurrentFocus() != null) {
                         imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
                     }
-
-                    return true; // Indicate that the event was handled
+                    return true;
                 }
-                return false; // Let the system handle other actions
-            }
-        });
-
-        btn_return_to_main.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
+                return false;
             }
         });
     }
@@ -150,7 +128,7 @@ public class AdminLoginActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         if (dbHelper != null) {
-            dbHelper.close();
+            dbHelper.close(); //
         }
     }
 }

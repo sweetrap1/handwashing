@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="overlay_background_dark">#E62E2E2E</color>
+    <color name="button_red_delete">#D32F2F</color>
+    <color name="button_red_delete_text">#FFFFFF</color>
 </resources>

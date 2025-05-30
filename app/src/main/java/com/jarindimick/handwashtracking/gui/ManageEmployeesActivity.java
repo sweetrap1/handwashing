@@ -1,6 +1,5 @@
 package com.jarindimick.handwashtracking.gui;
 
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -34,7 +33,7 @@ import java.util.Objects;
 
 public class ManageEmployeesActivity extends AppCompatActivity implements EmployeeAdminAdapter.OnEmployeeEditListener {
 
-    private static final String TAG = "ManageEmployeesActivity";
+    private static final String TAG = "ManageEmployeesActivity"; //
 
     private RecyclerView recyclerEmployeeList;
     private EmployeeAdminAdapter employeeAdminAdapter;
@@ -46,51 +45,41 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // IMPORTANT: Call EdgeToEdge.enable before super.onCreate() or at least before setContentView()
-        EdgeToEdge.enable(this);
+        EdgeToEdge.enable(this); //
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_manage_employees);
+        setContentView(R.layout.activity_manage_employees); //
 
-        toolbar = findViewById(R.id.toolbar_manage_employees);
-        setSupportActionBar(toolbar);
+        toolbar = findViewById(R.id.toolbar_manage_employees); //
+        setSupportActionBar(toolbar); //
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Manage Employees");
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setDisplayShowHomeEnabled(true);
+            getSupportActionBar().setTitle("Manage Employees"); //
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true); //
+            getSupportActionBar().setDisplayShowHomeEnabled(true); //
         }
 
-        // Apply insets for edge-to-edge display
-        // This listener will be called when the window insets change (e.g., keyboard shown/hidden, system bars)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_manage_employees), (v, windowInsets) -> {
-            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-            // Apply the system bar insets as padding to the root view (v)
-            // This will push the content down from the status bar and up from the navigation bar.
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_manage_employees), (v, windowInsets) -> { //
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()); //
             v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
-
-            // It's good practice to return the insets parameter unless you've fully consumed them
-            // and don't want child views to receive them.
             return windowInsets;
         });
 
-        dbHelper = new DatabaseHelper(this);
+        dbHelper = new DatabaseHelper(this); //
 
-        recyclerEmployeeList = findViewById(R.id.recycler_manage_employee_list);
-        lblNoEmployees = findViewById(R.id.lbl_no_employees);
-        fabAddEmployee = findViewById(R.id.fab_add_employee);
+        recyclerEmployeeList = findViewById(R.id.recycler_manage_employee_list); //
+        lblNoEmployees = findViewById(R.id.lbl_no_employees); //
+        fabAddEmployee = findViewById(R.id.fab_add_employee); //
 
-        recyclerEmployeeList.setLayoutManager(new LinearLayoutManager(this));
-        employeeAdminAdapter = new EmployeeAdminAdapter(this, new ArrayList<>(), this);
-        recyclerEmployeeList.setAdapter(employeeAdminAdapter);
+        recyclerEmployeeList.setLayoutManager(new LinearLayoutManager(this)); //
+        employeeAdminAdapter = new EmployeeAdminAdapter(this, new ArrayList<>(), this); //
+        recyclerEmployeeList.setAdapter(employeeAdminAdapter); //
 
-        fabAddEmployee.setOnClickListener(v -> showAddEmployeeDialog());
-
-        // loadEmployeeList(); // Moved to onResume to refresh data if coming back to activity
+        fabAddEmployee.setOnClickListener(v -> showAddEmployeeDialog()); //
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) { //
         if (item.getItemId() == android.R.id.home) {
-            finish(); // Close this activity and return to previous one (AdminDashboardActivity)
+            finish(); //
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -98,133 +87,168 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
 
 
     private void loadEmployeeList() {
-        Log.d(TAG, "Loading employee list...");
-        List<Employee> employees = dbHelper.getAllEmployees(); // Make sure dbHelper is initialized
-        if (employeeAdminAdapter == null) { // Should not happen if onCreate is correctly setup
-            employeeAdminAdapter = new EmployeeAdminAdapter(this, new ArrayList<>(), this);
-            recyclerEmployeeList.setAdapter(employeeAdminAdapter);
+        Log.d(TAG, "Loading employee list..."); //
+        List<Employee> employees = dbHelper.getAllEmployees(); //
+        if (employeeAdminAdapter == null) {
+            employeeAdminAdapter = new EmployeeAdminAdapter(this, new ArrayList<>(), this); //
+            recyclerEmployeeList.setAdapter(employeeAdminAdapter); //
         }
-        employeeAdminAdapter.updateEmployeeList(employees);
+        employeeAdminAdapter.updateEmployeeList(employees); //
 
         if (employees.isEmpty()) {
-            recyclerEmployeeList.setVisibility(View.GONE);
-            lblNoEmployees.setVisibility(View.VISIBLE);
+            recyclerEmployeeList.setVisibility(View.GONE); //
+            lblNoEmployees.setVisibility(View.VISIBLE); //
         } else {
-            recyclerEmployeeList.setVisibility(View.VISIBLE);
-            lblNoEmployees.setVisibility(View.GONE);
+            recyclerEmployeeList.setVisibility(View.VISIBLE); //
+            lblNoEmployees.setVisibility(View.GONE); //
         }
-        Log.d(TAG, (employees.isEmpty() ? "No" : employees.size()) + " employees loaded.");
+        Log.d(TAG, (employees.isEmpty() ? "No" : employees.size()) + " employees loaded."); //
     }
 
     @Override
-    public void onEditEmployee(Employee employee) {
-        showEditEmployeeDialog(employee);
+    public void onEditEmployee(Employee employee) { //
+        showEditEmployeeDialog(employee); //
     }
 
     private void showAddEmployeeDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = this.getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_add_employee, null);
-        builder.setView(dialogView);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this); //
+        LayoutInflater inflater = this.getLayoutInflater(); //
+        View dialogView = inflater.inflate(R.layout.dialog_add_employee, null); //
+        builder.setView(dialogView); //
 
-        final TextInputEditText dialogEditEmployeeNumber = dialogView.findViewById(R.id.dialog_edit_add_employee_number);
-        final TextInputEditText dialogEditFirstName = dialogView.findViewById(R.id.dialog_edit_add_first_name);
-        final TextInputEditText dialogEditLastName = dialogView.findViewById(R.id.dialog_edit_add_last_name);
-        final TextInputEditText dialogEditDepartment = dialogView.findViewById(R.id.dialog_edit_add_department);
+        final TextInputEditText dialogEditEmployeeNumber = dialogView.findViewById(R.id.dialog_edit_add_employee_number); //
+        final TextInputEditText dialogEditFirstName = dialogView.findViewById(R.id.dialog_edit_add_first_name); //
+        final TextInputEditText dialogEditLastName = dialogView.findViewById(R.id.dialog_edit_add_last_name); //
+        final TextInputEditText dialogEditDepartment = dialogView.findViewById(R.id.dialog_edit_add_department); //
 
-        builder.setTitle("Add New Employee");
-        builder.setPositiveButton("Add", null);
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+        builder.setTitle("Add New Employee"); //
+        builder.setPositiveButton("Add", null); //
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss()); //
 
-        AlertDialog alertDialog = builder.create();
+        AlertDialog alertDialog = builder.create(); //
         alertDialog.setOnShowListener(dialogInterface -> {
-            Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE); //
             positiveButton.setOnClickListener(view -> {
                 String employeeNumber = Objects.requireNonNull(dialogEditEmployeeNumber.getText()).toString().trim();
                 String firstName = Objects.requireNonNull(dialogEditFirstName.getText()).toString().trim();
                 String lastName = Objects.requireNonNull(dialogEditLastName.getText()).toString().trim();
                 String department = Objects.requireNonNull(dialogEditDepartment.getText()).toString().trim();
 
-                if (employeeNumber.isEmpty() || firstName.isEmpty() || lastName.isEmpty()) {
-                    Toast.makeText(ManageEmployeesActivity.this, "Employee Number, First & Last Name required.", Toast.LENGTH_SHORT).show();
+                // Clear previous errors
+                dialogEditEmployeeNumber.setError(null);
+                dialogEditFirstName.setError(null);
+                dialogEditLastName.setError(null);
+
+                boolean isValid = true;
+                if (employeeNumber.isEmpty()) {
+                    dialogEditEmployeeNumber.setError("Number required");
+                    isValid = false;
+                }
+                if (firstName.isEmpty()) {
+                    dialogEditFirstName.setError("First name required");
+                    isValid = false;
+                }
+                if (lastName.isEmpty()) {
+                    dialogEditLastName.setError("Last name required");
+                    isValid = false;
+                }
+
+                if (!isValid) {
                     return;
                 }
-                if (department.isEmpty()) {
+
+                if (department.isEmpty()) { //
                     department = "Unassigned";
                 }
-                if (dbHelper.isEmployeeNumberTaken(employeeNumber)) {
-                    Toast.makeText(ManageEmployeesActivity.this, "Employee number " + employeeNumber + " already exists.", Toast.LENGTH_SHORT).show();
+
+                if (dbHelper.isEmployeeNumberTaken(employeeNumber)) { //
+                    dialogEditEmployeeNumber.setError("Number " + employeeNumber + " already exists.");
                     return;
                 }
-                long result = dbHelper.insertEmployee(employeeNumber, firstName, lastName, department);
+
+                long result = dbHelper.insertEmployee(employeeNumber, firstName, lastName, department); //
                 if (result != -1) {
-                    Toast.makeText(ManageEmployeesActivity.this, "Employee " + firstName + " added.", Toast.LENGTH_SHORT).show();
-                    loadEmployeeList();
-                    alertDialog.dismiss();
+                    Toast.makeText(ManageEmployeesActivity.this, "Employee " + firstName + " added.", Toast.LENGTH_SHORT).show(); //
+                    loadEmployeeList(); //
+                    alertDialog.dismiss(); //
                 } else {
-                    Toast.makeText(ManageEmployeesActivity.this, "Error adding employee.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ManageEmployeesActivity.this, "Error adding employee.", Toast.LENGTH_SHORT).show(); //
                 }
             });
         });
-        alertDialog.show();
+        alertDialog.show(); //
     }
 
     private void showEditEmployeeDialog(final Employee employeeToEdit) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = this.getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_edit_employee, null);
-        builder.setView(dialogView);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this); //
+        LayoutInflater inflater = this.getLayoutInflater(); //
+        View dialogView = inflater.inflate(R.layout.dialog_edit_employee, null); //
+        builder.setView(dialogView); //
 
-        final TextView dialogTxtEmployeeNumber = dialogView.findViewById(R.id.dialog_txt_employee_number);
-        final TextInputEditText dialogEditFirstName = dialogView.findViewById(R.id.dialog_edit_first_name);
-        final TextInputEditText dialogEditLastName = dialogView.findViewById(R.id.dialog_edit_last_name);
-        final TextInputEditText dialogEditDepartment = dialogView.findViewById(R.id.dialog_edit_department);
-        final SwitchMaterial dialogSwitchIsActive = dialogView.findViewById(R.id.dialog_switch_is_active);
+        final TextView dialogTxtEmployeeNumber = dialogView.findViewById(R.id.dialog_txt_employee_number); //
+        final TextInputEditText dialogEditFirstName = dialogView.findViewById(R.id.dialog_edit_first_name); //
+        final TextInputEditText dialogEditLastName = dialogView.findViewById(R.id.dialog_edit_last_name); //
+        final TextInputEditText dialogEditDepartment = dialogView.findViewById(R.id.dialog_edit_department); //
+        final SwitchMaterial dialogSwitchIsActive = dialogView.findViewById(R.id.dialog_switch_is_active); //
 
-        dialogTxtEmployeeNumber.setText(employeeToEdit.getEmployeeNumber());
-        dialogEditFirstName.setText(employeeToEdit.getFirstName());
-        dialogEditLastName.setText(employeeToEdit.getLastName());
-        dialogEditDepartment.setText(employeeToEdit.getDepartment());
-        dialogSwitchIsActive.setChecked(employeeToEdit.isActive());
+        dialogTxtEmployeeNumber.setText(employeeToEdit.getEmployeeNumber()); //
+        dialogEditFirstName.setText(employeeToEdit.getFirstName()); //
+        dialogEditLastName.setText(employeeToEdit.getLastName()); //
+        dialogEditDepartment.setText(employeeToEdit.getDepartment()); //
+        dialogSwitchIsActive.setChecked(employeeToEdit.isActive()); //
 
-        builder.setTitle("Edit Employee: " + employeeToEdit.getEmployeeNumber());
-        builder.setPositiveButton("Save", null);
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+        builder.setTitle("Edit Employee: " + employeeToEdit.getEmployeeNumber()); //
+        builder.setPositiveButton("Save", null); //
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss()); //
 
-        AlertDialog alertDialog = builder.create();
+        AlertDialog alertDialog = builder.create(); //
         alertDialog.setOnShowListener(dialogInterface -> {
-            Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE); //
             positiveButton.setOnClickListener(view -> {
                 String firstName = Objects.requireNonNull(dialogEditFirstName.getText()).toString().trim();
                 String lastName = Objects.requireNonNull(dialogEditLastName.getText()).toString().trim();
                 String department = Objects.requireNonNull(dialogEditDepartment.getText()).toString().trim();
                 boolean isActive = dialogSwitchIsActive.isChecked();
 
-                if (TextUtils.isEmpty(firstName) || TextUtils.isEmpty(lastName)) {
-                    Toast.makeText(ManageEmployeesActivity.this, "First and Last name cannot be empty.", Toast.LENGTH_SHORT).show();
+                // Clear previous errors
+                dialogEditFirstName.setError(null);
+                dialogEditLastName.setError(null);
+
+                boolean isValid = true;
+                if (TextUtils.isEmpty(firstName)) { //
+                    dialogEditFirstName.setError("First name cannot be empty.");
+                    isValid = false;
+                }
+                if (TextUtils.isEmpty(lastName)) { //
+                    dialogEditLastName.setError("Last name cannot be empty.");
+                    isValid = false;
+                }
+
+                if (!isValid) {
                     return;
                 }
-                employeeToEdit.setFirstName(firstName);
-                employeeToEdit.setLastName(lastName);
-                employeeToEdit.setDepartment(department.isEmpty() ? "Unassigned" : department);
-                employeeToEdit.setActive(isActive);
 
-                boolean success = dbHelper.updateEmployee(employeeToEdit);
+                employeeToEdit.setFirstName(firstName); //
+                employeeToEdit.setLastName(lastName); //
+                employeeToEdit.setDepartment(department.isEmpty() ? "Unassigned" : department); //
+                employeeToEdit.setActive(isActive); //
+
+                boolean success = dbHelper.updateEmployee(employeeToEdit); //
                 if (success) {
-                    Toast.makeText(ManageEmployeesActivity.this, "Employee updated.", Toast.LENGTH_SHORT).show();
-                    loadEmployeeList();
-                    alertDialog.dismiss();
+                    Toast.makeText(ManageEmployeesActivity.this, "Employee updated.", Toast.LENGTH_SHORT).show(); //
+                    loadEmployeeList(); //
+                    alertDialog.dismiss(); //
                 } else {
-                    Toast.makeText(ManageEmployeesActivity.this, "Failed to update employee.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ManageEmployeesActivity.this, "Failed to update employee.", Toast.LENGTH_SHORT).show(); //
                 }
             });
         });
-        alertDialog.show();
+        alertDialog.show(); //
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        loadEmployeeList(); // Refresh list when activity resumes
+        loadEmployeeList(); //
     }
 }
