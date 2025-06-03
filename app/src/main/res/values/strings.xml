@@ -19,4 +19,13 @@
 
     <string name="welcome_button_continue">Got it! Continue</string>
     <string name="welcome_checkbox_dont_show">Don\'t show this again</string>
+    <string name="dialog_limitations_title">Free Version Information</string>
+    <string name="dialog_limitations_message">Thank you for trying Handwash Tracking!&lt;br/&gt;&lt;br/&gt;
+        This free version includes the following features &amp; limitations:&lt;br/&gt;&lt;br/&gt;
+        • Up to &lt;b&gt;15 employees&lt;/b&gt; can be added.&lt;br/&gt;&lt;br/&gt;
+        • Employee data import (CSV) is &lt;b&gt;disabled&lt;/b&gt;.&lt;br/&gt;&lt;br/&gt;
+        • Custom branding and logo upload features are &lt;b&gt;disabled&lt;/b&gt;.&lt;br/&gt;&lt;br/&gt;
+        Enjoy the app! Consider upgrading in the future for more features.
+    </string>
+    <string name="dialog_ok">OK, Got It!</string>
 </resources>

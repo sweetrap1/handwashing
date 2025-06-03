@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <files-path name="my_images" path="pictures/" />
+    <files-path name="my_internal_images" path="pictures/" />
 
     <external-files-path name="my_exports" path="exports/" />
+
+    <external-files-path name="my_handwash_app_pictures" path="Pictures/" />
+
 </paths>

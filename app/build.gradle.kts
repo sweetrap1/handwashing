@@ -57,6 +57,8 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:${cameraxVersion}")
     implementation("androidx.camera:camera-view:${cameraxVersion}") // For PreviewViewion
 
+    implementation("com.getkeepsafe.taptargetview:taptargetview:1.13.3") // Check for the latest version
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

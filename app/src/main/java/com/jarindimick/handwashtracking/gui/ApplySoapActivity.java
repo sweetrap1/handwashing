@@ -25,7 +25,7 @@ public class ApplySoapActivity extends AppCompatActivity {
 
     // Timings for Apply Soap & Scrub
     private static final long STEP_DURATION_MS = 20000; // 20 seconds for Apply Soap & Scrub
-    private static final long TOTAL_PROCESS_DURATION_MS = 34000; //
+    private static final long TOTAL_PROCESS_DURATION_MS = 35000; //
 
     // UI Elements
     private ProgressBar progressStepTimer;

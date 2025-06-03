@@ -11,14 +11,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView; // Was androidx.core.content.FileProvider; - this import is not needed here
+import androidx.core.content.FileProvider; // Needed for converting file paths to content URIs
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
-// import java.io.File; // No longer strictly needed here for this functionality
-// import java.io.FileNotFoundException; // Only if you add explicit content resolver checks
-// import java.io.InputStream; // Only if you add explicit content resolver checks
+import java.io.File; // Needed for creating File objects from paths
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -44,9 +43,9 @@ public class HandwashLogAdapter extends RecyclerView.Adapter<HandwashLogAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull HandwashLogViewHolder holder, int position) {
-        DatabaseHelper.HandwashLog log = logs.get(position);
+        final DatabaseHelper.HandwashLog log = logs.get(position); // Made log final for use in inner class
 
-        Log.d("HandwashLogAdapter", "Binding log for Emp: " + log.employeeNumber + ", PhotoPath: " + log.photoPath);
+        // Log.d("HandwashLogAdapter", "Binding log for Emp: " + log.employeeNumber + ", PhotoPath: " + log.photoPath); // This log is good for initial binding check
 
         holder.txt_employee_number.setText("Employee Number: " + log.employeeNumber);
 
@@ -66,70 +65,109 @@ public class HandwashLogAdapter extends RecyclerView.Adapter<HandwashLogAdapter.
 
         holder.txt_wash_time.setText("Wash Time: " + log.washTime);
 
-        // Determine if a photo path/URI exists and is not empty or explicitly "null" (as a string)
         boolean hasPhotoIdentifier = log.photoPath != null && !log.photoPath.isEmpty() && !log.photoPath.equalsIgnoreCase("null");
 
         holder.txt_photo_path.setText("Photo: " + (hasPhotoIdentifier ? "View Photo" : "N/A"));
         holder.txt_photo_path.setClickable(hasPhotoIdentifier);
         holder.txt_photo_path.setFocusable(hasPhotoIdentifier);
 
-
         if (hasPhotoIdentifier) {
             holder.txt_photo_path.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Uri photoUriToView = null;
-                    try {
-                        // The stored log.photoPath is expected to be a URI string
-                        photoUriToView = Uri.parse(log.photoPath);
-                    } catch (Exception e) {
-                        Log.e("HandwashLogAdapter", "Error parsing stored photo path as URI: " + log.photoPath, e);
-                        Toast.makeText(context, "Invalid photo reference in database.", Toast.LENGTH_LONG).show();
+                    String pathFromDb = log.photoPath;
+
+                    if (pathFromDb == null || pathFromDb.isEmpty() || pathFromDb.equalsIgnoreCase("null")) {
+                        Toast.makeText(context, "Photo reference is missing.", Toast.LENGTH_LONG).show();
                         return;
                     }
 
-                    if (photoUriToView != null) {
-                        Log.d("HandwashLogAdapter", "Attempting to view photo with URI: " + photoUriToView.toString());
-                        try {
-                            // Optional: A quick check to see if content resolver can open it (catches some bad URIs)
-                            // This check can be useful for debugging but might be too strict if some apps can handle URIs
-                            // that openInputStream might fail for (e.g. due to temporary permissions needed by the viewer app)
-                            //
-                            // InputStream inputStream = context.getContentResolver().openInputStream(photoUriToView);
-                            // if (inputStream != null) {
-                            //     inputStream.close();
-                            // } else {
-                            //     throw new FileNotFoundException("Content resolver returned null stream for URI.");
-                            // }
+                    Log.d("HandwashLogAdapter", "Raw photoPath from DB: " + pathFromDb);
+                    Uri photoUriToView;
 
-                            Intent intent = new Intent(Intent.ACTION_VIEW);
-                            intent.setDataAndType(photoUriToView, "image/*");
-                            // Grant permission to the receiving app to read this URI
-                            // This is crucial for FileProvider URIs and good practice for MediaStore URIs too.
-                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    try {
+                        Uri parsedUri = Uri.parse(pathFromDb);
+                        String scheme = parsedUri.getScheme();
+                        Log.d("HandwashLogAdapter", "Parsed URI Scheme: " + (scheme != null ? scheme : "null"));
 
-                            if (intent.resolveActivity(context.getPackageManager()) != null) {
-                                context.startActivity(intent);
+                        if ("file".equals(scheme)) {
+                            Log.d("HandwashLogAdapter", "Path from DB is a file scheme. Attempting FileProvider conversion.");
+                            File photoFile = new File(parsedUri.getPath()); // Get path from file URI
+                            if (photoFile.exists()) {
+                                // Authority must match exactly what's in AndroidManifest.xml
+                                String authority = context.getApplicationContext().getPackageName() + ".fileprovider";
+                                photoUriToView = FileProvider.getUriForFile(context, authority, photoFile);
+                                Log.d("HandwashLogAdapter", "Converted to FileProvider URI: " + photoUriToView.toString());
                             } else {
-                                Toast.makeText(context, "No app found to view this photo.", Toast.LENGTH_SHORT).show();
-                                Log.w("HandwashLogAdapter", "No activity found to handle ACTION_VIEW for image URI: " + photoUriToView.toString());
+                                Log.e("HandwashLogAdapter", "File URI points to a non-existent file: " + parsedUri.getPath());
+                                Toast.makeText(context, "Photo file not found at path: " + parsedUri.getPath(), Toast.LENGTH_LONG).show();
+                                return;
                             }
+                        } else if ("content".equals(scheme)) {
+                            Log.d("HandwashLogAdapter", "Path from DB is already a content scheme URI: " + parsedUri.toString());
+                            photoUriToView = parsedUri;
+                        } else {
+                            // Attempt to treat as a file path if no scheme, though this is less reliable
+                            Log.w("HandwashLogAdapter", "URI scheme is null or unknown ('" + scheme + "'). Assuming it might be a raw file path and attempting FileProvider conversion.");
+                            File photoFile = new File(pathFromDb);
+                            if (photoFile.exists()) {
+                                String authority = context.getApplicationContext().getPackageName() + ".fileprovider";
+                                photoUriToView = FileProvider.getUriForFile(context, authority, photoFile);
+                                Log.d("HandwashLogAdapter", "Converted assumed file path to FileProvider URI: " + photoUriToView.toString());
+                            } else {
+                                Log.e("HandwashLogAdapter", "Assumed file path does not exist: " + pathFromDb);
+                                Toast.makeText(context, "Photo file not found for path: " + pathFromDb, Toast.LENGTH_LONG).show();
+                                return;
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e("HandwashLogAdapter", "Error processing photo path: '" + pathFromDb + "' into a usable URI.", e);
+                        Toast.makeText(context, "Invalid photo reference format.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    if (photoUriToView == null) {
+                        Toast.makeText(context, "Could not obtain a valid URI for the photo.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    Log.d("HandwashLogAdapter", "Attempting to view with final URI: " + photoUriToView.toString() + " (Scheme: " + photoUriToView.getScheme() + ")");
+
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setDataAndType(photoUriToView, "image/*"); // Standard way to set data and type
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); // Often helps when starting external activities
+
+                    if (intent.resolveActivity(context.getPackageManager()) != null) {
+                        try {
+                            context.startActivity(intent);
                         } catch (SecurityException se) {
-                            Toast.makeText(context, "Permission denied: Cannot open photo.", Toast.LENGTH_LONG).show();
                             Log.e("HandwashLogAdapter", "SecurityException opening photo URI: " + photoUriToView.toString(), se);
-                        } catch (Exception e) { // Catch other exceptions like ActivityNotFoundException, FileNotFoundException from optional check
+                            Toast.makeText(context, "Permission denied: Cannot open photo.", Toast.LENGTH_LONG).show();
+                        } catch (Exception e) {
+                            Log.e("HandwashLogAdapter", "Error starting activity for URI: " + photoUriToView.toString(), e);
                             Toast.makeText(context, "Could not open photo: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            Log.e("HandwashLogAdapter", "Error opening photo URI: " + photoUriToView.toString(), e);
                         }
                     } else {
-                        // This case might be reached if log.photoPath was an empty string that somehow passed the initial check
-                        // or if Uri.parse returns null for some malformed strings (though it usually throws an exception).
-                        Toast.makeText(context, "Photo reference is invalid (null after parse).", Toast.LENGTH_LONG).show();
+                        Toast.makeText(context, "No app found to view this photo.", Toast.LENGTH_SHORT).show();
+                        Log.w("HandwashLogAdapter", "No activity found for ACTION_VIEW with URI: " + photoUriToView.toString());
+
+                        // Fallback attempt with chooser for further debugging
+                        Intent chooserIntent = Intent.createChooser(intent, "Open image with");
+                        if (chooserIntent.resolveActivity(context.getPackageManager()) != null) {
+                            Log.d("HandwashLogAdapter", "Chooser has options, trying to start chooser...");
+                            try {
+                                context.startActivity(chooserIntent);
+                            } catch (Exception e) {
+                                Log.e("HandwashLogAdapter", "Error starting chooser: " + e.getMessage());
+                            }
+                        } else {
+                            Log.w("HandwashLogAdapter", "Chooser also found no activities for URI: " + photoUriToView.toString());
+                        }
                     }
                 }
             });
         } else {
-            // If no photo identifier, ensure no listener is set (or remove if set previously)
             holder.txt_photo_path.setOnClickListener(null);
         }
     }

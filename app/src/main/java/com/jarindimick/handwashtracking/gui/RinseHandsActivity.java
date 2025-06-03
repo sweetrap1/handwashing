@@ -21,8 +21,8 @@ public class RinseHandsActivity extends AppCompatActivity {
 
     private String employeeNumber;
 
-    private static final long STEP_DURATION_MS = 7000; // 7 seconds for Rinse Hands
-    private static final long TOTAL_PROCESS_DURATION_MS = 37000; //
+    private static final long STEP_DURATION_MS = 6000; // 7 seconds for Rinse Hands
+    private static final long TOTAL_PROCESS_DURATION_MS = 35000; //
 
     private ProgressBar progressStepTimer;
     private TextView textStepTimerValue;

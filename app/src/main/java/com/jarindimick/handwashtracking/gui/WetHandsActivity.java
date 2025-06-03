@@ -22,7 +22,7 @@ public class WetHandsActivity extends AppCompatActivity {
     private String employeeNumber;
 
     private static final long STEP_DURATION_MS = 4000; // 5 seconds for Wet Hands
-    public static final long TOTAL_PROCESS_DURATION_MS = 34000; // Total
+    public static final long TOTAL_PROCESS_DURATION_MS = 35000; // Total
 
     private ProgressBar progressStepTimer;
     private TextView textStepTimerValue;

@@ -236,7 +236,7 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
                         File imageFile = new File(currentPhotoPath);
                         try {
                             currentPhotoUri = FileProvider.getUriForFile(ConfirmHandwashActivity.this,
-                                    getApplicationContext().getPackageName() + ".fileprovider",
+                                    getApplicationContext().getPackageName() + ".fileprovider", // This generates "com.jarindimick.handwashtracking.fileprovider"
                                     imageFile);
                         } catch (IllegalArgumentException e) {
                             Log.e(TAG, "FileProvider error for pre-Q image: " + e.getMessage(), e);

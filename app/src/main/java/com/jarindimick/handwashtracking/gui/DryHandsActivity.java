@@ -23,7 +23,7 @@ public class DryHandsActivity extends AppCompatActivity {
     private String employeeNumber;
 
     private static final long STEP_DURATION_MS = 5000; // 5 seconds for Dry Hands
-    private static final long TOTAL_PROCESS_DURATION_MS = 37000; //
+    private static final long TOTAL_PROCESS_DURATION_MS = 35000; //
 
     private ProgressBar progressStepTimer;
     private TextView textStepTimerValue;
