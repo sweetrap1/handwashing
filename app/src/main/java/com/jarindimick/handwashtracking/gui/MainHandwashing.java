@@ -216,98 +216,114 @@ public class MainHandwashing extends AppCompatActivity {
     }
 
 
-    private void populateLeaderboardTable() {
-        table_top_handwashers.removeAllViews();
+    // ... other methods ...
 
-        TableRow headerRow = new TableRow(this);
-        TableRow.LayoutParams headerParams = new TableRow.LayoutParams(
+    private void populateLeaderboardTable() {
+        table_top_handwashers.removeAllViews(); //
+
+        TableRow headerRow = new TableRow(this); //
+        TableRow.LayoutParams headerParams = new TableRow.LayoutParams( //
                 TableRow.LayoutParams.MATCH_PARENT,
                 TableRow.LayoutParams.WRAP_CONTENT);
-        headerRow.setLayoutParams(headerParams);
-        headerRow.setPadding(dpToPx(8), dpToPx(12), dpToPx(8), dpToPx(12));
+        headerRow.setLayoutParams(headerParams); //
+        headerRow.setPadding(dpToPx(8), dpToPx(12), dpToPx(8), dpToPx(12)); //
 
-        TextView rankHeader = createTableHeaderTextView("Rank"); // Header text size is 16sp
-        TextView nameHeader = createTableHeaderTextView("Name");   // Header text size is 16sp
-        TextView countHeader = createTableHeaderTextView("Washes"); // Header text size is 16sp
+        TextView rankHeader = createTableHeaderTextView("Rank"); //
+        TextView nameHeader = createTableHeaderTextView("Name");   //
+        TextView countHeader = createTableHeaderTextView("Washes"); //
 
-        rankHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f));
-        nameHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1.5f));
-        countHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f));
+        rankHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f)); //
+        nameHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1.5f)); //
+        countHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)); //
 
-        headerRow.addView(rankHeader);
-        headerRow.addView(nameHeader);
-        headerRow.addView(countHeader);
-        table_top_handwashers.addView(headerRow);
+        headerRow.addView(rankHeader); //
+        headerRow.addView(nameHeader); //
+        headerRow.addView(countHeader); //
+        table_top_handwashers.addView(headerRow); //
 
-        leaderboardData = dbHelper.getTopHandwashers();
+        leaderboardData = dbHelper.getTopHandwashers(); //
 
-        if (leaderboardData.isEmpty()) {
-            TableRow emptyRow = new TableRow(this);
-            TextView emptyMsg = new TextView(this);
-            emptyMsg.setText("No handwashes recorded yet today!");
-            emptyMsg.setTextSize(16); // Size for the "empty" message
-            emptyMsg.setPadding(dpToPx(8), dpToPx(16), dpToPx(8), dpToPx(16));
-            emptyMsg.setGravity(Gravity.CENTER);
-            TableRow.LayoutParams emptyParams = new TableRow.LayoutParams(
+        if (leaderboardData.isEmpty()) { //
+            TableRow emptyRow = new TableRow(this); //
+            TextView emptyMsg = new TextView(this); //
+            emptyMsg.setText("No handwashes recorded yet today!"); //
+            emptyMsg.setTextSize(16); //
+            emptyMsg.setPadding(dpToPx(8), dpToPx(16), dpToPx(8), dpToPx(16)); //
+            emptyMsg.setGravity(Gravity.CENTER); //
+            TableRow.LayoutParams emptyParams = new TableRow.LayoutParams( //
                     TableRow.LayoutParams.MATCH_PARENT,
                     TableRow.LayoutParams.WRAP_CONTENT);
-            emptyParams.span = 3;
-            emptyRow.addView(emptyMsg, emptyParams);
-            table_top_handwashers.addView(emptyRow);
+            emptyParams.span = 3; //
+            emptyRow.addView(emptyMsg, emptyParams); //
+            table_top_handwashers.addView(emptyRow); //
         } else {
             int rank = 1;
-            for (LeaderboardEntry entry : leaderboardData) {
-                TableRow dataRow = new TableRow(this);
-                dataRow.setPadding(dpToPx(8), dpToPx(10), dpToPx(8), dpToPx(10));
+            for (LeaderboardEntry entry : leaderboardData) { //
+                TableRow dataRow = new TableRow(this); //
+                dataRow.setPadding(dpToPx(8), dpToPx(10), dpToPx(8), dpToPx(10)); //
 
-                // Increase text size here for data rows, e.g., from 18 to 20
-                int dataTextSize = 20; // Define your desired size
+                int dataTextSize = 20; //
 
-                TextView rankView = createDataTextView(String.valueOf(rank) + ".", dataTextSize, Typeface.BOLD);
-                rankView.setGravity(Gravity.CENTER);
+                TextView rankView = createDataTextView(String.valueOf(rank) + ".", dataTextSize, Typeface.BOLD); //
+                rankView.setGravity(Gravity.CENTER); //
 
-                LinearLayout nameCellLayout = new LinearLayout(this);
-                nameCellLayout.setOrientation(LinearLayout.HORIZONTAL);
-                nameCellLayout.setGravity(Gravity.CENTER_VERTICAL);
+                LinearLayout nameCellLayout = new LinearLayout(this); //
+                nameCellLayout.setOrientation(LinearLayout.HORIZONTAL); //
+                // THIS IS THE KEY CHANGE:
+                nameCellLayout.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL); //
 
-                ImageView starIcon = new ImageView(this);
-                starIcon.setImageResource(R.drawable.ic_star_leaderboard);
-                LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
+                ImageView starIcon = new ImageView(this); //
+                starIcon.setImageResource(R.drawable.ic_star_leaderboard); //
+                LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams( //
                         dpToPx(20),
                         dpToPx(20)
                 );
-                iconParams.setMarginEnd(dpToPx(4));
-                starIcon.setLayoutParams(iconParams);
+                iconParams.setMarginEnd(dpToPx(4)); //
+                starIcon.setLayoutParams(iconParams); //
 
-                TextView nameView = createDataTextView(entry.employeeName, dataTextSize, Typeface.NORMAL);
-                LinearLayout.LayoutParams nameViewParams = new LinearLayout.LayoutParams(
+                String firstName = entry.employeeName;
+                String lastName = entry.lastName;
+                String displayName = (firstName == null) ? "" : firstName;
+
+                if (lastName != null && !lastName.isEmpty()) {
+                    displayName = displayName.trim() + " " + lastName.charAt(0) + ".";
+                } else if (firstName != null && firstName.equals("Guest") && (lastName == null || lastName.isEmpty())) {
+                    displayName = "Guest";
+                }
+                displayName = displayName.trim();
+
+                Log.d("LeaderboardDebug", "Rank: " + rank + ", Employee: " + entry.employeeNumber + ", DisplayName: '" + displayName + "'");
+
+                TextView nameView = createDataTextView(displayName, dataTextSize, Typeface.NORMAL); //
+                LinearLayout.LayoutParams nameViewParams = new LinearLayout.LayoutParams( //
                         0,
                         LinearLayout.LayoutParams.WRAP_CONTENT,
                         1.0f
                 );
-                nameView.setLayoutParams(nameViewParams);
-                nameView.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
+                nameView.setLayoutParams(nameViewParams); //
+                nameView.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL); // Text within the TextView is still START aligned
 
-                nameCellLayout.addView(starIcon);
-                nameCellLayout.addView(nameView);
+                nameCellLayout.addView(starIcon); //
+                nameCellLayout.addView(nameView); //
 
-                TextView countView = createDataTextView(String.valueOf(entry.handwashCount), dataTextSize, Typeface.BOLD);
-                countView.setGravity(Gravity.CENTER);
+                TextView countView = createDataTextView(String.valueOf(entry.handwashCount), dataTextSize, Typeface.BOLD); //
+                countView.setGravity(Gravity.CENTER); //
 
-                TableRow.LayoutParams rankCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f);
-                TableRow.LayoutParams nameCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.MATCH_PARENT, 1.5f);
-                TableRow.LayoutParams countCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f);
+                TableRow.LayoutParams rankCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f); //
+                TableRow.LayoutParams nameCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.MATCH_PARENT, 1.5f); //
+                TableRow.LayoutParams countCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f); //
 
-                dataRow.addView(rankView, rankCellParams);
-                dataRow.addView(nameCellLayout, nameCellParams);
-                dataRow.addView(countView, countCellParams);
+                dataRow.addView(rankView, rankCellParams); //
+                dataRow.addView(nameCellLayout, nameCellParams); //
+                dataRow.addView(countView, countCellParams); //
 
-                table_top_handwashers.addView(dataRow);
+                table_top_handwashers.addView(dataRow); //
                 rank++;
             }
         }
     }
 
+    // ... rest of MainHandwashing.java ...
     private TextView createTableHeaderTextView(String text) {
         TextView textView = new TextView(this);
         textView.setText(text);

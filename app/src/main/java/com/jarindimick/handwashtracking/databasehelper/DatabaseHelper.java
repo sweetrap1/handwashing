@@ -82,6 +82,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         adminValues.put(COLUMN_ROLE, "administrator");
         db.insert(TABLE_ADMIN_USERS, null, adminValues);
         Log.d(TAG, "Database tables created and initial admin user (admin/admin) inserted.");
+
+        // --- START: Add Guest User ---
+        ContentValues guestValues = new ContentValues();
+        guestValues.put(COLUMN_EMPLOYEE_NUMBER, "0");
+        guestValues.put(COLUMN_FIRST_NAME, "Guest");
+        guestValues.put(COLUMN_LAST_NAME, ""); // Last name can be empty or a placeholder
+        guestValues.put(COLUMN_DEPARTMENT, "N/A");
+        guestValues.put(COLUMN_IS_ACTIVE, 1); // Guest user is always active for logging
+        db.insert(TABLE_EMPLOYEES, null, guestValues);
+        Log.d(TAG, "Default Guest user (0) inserted.");
+        // --- END: Add Guest User ---
     }
 
     @Override
@@ -387,36 +398,39 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 
     public List<LeaderboardEntry> getTopHandwashers() {
-        SQLiteDatabase db = this.getReadableDatabase();
-        List<LeaderboardEntry> leaderboard = new ArrayList<>();
-        LocalDate currentDate = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.getDefault());
-        String today = currentDate.format(formatter);
+        SQLiteDatabase db = this.getReadableDatabase(); //
+        List<LeaderboardEntry> leaderboard = new ArrayList<>(); //
+        LocalDate currentDate = LocalDate.now(); //
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.getDefault()); //
+        String today = currentDate.format(formatter); //
         Cursor cursor = null;
         try {
-            String query = "SELECT e." + COLUMN_EMPLOYEE_NUMBER + ", e." + COLUMN_FIRST_NAME + ", " +
-                    "COUNT(hl." + COLUMN_ID + ") AS handwash_count " +
+            // MODIFIED QUERY to include last_name
+            String query = "SELECT e." + COLUMN_EMPLOYEE_NUMBER + ", e." + COLUMN_FIRST_NAME + ", e." + COLUMN_LAST_NAME + // Added COLUMN_LAST_NAME
+                    ", COUNT(hl." + COLUMN_ID + ") AS handwash_count " +
                     "FROM " + TABLE_EMPLOYEES + " e JOIN " + TABLE_HANDWASH_LOG + " hl " +
                     "ON e." + COLUMN_EMPLOYEE_NUMBER + " = hl." + COLUMN_EMPLOYEE_NUMBER +
                     " WHERE hl." + COLUMN_WASH_DATE + " = ? AND e." + COLUMN_IS_ACTIVE + " = 1" +
-                    " GROUP BY e." + COLUMN_EMPLOYEE_NUMBER + ", e." + COLUMN_FIRST_NAME +
+                    " GROUP BY e." + COLUMN_EMPLOYEE_NUMBER + ", e." + COLUMN_FIRST_NAME + ", e." + COLUMN_LAST_NAME + // Added COLUMN_LAST_NAME to GROUP BY
                     " ORDER BY handwash_count DESC LIMIT 5";
-            cursor = db.rawQuery(query, new String[]{today});
-            if (cursor.moveToFirst()) {
+            cursor = db.rawQuery(query, new String[]{today}); //
+            if (cursor.moveToFirst()) { //
                 do {
-                    String empNumber = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
-                    String firstName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIRST_NAME));
-                    int count = cursor.getInt(cursor.getColumnIndexOrThrow("handwash_count"));
-                    leaderboard.add(new LeaderboardEntry(empNumber, firstName, count));
+                    String empNumber = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER)); //
+                    String firstName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIRST_NAME)); //
+                    String lastNameValue = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_LAST_NAME)); // NEW: Get lastName
+                    int count = cursor.getInt(cursor.getColumnIndexOrThrow("handwash_count")); //
+                    // MODIFIED Instantiation
+                    leaderboard.add(new LeaderboardEntry(empNumber, firstName, lastNameValue, count)); //
                 } while (cursor.moveToNext());
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Error getting top handwashers: " + e.getMessage());
+        } catch (Exception e) { //
+            Log.e(TAG, "Error getting top handwashers: " + e.getMessage()); //
         } finally {
-            if (cursor != null) cursor.close();
-            db.close();
+            if (cursor != null) cursor.close(); //
+            db.close(); //
         }
-        return leaderboard;
+        return leaderboard; //
     }
 
 

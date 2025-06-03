@@ -82,14 +82,6 @@
             android:gravity="center"
             android:layout_marginBottom="12dp"/>
 
-        <TextView
-            android:id="@+id/lbl_employee_number"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Enter Your Employee Number"
-            android:textSize="15sp"
-            android:gravity="center"
-            android:layout_marginBottom="6dp"/>
 
         <EditText
             android:id="@+id/edit_employee_number"
@@ -103,16 +95,26 @@
             android:textSize="15sp"
             android:layout_marginBottom="12dp"
             android:autofillHints="employeeId"
-            android:hint="Employee #"/>
-
-        <Button
-            android:id="@+id/btn_start"
+            android:hint="Enter Employee #
+" />
+        <TextView
+            android:id="@+id/lbl_employee_number"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:backgroundTint="#4CAF50"
-            android:text="Start"
-            android:textSize="15sp"
-            android:textColor="#FFFFFF"/>
+            android:text="Guest or employees not yet added enter 0"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:layout_marginBottom="6dp"
+            android:visibility="visible" />
+
+        <Button
+        android:id="@+id/btn_start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:backgroundTint="#4CAF50"
+        android:text="Start"
+        android:textSize="15sp"
+        android:textColor="#FFFFFF"/>
     </LinearLayout>
 
 

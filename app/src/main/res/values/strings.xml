@@ -1,3 +1,22 @@
 <resources>
     <string name="app_name">Handwash Tracking</string>
+    <string name="welcome_title">Welcome to Handwash Tracking!</string>
+    <string name="welcome_intro">Here are a few tips to get you started:</string>
+
+    <string name="welcome_guest_title"><b>Using as a Guest:</b></string>
+    <string name="welcome_guest_desc">\t• If you\'re not a registered employee, you can log a handwash by entering employee number <b>0</b> on the main screen.</string>
+
+    <string name="welcome_admin_title"><b>Admin Dashboard:</b></string>
+    <string name="welcome_admin_desc_login">\t• To access admin features (add employees, reports, etc.), tap the <b>menu icon</b> (⋮) on the main screen and select \"Admin Login\".</string>
+    <string name="welcome_admin_desc_creds">\t• Default Admin Username: <b>admin</b></string>
+    <string name="welcome_admin_desc_pass">\t• Default Admin Password: <b>admin</b> (Please change this in the Admin Dashboard!)</string>
+
+    <string name="welcome_free_version_title"><b>Free Version Limitations:</b></string>
+    <string name="welcome_free_employees">\t• You can add up to <b>15 employees</b>.</string>
+    <string name="welcome_free_no_import">\t• Employee CSV import is <b>not available</b>.</string>
+    <string name="welcome_free_no_logo">\t• Custom logo upload is <b>not available</b>.</string>
+    <string name="welcome_free_consider_pro">\t• Consider upgrading for unlimited features!</string>
+
+    <string name="welcome_button_continue">Got it! Continue</string>
+    <string name="welcome_checkbox_dont_show">Don\'t show this again</string>
 </resources>
