@@ -88,6 +88,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private Button btn_import_employees;
     private Button btn_go_to_manage_employees;
     private Button btn_upload_logo;
+    private Button getBtn_remove_logo;
+
     private Button btn_show_add_employee_dialog;
     private Button btn_show_change_password_dialog;
     private Button btn_show_download_data_dialog;
@@ -143,7 +145,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_import_employees = findViewById(R.id.btn_import_employees); //
         txt_message = findViewById(R.id.txt_message); //
         btn_go_to_manage_employees = findViewById(R.id.btn_go_to_manage_employees); //
-        btn_upload_logo = findViewById(R.id.btn_upload_logo); //
+        btn_upload_logo = findViewById(R.id.btn_upload_logo);
+        btn_remove_logo = findViewById(R.id.btn_remove_logo);   //
         btn_show_add_employee_dialog = findViewById(R.id.btn_show_add_employee_dialog); //
         btn_show_change_password_dialog = findViewById(R.id.btn_show_change_password_dialog); //
         btn_show_download_data_dialog = findViewById(R.id.btn_show_download_data_dialog); //
@@ -166,6 +169,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_show_change_password_dialog.setOnClickListener(v -> showChangePasswordDialog()); //
         btn_show_download_data_dialog.setOnClickListener(v -> showDownloadDataDialog()); //
     }
+
 
     private void removeCustomLogoWithConfirmation() {
         new AlertDialog.Builder(this)
