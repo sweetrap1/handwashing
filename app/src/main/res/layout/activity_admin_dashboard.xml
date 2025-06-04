@@ -5,7 +5,6 @@
     android:id="@+id/coordinator_layout_admin_dashboard"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="false"
     tools:context=".gui.AdminDashboardActivity">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -21,7 +20,7 @@
             android:layout_height="?attr/actionBarSize"
             app:title="Admin Dashboard"
             app:titleCentered="true"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+            app:popupTheme="@style/AppPopupMenu" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -36,335 +35,321 @@
             android:id="@+id/main"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp">
+            android:paddingBottom="16dp">
 
-            <LinearLayout
-                android:id="@+id/layout_admin_overview"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_overview"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="12dp"
-                android:background="@drawable/overview_section_background"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Today's Overview"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp"
-                    android:textColor="?attr/colorPrimary"
-                    android:layout_gravity="center_horizontal"/>
-                <TextView
-                    android:id="@+id/txt_overview_total_washes_today"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Total Handwashes Today: N/A"
-                    android:textSize="16sp"
-                    android:layout_marginBottom="4dp"/>
-                <TextView
-                    android:id="@+id/txt_overview_active_employees"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Today's Overview"
+                        android:textAppearance="?attr/textAppearanceHeadline6"
+                        android:layout_marginBottom="12dp"
+                        android:textColor="?attr/colorPrimary"
+                        android:layout_gravity="center_horizontal"/>
+                    <TextView
+                        android:id="@+id/txt_overview_total_washes_today"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Total Handwashes Today: N/A"
+                        android:textSize="16sp"
+                        android:layout_marginBottom="6dp"/>
+                    <TextView
+                        android:id="@+id/txt_overview_active_employees"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Active Employees: N/A"
+                        android:textSize="16sp"
+                        android:layout_marginBottom="6dp"/>
+                    <TextView
+                        android:id="@+id/txt_overview_top_washer_today"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Top Washer Today: N/A"
+                        android:textSize="16sp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_database_management"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/card_overview"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="12dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Active Employees: N/A"
-                    android:textSize="16sp"
-                    android:layout_marginBottom="4dp"/>
-                <TextView
-                    android:id="@+id/txt_overview_top_washer_today"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/lbl_database_section_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Database Management"
+                        android:textAppearance="?attr/textAppearanceHeadline6"
+                        android:layout_marginBottom="12dp"
+                        android:layout_gravity="center_horizontal"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_go_to_manage_employees"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="56dp"
+                        android:text="Manage Employees"
+                        app:icon="@android:drawable/ic_menu_manage"
+                        android:layout_marginBottom="8dp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_show_download_data_dialog"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="56dp"
+                        android:text="Download Data Report"
+                        app:icon="@android:drawable/stat_sys_download_done"
+                        android:layout_marginBottom="8dp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_delete_data"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="56dp"
+                        android:text="Delete Data Range"
+                        app:icon="@android:drawable/ic_menu_delete"
+                        app:backgroundTint="?attr/colorError"
+                        android:textColor="?attr/colorOnError"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_branding"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/card_database_management"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="12dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Top Washer Today: N/A"
-                    android:textSize="16sp"/>
-            </LinearLayout>
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guideline_admin_buttons_center"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_constraintGuide_percent="0.5" />
+                    <TextView
+                        android:id="@+id/lbl_branding_section_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Branding"
+                        android:textAppearance="?attr/textAppearanceHeadline6"
+                        android:layout_marginBottom="12dp"
+                        android:layout_gravity="center_horizontal"/>
 
-            <Button
-                android:id="@+id/btn_show_change_password_dialog"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:minHeight="56dp" android:text="Change Password"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="4dp" app:layout_constraintTop_toBottomOf="@id/layout_admin_overview"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/guideline_admin_buttons_center" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_upload_logo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="56dp"
+                        android:text="Upload/Change App Logo"
+                        app:icon="@android:drawable/ic_menu_gallery"
+                        android:layout_marginBottom="8dp"/>
 
-            <Button
-                android:id="@+id/btn_logout"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:minHeight="56dp" android:text="Logout"
-                android:layout_marginStart="4dp" app:layout_constraintTop_toTopOf="@id/btn_show_change_password_dialog"
-                app:layout_constraintStart_toEndOf="@id/guideline_admin_buttons_center"
-                app:layout_constraintEnd_toEndOf="parent" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_remove_logo"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:text="Remove App Logo"
+                        android:textColor="?attr/colorError"
+                        app:icon="@android:drawable/ic_menu_delete"
+                        app:iconTint="?attr/colorError"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            <View
-                android:id="@+id/divider_after_account_actions"
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:background="?android:attr/listDivider"
-                app:layout_constraintTop_toBottomOf="@id/btn_show_change_password_dialog"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <TextView
-                android:id="@+id/lbl_database_section_title"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_search_handwashes"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Database Management"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:gravity="center_horizontal"
-                android:layout_marginTop="16dp"
-                app:layout_constraintTop_toBottomOf="@id/divider_after_account_actions"
+                app:layout_constraintTop_toBottomOf="@id/card_branding"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <Button
-                android:id="@+id/btn_go_to_manage_employees"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:minHeight="56dp" android:text="Manage Employees"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="4dp" app:layout_constraintTop_toBottomOf="@id/lbl_database_section_title"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/guideline_admin_buttons_center" />
-
-            <Button
-                android:id="@+id/btn_show_add_employee_dialog"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:minHeight="56dp" android:text="Quick Add Emp"
-                android:layout_marginStart="4dp" app:layout_constraintTop_toTopOf="@id/btn_go_to_manage_employees"
-                app:layout_constraintStart_toEndOf="@id/guideline_admin_buttons_center"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <Button
-                android:id="@+id/btn_import_employees"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:minHeight="56dp" android:text="Import Employees"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="4dp" app:layout_constraintTop_toBottomOf="@id/btn_go_to_manage_employees"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/guideline_admin_buttons_center" />
-
-            <Button
-                android:id="@+id/btn_show_download_data_dialog"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:minHeight="56dp" android:text="Download Data Report"
-                android:layout_marginStart="4dp" app:layout_constraintTop_toTopOf="@id/btn_import_employees"
-                app:layout_constraintStart_toEndOf="@id/guideline_admin_buttons_center"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <Button
-                android:id="@+id/btn_delete_data"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:minHeight="56dp" android:text="Delete Data"
-                app:backgroundTint="@color/button_red_delete"
-                android:textColor="@color/button_red_delete_text"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="4dp" app:layout_constraintTop_toBottomOf="@id/btn_import_employees"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/guideline_admin_buttons_center" />
-
-            <View
-                android:id="@+id/divider_after_database"
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:background="?android:attr/listDivider"
-                app:layout_constraintTop_toBottomOf="@id/btn_delete_data"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <TextView
-                android:id="@+id/lbl_branding_section_title"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="Branding"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:gravity="center_horizontal"
-                android:layout_marginTop="16dp"
-                app:layout_constraintTop_toBottomOf="@id/divider_after_database"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <TextView
-                android:id="@+id/lbl_branding_section_title"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="Branding"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:gravity="center_horizontal"
-                android:layout_marginTop="16dp"
-                app:layout_constraintTop_toBottomOf="@id/divider_after_database"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <Button
-                android:id="@+id/btn_upload_logo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:text="Upload/Change App Logo"
-                android:layout_marginTop="8dp"
-                app:layout_constraintTop_toBottomOf="@id/lbl_branding_section_title"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <Button
-                android:id="@+id/btn_remove_logo"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:text="Remove App Logo"
-                android:layout_marginTop="8dp"
-                android:textColor="?attr/colorError"
-                app:layout_constraintTop_toBottomOf="@id/btn_upload_logo"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <View
-                android:id="@+id/divider_after_branding"
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:background="?android:attr/listDivider"
-                app:layout_constraintTop_toBottomOf="@id/btn_remove_logo" app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <TextView
-                android:id="@+id/lbl_search_handwashes_title"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Search Handwashes"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textAlignment="center"
-                app:layout_constraintTop_toBottomOf="@id/divider_after_branding"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
-            <EditText
-                android:id="@+id/edit_search_first_name"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:hint="First Name"
-                android:inputType="textPersonName"
-                android:minHeight="48dp"
-                app:layout_constraintTop_toBottomOf="@id/lbl_search_handwashes_title"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-            <EditText
-                android:id="@+id/edit_search_last_name"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:hint="Last Name"
-                android:inputType="textPersonName"
-                android:minHeight="48dp"
-                app:layout_constraintTop_toBottomOf="@id/edit_search_first_name"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-            <EditText
-                android:id="@+id/edit_search_employee_id"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:hint="Employee ID"
-                android:inputType="number"
-                android:minHeight="48dp"
-                app:layout_constraintTop_toBottomOf="@id/edit_search_last_name"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-            <EditText
-                android:id="@+id/edit_search_start_date"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="8dp"
-                android:clickable="true"
-                android:focusable="false"
-                android:hint="Start Date (YYYY-MM-DD)"
-                android:minHeight="48dp"
-                app:layout_constraintTop_toBottomOf="@id/edit_search_employee_id"
-                app:layout_constraintEnd_toStartOf="@+id/edit_search_end_date"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintHorizontal_chainStyle="spread"
-                app:layout_constraintStart_toStartOf="parent" />
-            <EditText
-                android:id="@+id/edit_search_end_date"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:clickable="true"
-                android:focusable="false"
-                android:hint="End Date (YYYY-MM-DD)"
-                android:minHeight="48dp"
-                app:layout_constraintTop_toBottomOf="@id/edit_search_employee_id"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/edit_search_start_date" />
-            <Button
-                android:id="@+id/btn_search_handwashes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp" android:layout_marginTop="16dp"
-                android:text="Search Handwashes"
-                app:layout_constraintTop_toBottomOf="@id/edit_search_end_date"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                android:layout_marginTop="12dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                app:cardElevation="4dp">
 
-            <View
-                android:id="@+id/divider2"
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:background="?android:attr/listDivider"
-                app:layout_constraintTop_toBottomOf="@id/btn_search_handwashes"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
-            <TextView
-                android:id="@+id/lbl_message_area_title"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/lbl_search_handwashes_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Search Handwash Logs"
+                        android:textAppearance="?attr/textAppearanceHeadline6"
+                        android:layout_marginBottom="12dp"
+                        android:layout_gravity="center_horizontal" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:hint="First Name (Optional)">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edit_search_first_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPersonName|textCapWords"
+                            android:minHeight="48dp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:hint="Last Name (Optional)">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edit_search_last_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPersonName|textCapWords"
+                            android:minHeight="48dp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:hint="Employee ID (Optional)">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edit_search_employee_id"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="number"
+                            android:minHeight="48dp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:hint="Start Date">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edit_search_start_date"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="false"
+                            android:inputType="date"
+                            android:minHeight="48dp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:hint="End Date">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edit_search_end_date"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="false"
+                            android:inputType="date"
+                            android:minHeight="48dp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_search_handwashes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minHeight="56dp"
+                        android:layout_marginTop="8dp"
+                        android:text="Search Logs"
+                        app:icon="@android:drawable/ic_menu_search"
+                        android:layout_gravity="center_horizontal"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_messages_results"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Messages / Results"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textAlignment="center"
-                app:layout_constraintTop_toBottomOf="@id/divider2"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
-            <TextView
-                android:id="@+id/txt_message"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Status messages will appear here."
-                app:layout_constraintTop_toBottomOf="@id/lbl_message_area_title"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_search_results"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:minHeight="150dp"
-                android:layout_marginTop="8dp"
-                android:visibility="gone"
-                app:layout_constraintTop_toBottomOf="@id/txt_message"
+                app:layout_constraintTop_toBottomOf="@id/card_search_handwashes"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginTop="12dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/lbl_message_area_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Messages / Results"
+                        android:textAppearance="?attr/textAppearanceHeadline6"
+                        android:layout_marginBottom="8dp"
+                        android:layout_gravity="center_horizontal" />
+                    <TextView
+                        android:id="@+id/txt_message"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Status messages will appear here."
+                        android:minHeight="40dp"/>
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recycler_search_results"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="150dp"
+                        android:layout_marginTop="8dp"
+                        android:visibility="gone"
+                        tools:listitem="@layout/item_handwash_log" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
