@@ -51,4 +51,11 @@
         android:padding="8dp"
         app:tint="?attr/colorPrimary" />
 
-</LinearLayout>
+    <ImageButton
+        android:id="@+id/btn_employee_row_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@android:drawable/ic_menu_delete" android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Delete Employee"
+        android:padding="8dp"
+        android:layout_marginStart="8dp" app:tint="?attr/colorError" /> </LinearLayout>

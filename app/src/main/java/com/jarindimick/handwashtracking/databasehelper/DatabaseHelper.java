@@ -95,6 +95,34 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // --- END: Add Guest User ---
     }
 
+    // Method to delete an employee by employee number
+    public boolean deleteEmployeeByNumber(String employeeNumber) {
+        // Prevent deletion of the special "Guest 0" employee
+        if ("0".equals(employeeNumber)) {
+            Log.w(TAG, "Attempt to delete Guest (0) employee was denied at DatabaseHelper.");
+            // This check is also in ManageEmployeesActivity, but good to have a safeguard here.
+            return false;
+        }
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        int rowsAffected = 0;
+        try {
+            // Note: This currently does not delete associated handwash logs for the employee.
+            // Handwash logs store the employee_number as text. If you need to delete
+            // associated logs, you would add:
+            // db.delete(TABLE_HANDWASH_LOG, COLUMN_EMPLOYEE_NUMBER + " = ?", new String[]{employeeNumber});
+            // before deleting the employee. This might be a future enhancement.
+
+            rowsAffected = db.delete(TABLE_EMPLOYEES, COLUMN_EMPLOYEE_NUMBER + " = ?",
+                    new String[]{employeeNumber});
+            Log.d(TAG, "Attempted to delete employee with number " + employeeNumber + ". Rows affected: " + rowsAffected);
+        } catch (Exception e) {
+            Log.e(TAG, "Error deleting employee with number " + employeeNumber + ": " + e.getMessage());
+        } finally {
+            db.close();
+        }
+        return rowsAffected > 0; // Returns true if one or more rows were deleted
+    }
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.w(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion + ", which will destroy all old data");

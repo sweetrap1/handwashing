@@ -15,4 +15,7 @@
     <color name="section_background_overview_light">#FEFEFE</color>
     <color name="section_background_overview_dark">#FF2A2A2A</color>
 
+    <color name="button_red_delete">#F44336</color>
+    <color name="button_red_delete_text">#FFFFFF</color>
+
     <color name="text_color_primary_on_light_surface">#DE000000</color> <color name="text_color_secondary_on_light_surface">#8A000000</color> <color name="text_color_primary_on_dark_surface">#FFFFFFFF</color> <color name="text_color_secondary_on_dark_surface">#B3FFFFFF</color> <color name="overlay_background_light">#E6FFFFFF</color> </resources>

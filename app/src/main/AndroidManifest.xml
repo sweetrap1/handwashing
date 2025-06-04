@@ -63,7 +63,8 @@
             android:name=".gui.AdminDashboardActivity"
             android:exported="false"
             android:screenOrientation="unspecified"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"
+            android:windowSoftInputMode="adjustResize"/>
         <activity
             android:name=".gui.ManageEmployeesActivity"
             android:exported="false"

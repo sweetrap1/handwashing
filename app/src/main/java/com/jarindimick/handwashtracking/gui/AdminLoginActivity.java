@@ -35,15 +35,21 @@ public class AdminLoginActivity extends AppCompatActivity {
         EdgeToEdge.enable(this); //
         setContentView(R.layout.activity_admin_login); //
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> { //
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars()); //
-            v.setPadding(
-                    systemBars.left + v.getPaddingLeft(),
-                    systemBars.top + v.getPaddingTop(),
-                    systemBars.right + v.getPaddingRight(),
-                    systemBars.bottom + v.getPaddingBottom()
-            );
-            return insets;
+        View mainView = findViewById(R.id.main);
+        // Capture initial padding values from the XML layout
+        final int initialPaddingLeft = mainView.getPaddingLeft();
+        final int initialPaddingTop = mainView.getPaddingTop();
+        final int initialPaddingRight = mainView.getPaddingRight();
+        final int initialPaddingBottom = mainView.getPaddingBottom();
+
+        ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, windowInsets) -> {
+            Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            // Apply system bar insets ADDED TO the initial XML padding
+            v.setPadding(initialPaddingLeft + systemBars.left,
+                    initialPaddingTop + systemBars.top,
+                    initialPaddingRight + systemBars.right,
+                    initialPaddingBottom + systemBars.bottom);
+            return WindowInsetsCompat.CONSUMED; // Consume the insets as they've been applied
         });
 
         setupgui(); //
