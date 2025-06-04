@@ -21,7 +21,6 @@
             app:title="Admin Dashboard"
             app:titleCentered="true"
             app:popupTheme="@style/AppPopupMenu" />
-
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -48,13 +47,11 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 app:cardElevation="4dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -87,7 +84,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_database_management"
+                android:id="@+id/card_core_actions"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 app:layout_constraintTop_toBottomOf="@id/card_overview"
@@ -97,129 +94,64 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 app:cardElevation="4dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:id="@+id/lbl_database_section_title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Database Management"
-                        android:textAppearance="?attr/textAppearanceHeadline6"
-                        android:layout_marginBottom="12dp"
-                        android:layout_gravity="center_horizontal"/>
-
+                    android:layout_height="wrap_content" android:orientation="horizontal"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp">
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_go_to_manage_employees"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minHeight="56dp"
-                        android:text="Manage Employees"
-                        app:icon="@android:drawable/ic_menu_manage"
-                        android:layout_marginBottom="8dp"/>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_show_download_data_dialog"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minHeight="56dp"
-                        android:text="Download Data Report"
-                        app:icon="@android:drawable/stat_sys_download_done"
-                        android:layout_marginBottom="8dp"/>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_delete_data"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minHeight="56dp"
-                        android:text="Delete Data Range"
-                        app:icon="@android:drawable/ic_menu_delete"
-                        app:backgroundTint="?attr/colorError"
-                        android:textColor="?attr/colorOnError"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_branding"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintTop_toBottomOf="@id/card_database_management"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="12dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="16dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:id="@+id/lbl_branding_section_title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Branding"
-                        android:textAppearance="?attr/textAppearanceHeadline6"
-                        android:layout_marginBottom="12dp"
-                        android:layout_gravity="center_horizontal"/>
-
+                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="100dp" android:layout_weight="1"
+                        android:text="Employees"
+                        app:icon="@drawable/ic_manage_accounts"
+                        app:iconGravity="textTop"
+                        app:iconPadding="8dp"
+                        android:paddingTop="12dp"
+                        android:paddingBottom="12dp"
+                        android:gravity="center"
+                        android:layout_margin="4dp"/>
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_upload_logo"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minHeight="56dp"
-                        android:text="Upload/Change App Logo"
+                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="100dp" android:layout_weight="1"
+                        android:text="App Logo"
                         app:icon="@android:drawable/ic_menu_gallery"
-                        android:layout_marginBottom="8dp"/>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_remove_logo"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minHeight="48dp"
-                        android:text="Remove App Logo"
-                        android:textColor="?attr/colorError"
-                        app:icon="@android:drawable/ic_menu_delete"
-                        app:iconTint="?attr/colorError"/>
+                        app:iconGravity="textTop"
+                        app:iconPadding="8dp"
+                        android:paddingTop="12dp"
+                        android:paddingBottom="12dp"
+                        android:gravity="center"
+                        android:layout_margin="4dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_search_handwashes"
+                android:id="@+id/card_search_download"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:layout_constraintTop_toBottomOf="@id/card_branding"
+                app:layout_constraintTop_toBottomOf="@id/card_core_actions"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:layout_marginTop="12dp"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 app:cardElevation="4dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
-
                     <TextView
-                        android:id="@+id/lbl_search_handwashes_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Search Handwash Logs"
+                        android:text="Handwash Log Utilities"
                         android:textAppearance="?attr/textAppearanceHeadline6"
                         android:layout_marginBottom="12dp"
                         android:layout_gravity="center_horizontal" />
-
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
@@ -233,7 +165,6 @@
                             android:inputType="textPersonName|textCapWords"
                             android:minHeight="48dp" />
                     </com.google.android.material.textfield.TextInputLayout>
-
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
@@ -247,7 +178,6 @@
                             android:inputType="textPersonName|textCapWords"
                             android:minHeight="48dp" />
                     </com.google.android.material.textfield.TextInputLayout>
-
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
@@ -261,7 +191,6 @@
                             android:inputType="number"
                             android:minHeight="48dp" />
                     </com.google.android.material.textfield.TextInputLayout>
-
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
@@ -277,12 +206,11 @@
                             android:inputType="date"
                             android:minHeight="48dp" />
                     </com.google.android.material.textfield.TextInputLayout>
-
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
+                        android:layout_marginBottom="16dp"
                         android:hint="End Date">
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/edit_search_end_date"
@@ -294,15 +222,29 @@
                             android:minHeight="48dp" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_search_handwashes"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:minHeight="56dp"
-                        android:layout_marginTop="8dp"
-                        android:text="Search Logs"
-                        app:icon="@android:drawable/ic_menu_search"
-                        android:layout_gravity="center_horizontal"/>
+                        android:orientation="horizontal">
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_search_handwashes"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:minHeight="56dp"
+                            android:text="Search"
+                            app:icon="@android:drawable/ic_menu_search"
+                            android:layout_marginEnd="4dp"/>
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_show_download_data_dialog"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:minHeight="56dp"
+                            android:text="Download"
+                            app:icon="@android:drawable/stat_sys_download_done"
+                            android:layout_marginStart="4dp"/>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -310,7 +252,7 @@
                 android:id="@+id/card_messages_results"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:layout_constraintTop_toBottomOf="@id/card_search_handwashes"
+                app:layout_constraintTop_toBottomOf="@id/card_search_download"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -318,13 +260,11 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 app:cardElevation="4dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
-
                     <TextView
                         android:id="@+id/lbl_message_area_title"
                         android:layout_width="wrap_content"
@@ -353,5 +293,4 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

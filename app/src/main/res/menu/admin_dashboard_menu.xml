@@ -4,7 +4,12 @@
 
     <item
         android:id="@+id/action_change_password_toolbar"
-        android:title="Change Admin Password"
+        android:title="Change Password"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_delete_data_range_toolbar"
+        android:title="Delete Data"
         app:showAsAction="never" />
 
     <item

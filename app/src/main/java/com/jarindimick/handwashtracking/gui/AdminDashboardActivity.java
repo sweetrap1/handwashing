@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -14,7 +13,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Html;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -44,7 +42,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.button.MaterialButton; // Import MaterialButton
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
@@ -67,7 +65,8 @@ import java.util.Objects;
 public class AdminDashboardActivity extends AppCompatActivity {
     private static final String TAG = "AdminDashboardActivity";
     private static final int PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 101;
-    private static final int REQUEST_CODE_SELECT_CSV = 102; // Kept for future use if import is moved elsewhere
+    // REQUEST_CODE_SELECT_CSV will be moved to ManageEmployeesActivity
+    // private static final int REQUEST_CODE_SELECT_CSV = 102;
     private static final int REQUEST_CODE_SELECT_LOGO_IMAGE = 103;
 
     public static final String PREFS_NAME = "HandwashAppPrefs";
@@ -77,34 +76,25 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private TextView txt_overview_total_washes_today;
     private TextView txt_overview_active_employees;
     private TextView txt_overview_top_washer_today;
-    private EditText edit_search_first_name;
-    private EditText edit_search_last_name;
-    private EditText edit_search_employee_id;
-    private EditText edit_search_start_date;
-    private EditText edit_search_end_date;
-    private MaterialButton btn_search_handwashes; // Changed to MaterialButton
+    private TextInputEditText edit_search_first_name; // Changed from EditText
+    private TextInputEditText edit_search_last_name;  // Changed from EditText
+    private TextInputEditText edit_search_employee_id;// Changed from EditText
+    private TextInputEditText edit_search_start_date; // Changed from EditText
+    private TextInputEditText edit_search_end_date;   // Changed from EditText
+    private MaterialButton btn_search_handwashes;
     private RecyclerView recycler_search_results;
     private HandwashLogAdapter handwashLogAdapter;
     private TextView txt_message;
     private MaterialToolbar toolbarAdminDashboard;
 
-    // Buttons that were removed from the layout (and thus their direct member variables)
-    // private Button btn_logout;
-    // private Button btn_import_employees;
-    // private Button btn_show_add_employee_dialog;
-    // private Button btn_show_change_password_dialog;
-
-    private MaterialButton btn_delete_data; // Changed to MaterialButton
-    private MaterialButton btn_go_to_manage_employees; // Changed to MaterialButton
-    private MaterialButton btn_upload_logo; // Changed to MaterialButton
-    private MaterialButton btn_remove_logo; // Changed to MaterialButton
-    private MaterialButton btn_show_download_data_dialog; // Changed to MaterialButton
-
+    private MaterialButton btn_go_to_manage_employees;
+    private MaterialButton btn_upload_logo; // This button now handles upload and implicitly remove
+    private MaterialButton btn_show_download_data_dialog;
 
     private DatabaseHelper dbHelper;
-    private String pendingCsvData;
-    private String pendingFileName;
-    private AlertDialog pendingDialogToDismiss;
+    private String pendingCsvData; // For CSV export permission handling
+    private String pendingFileName;  // For CSV export permission handling
+    private AlertDialog pendingDialogToDismiss; // For CSV export permission handling
 
 
     @Override
@@ -119,11 +109,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
         CoordinatorLayout coordinatorLayout = findViewById(R.id.coordinator_layout_admin_dashboard);
         ViewCompat.setOnApplyWindowInsetsListener(coordinatorLayout, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-            // Apply padding to the CoordinatorLayout to ensure content (including AppBar) is inset correctly
             v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
-            return WindowInsetsCompat.CONSUMED; // Consume the insets as they've been applied
+            return WindowInsetsCompat.CONSUMED;
         });
-
 
         dbHelper = new DatabaseHelper(this);
         setupgui();
@@ -136,7 +124,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         loadAdminOverviewData();
     }
 
-    // Inflate the menu for the toolbar
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -144,20 +131,21 @@ public class AdminDashboardActivity extends AppCompatActivity {
         return true;
     }
 
-    // Handle menu item clicks
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
         if (itemId == R.id.action_change_password_toolbar) {
-            showChangePasswordDialog(); // Your existing method
+            showChangePasswordDialog();
             return true;
         } else if (itemId == R.id.action_logout_toolbar) {
-            logout(); // Your existing method
+            logout();
+            return true;
+        } else if (itemId == R.id.action_delete_data_range_toolbar) {
+            deleteDataWithConfirmation();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
-
 
     private void setupgui() {
         txt_overview_total_washes_today = findViewById(R.id.txt_overview_total_washes_today);
@@ -172,17 +160,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
         recycler_search_results = findViewById(R.id.recycler_search_results);
         recycler_search_results.setLayoutManager(new LinearLayoutManager(this));
 
-        // Removed findViewById for buttons that no longer exist as direct layout elements
-        // btn_logout = findViewById(R.id.btn_logout);
-        // btn_import_employees = findViewById(R.id.btn_import_employees);
-        // btn_show_add_employee_dialog = findViewById(R.id.btn_show_add_employee_dialog);
-        // btn_show_change_password_dialog = findViewById(R.id.btn_show_change_password_dialog);
-
-        btn_delete_data = findViewById(R.id.btn_delete_data);
         txt_message = findViewById(R.id.txt_message);
         btn_go_to_manage_employees = findViewById(R.id.btn_go_to_manage_employees);
         btn_upload_logo = findViewById(R.id.btn_upload_logo);
-        btn_remove_logo = findViewById(R.id.btn_remove_logo);
         btn_show_download_data_dialog = findViewById(R.id.btn_show_download_data_dialog);
     }
 
@@ -190,22 +170,45 @@ public class AdminDashboardActivity extends AppCompatActivity {
         edit_search_start_date.setOnClickListener(v -> showDatePickerDialog(edit_search_start_date, "Set Search Start Date"));
         edit_search_end_date.setOnClickListener(v -> showDatePickerDialog(edit_search_end_date, "Set Search End Date"));
         btn_search_handwashes.setOnClickListener(v -> searchHandwashes());
-        btn_delete_data.setOnClickListener(v -> deleteDataWithConfirmation());
-        btn_upload_logo.setOnClickListener(v -> openImagePicker());
-        btn_remove_logo.setOnClickListener(v -> removeCustomLogoWithConfirmation());
+
+        btn_upload_logo.setOnClickListener(v -> {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            String currentLogoPath = prefs.getString(KEY_CUSTOM_LOGO_PATH, null);
+            File logoFile = null;
+            if (currentLogoPath != null) {
+                logoFile = new File(currentLogoPath);
+            }
+
+            if (logoFile != null && logoFile.exists()) {
+                // Logo exists, offer options
+                new AlertDialog.Builder(AdminDashboardActivity.this)
+                        .setTitle("App Logo Options")
+                        .setItems(new CharSequence[]{"Change Logo", "Remove Current Logo", "Cancel"}, (dialog, which) -> {
+                            switch (which) {
+                                case 0: // Change Logo
+                                    openImagePicker();
+                                    break;
+                                case 1: // Remove Current Logo
+                                    removeCustomLogoWithConfirmation();
+                                    break;
+                                case 2: // Cancel
+                                    dialog.dismiss();
+                                    break;
+                            }
+                        })
+                        .show();
+            } else {
+                // No logo exists, or path is invalid, proceed to pick new one
+                openImagePicker();
+            }
+        });
+
         btn_go_to_manage_employees.setOnClickListener(v -> {
             Intent intent = new Intent(AdminDashboardActivity.this, ManageEmployeesActivity.class);
             startActivity(intent);
         });
         btn_show_download_data_dialog.setOnClickListener(v -> showDownloadDataDialog());
-
-        // Removed listeners for buttons that no longer exist as direct layout elements
-        // btn_logout.setOnClickListener(v -> logout());
-        // btn_import_employees.setOnClickListener(v -> importEmployeesFromDevice()); // Will be moved
-        // btn_show_add_employee_dialog.setOnClickListener(v -> showAddEmployeeDialog()); // Functionality in ManageEmployees
-        // btn_show_change_password_dialog.setOnClickListener(v -> showChangePasswordDialog()); // Moved to menu
     }
-
 
     private void removeCustomLogoWithConfirmation() {
         new AlertDialog.Builder(this)
@@ -219,6 +222,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
     private void performLogoRemoval() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        // Use the constant filename for consistency, assuming it's saved in getFilesDir()
         File internalDir = getFilesDir();
         File logoFile = new File(internalDir, CUSTOM_LOGO_FILENAME);
 
@@ -230,12 +234,12 @@ public class AdminDashboardActivity extends AppCompatActivity {
             }
         } else {
             Log.d(TAG, "Custom logo file not found (already removed or never existed): " + logoFile.getAbsolutePath());
-            fileActionSuccess = true;
+            fileActionSuccess = true; // If file isn't there, consider it "removed" for the purpose of clearing prefs
         }
 
         if (fileActionSuccess) {
             SharedPreferences.Editor editor = prefs.edit();
-            editor.remove(KEY_CUSTOM_LOGO_PATH);
+            editor.remove(KEY_CUSTOM_LOGO_PATH); // Remove the stored path
             editor.apply();
 
             txt_message.setText("Custom app logo removed. Change will be visible on the main screen on its next load/restart.");
@@ -263,8 +267,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
             Toast.makeText(this, "Failed to get image.", Toast.LENGTH_SHORT).show();
             return;
         }
-        File internalDir = getFilesDir();
-        File logoFile = new File(internalDir, CUSTOM_LOGO_FILENAME);
+        File internalDir = getFilesDir(); // Always save to app's private internal storage
+        File logoFile = new File(internalDir, CUSTOM_LOGO_FILENAME); // Use a consistent filename
 
         try (InputStream inputStream = getContentResolver().openInputStream(sourceUri);
              OutputStream outputStream = new FileOutputStream(logoFile)) {
@@ -278,7 +282,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
             }
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
-            editor.putString(KEY_CUSTOM_LOGO_PATH, logoFile.getAbsolutePath());
+            editor.putString(KEY_CUSTOM_LOGO_PATH, logoFile.getAbsolutePath()); // Store the absolute path
             editor.apply();
             txt_message.setText("Logo updated. It will show on the main screen.");
             Toast.makeText(this, "App logo updated successfully!", Toast.LENGTH_SHORT).show();
@@ -297,26 +301,18 @@ public class AdminDashboardActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
-            if (requestCode == REQUEST_CODE_SELECT_CSV) { // This case is now unused here but kept for reference
-                Uri selectedFileUri = data.getData();
-                Log.d(TAG, "CSV file selected: " + selectedFileUri.toString());
-                txt_message.setText("Processing selected CSV: " + selectedFileUri.getLastPathSegment());
-                // processSelectedCsv(selectedFileUri); // This would be called if import was here
-            } else if (requestCode == REQUEST_CODE_SELECT_LOGO_IMAGE) {
+        // REQUEST_CODE_SELECT_CSV handling will be moved to ManageEmployeesActivity
+        if (requestCode == REQUEST_CODE_SELECT_LOGO_IMAGE) {
+            if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
                 Uri selectedImageUri = data.getData();
                 Log.d(TAG, "Logo image selected: " + selectedImageUri.toString());
                 txt_message.setText("Processing selected logo...");
                 saveLogoToAppStorage(selectedImageUri);
-            }
-        } else if (resultCode == Activity.RESULT_CANCELED) {
-            Log.d(TAG, "File/Image selection cancelled. Request code: " + requestCode);
-            if (requestCode == REQUEST_CODE_SELECT_LOGO_IMAGE) {
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                Log.d(TAG, "Logo image selection cancelled.");
                 txt_message.setText("Logo selection cancelled.");
-            }
-        } else {
-            Log.w(TAG, "onActivityResult with resultCode: " + resultCode + " and no data or null URI for requestCode: " + requestCode);
-            if (requestCode == REQUEST_CODE_SELECT_LOGO_IMAGE) {
+            } else {
+                Log.w(TAG, "onActivityResult for logo with resultCode: " + resultCode);
                 txt_message.setText("Failed to select logo image.");
                 Toast.makeText(this, "Failed to get image.", Toast.LENGTH_SHORT).show();
             }
@@ -337,7 +333,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         Log.d(TAG, "Admin overview data loaded.");
     }
 
-    private void showDatePickerDialog(final EditText editTextToSetDate, String title) {
+    private void showDatePickerDialog(final TextInputEditText editTextToSetDate, String title) { // Changed to TextInputEditText
         final Calendar c = Calendar.getInstance();
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 AdminDashboardActivity.this,
@@ -440,6 +436,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 if (!downloadsDir.exists() && !downloadsDir.mkdirs()) throw new IOException("Failed to create public Downloads dir.");
                 File csvFile = new File(downloadsDir, fileName);
                 try (FileWriter writer = new FileWriter(csvFile)) { writer.write(csvData); }
+                // Use getApplicationContext().getPackageName() for authority string
                 fileUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".fileprovider", csvFile);
             }
 
@@ -452,6 +449,10 @@ public class AdminDashboardActivity extends AppCompatActivity {
             txt_message.setText("Error saving CSV: " + e.getMessage());
             Log.e(TAG, "Error saving CSV", e);
             Toast.makeText(this, "Error saving CSV: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        } catch (IllegalArgumentException e) { // Catch FileProvider errors
+            txt_message.setText("Error creating URI for CSV: " + e.getMessage());
+            Log.e(TAG, "Error creating URI for CSV", e);
+            Toast.makeText(this, "Error creating URI for CSV: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -499,11 +500,12 @@ public class AdminDashboardActivity extends AppCompatActivity {
     }
 
     private void searchHandwashes() {
-        String firstName = edit_search_first_name.getText().toString().trim();
-        String lastName = edit_search_last_name.getText().toString().trim();
-        String employeeId = edit_search_employee_id.getText().toString().trim();
-        String startDate = edit_search_start_date.getText().toString().trim();
-        String endDate = edit_search_end_date.getText().toString().trim();
+        String firstName = Objects.requireNonNull(edit_search_first_name.getText()).toString().trim();
+        String lastName = Objects.requireNonNull(edit_search_last_name.getText()).toString().trim();
+        String employeeId = Objects.requireNonNull(edit_search_employee_id.getText()).toString().trim();
+        String startDate = Objects.requireNonNull(edit_search_start_date.getText()).toString().trim();
+        String endDate = Objects.requireNonNull(edit_search_end_date.getText()).toString().trim();
+
         if (firstName.isEmpty() && lastName.isEmpty() && employeeId.isEmpty() && startDate.isEmpty() && endDate.isEmpty()) {
             txt_message.setText("Please enter search criteria or a date range.");
             recycler_search_results.setVisibility(View.GONE);
@@ -521,7 +523,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         }
     }
 
-    // This method is now called from the toolbar menu selection
     private void logout() {
         new AlertDialog.Builder(this).setTitle("Logout").setMessage("Are you sure?")
                 .setPositiveButton("Logout", (dialog, which) -> {
@@ -529,33 +530,45 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     Intent intent = new Intent(this, MainHandwashing.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
-                    finish();
+                    finishAffinity(); // Ensures all activities in the task are finished
                 }).setNegativeButton("Cancel", null).show();
     }
 
     private void deleteDataWithConfirmation() {
-        final EditText inputStartDate = new EditText(this); inputStartDate.setHint("YYYY-MM-DD (Start)");
-        inputStartDate.setFocusable(false); inputStartDate.setClickable(true);
+        // Create a new instance of TextInputEditText for the dialog programmatically
+        final TextInputEditText inputStartDate = new TextInputEditText(this);
+        inputStartDate.setHint("YYYY-MM-DD (Start)");
+        inputStartDate.setFocusable(false);
+        inputStartDate.setClickable(true);
         inputStartDate.setOnClickListener(v -> showDatePickerDialog(inputStartDate, "Select Deletion Start Date"));
-        final EditText inputEndDate = new EditText(this); inputEndDate.setHint("YYYY-MM-DD (End)");
-        inputEndDate.setFocusable(false); inputEndDate.setClickable(true);
+
+        final TextInputEditText inputEndDate = new TextInputEditText(this);
+        inputEndDate.setHint("YYYY-MM-DD (End)");
+        inputEndDate.setFocusable(false);
+        inputEndDate.setClickable(true);
         inputEndDate.setOnClickListener(v -> showDatePickerDialog(inputEndDate, "Select Deletion End Date"));
-        LinearLayout layout = new LinearLayout(this); layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(dpToPx(20), dpToPx(10), dpToPx(20), dpToPx(10));
-        layout.addView(inputStartDate); layout.addView(inputEndDate);
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = dpToPx(20); // Convert dp to px for padding
+        layout.setPadding(padding, dpToPx(10), padding, dpToPx(10));
+        layout.addView(inputStartDate);
+        layout.addView(inputEndDate);
+
         new AlertDialog.Builder(this).setTitle("Delete Handwash Logs")
                 .setMessage("Select date range to delete. THIS CANNOT BE UNDONE.").setView(layout)
                 .setPositiveButton("DELETE", (dialog, which) -> {
-                    String startDate = inputStartDate.getText().toString().trim(); String endDate = inputEndDate.getText().toString().trim();
-                    if (startDate.isEmpty() || endDate.isEmpty()) {
+                    String startDateStr = Objects.requireNonNull(inputStartDate.getText()).toString().trim();
+                    String endDateStr = Objects.requireNonNull(inputEndDate.getText()).toString().trim();
+                    if (startDateStr.isEmpty() || endDateStr.isEmpty()) {
                         txt_message.setText("Start and End dates are required for deletion.");
                         return;
                     }
                     new AlertDialog.Builder(this).setTitle("FINAL CONFIRMATION")
-                            .setMessage("REALLY delete logs from " + startDate + " to " + endDate + "?")
+                            .setMessage("REALLY delete logs from " + startDateStr + " to " + endDateStr + "?")
                             .setPositiveButton("Yes, Delete Them", (d, w) -> {
-                                int rowsDeleted = dbHelper.deleteHandwashLogs(startDate, endDate);
-                                txt_message.setText(String.format(Locale.getDefault(),"Deleted %d log(s) from %s to %s.", rowsDeleted, startDate, endDate));
+                                int rowsDeleted = dbHelper.deleteHandwashLogs(startDateStr, endDateStr);
+                                txt_message.setText(String.format(Locale.getDefault(),"Deleted %d log(s) from %s to %s.", rowsDeleted, startDateStr, endDateStr));
                                 loadAdminOverviewData();
                                 if (recycler_search_results.getVisibility() == View.VISIBLE) searchHandwashes();
                             }).setNegativeButton("No, Cancel", null).setIcon(android.R.drawable.ic_dialog_alert).show();
@@ -564,105 +577,14 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
     private int dpToPx(int dp) { return (int) (dp * getResources().getDisplayMetrics().density); }
 
-    // This method would be called if import functionality was here. It's now unused in this activity.
-    private void importEmployeesFromDevice() {
-        String csvFormatInfo = "Please select a CSV file with the following columns in order:<br>" +
-                "1. <b>EmployeeNumber</b> (e.g., 101)<br>" +
-                "2. <b>FirstName</b> (e.g., John)<br>" +
-                "3. <b>LastName</b> (e.g., Doe)<br>" +
-                "4. <b>Department</b> (e.g., Kitchen) <i>(Optional, defaults to 'Imported')</i><br><br>" +
-                "No header row is expected in the CSV file.";
-        new AlertDialog.Builder(this)
-                .setTitle("CSV Import Information")
-                .setMessage(Html.fromHtml(csvFormatInfo, Html.FROM_HTML_MODE_LEGACY))
-                .setPositiveButton("Select File", (dialog, which) -> launchCsvFilePicker())
-                .setNegativeButton("Cancel", null).show();
-    }
+    // Unused CSV import methods (will be moved to ManageEmployeesActivity)
+    // private void importEmployeesFromDevice() { ... }
+    // private void launchCsvFilePicker() { ... }
+    // private void processSelectedCsv(Uri csvFileUri) { ... }
+    // private List<EmployeeFromCsv> readEmployeesFromCsvUri(Uri csvFileUri) throws IOException { ... }
+    // private static class EmployeeFromCsv { ... }
 
-    // This method would be called if import functionality was here. It's now unused in this activity.
-    private void launchCsvFilePicker() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("text/csv");
-        String[] mimeTypes = {
-                "text/csv",
-                "text/comma-separated-values",
-                "application/csv",
-                "application/vnd.ms-excel"
-        };
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
-        try {
-            startActivityForResult(Intent.createChooser(intent, "Select a CSV file"), REQUEST_CODE_SELECT_CSV);
-        } catch (android.content.ActivityNotFoundException ex) {
-            txt_message.setText("No File Manager found to select CSV.");
-            Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
-        }
-    }
 
-    // This method is now unused in this activity
-    private void processSelectedCsv(Uri csvFileUri) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = this.getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_progress_spinner, null);
-        TextView progressText = dialogView.findViewById(R.id.text_progress_message);
-        if(progressText != null) progressText.setText("Processing CSV...");
-        builder.setView(dialogView);
-        builder.setCancelable(false);
-        AlertDialog progressDialog = builder.create();
-        progressDialog.show();
-
-        new Thread(() -> {
-            List<EmployeeFromCsv> employeesToImport;
-            String resultMessage;
-            try {
-                employeesToImport = readEmployeesFromCsvUri(csvFileUri);
-                if (employeesToImport.isEmpty()) {
-                    resultMessage = "Selected CSV is empty or has no valid data.";
-                } else {
-                    int newCount = 0, skippedCount = 0, errorCount = 0;
-                    for (EmployeeFromCsv empData : employeesToImport) {
-                        if (dbHelper.isEmployeeNumberTaken(empData.employeeNumber)) {
-                            skippedCount++;
-                        } else {
-                            if (dbHelper.insertEmployee(empData.employeeNumber, empData.firstName, empData.lastName, empData.department) > 0) newCount++; else errorCount++;
-                        }
-                    }
-                    resultMessage = String.format(Locale.getDefault(), "CSV Import: New: %d, Skipped: %d, Errors: %d", newCount, skippedCount, errorCount);
-                }
-            } catch (IOException e) {
-                resultMessage = "Error reading selected CSV: " + e.getMessage();
-                Log.e(TAG, "Error reading CSV URI", e);
-            }
-            final String finalResultMessage = resultMessage;
-            runOnUiThread(() -> {
-                progressDialog.dismiss();
-                txt_message.setText(finalResultMessage);
-                loadAdminOverviewData();
-            });
-        }).start();
-    }
-
-    // This method is now unused in this activity
-    private List<EmployeeFromCsv> readEmployeesFromCsvUri(Uri csvFileUri) throws IOException {
-        List<EmployeeFromCsv> employees = new ArrayList<>();
-        try (InputStream inputStream = getContentResolver().openInputStream(csvFileUri);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(inputStream)))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
-                String[] tokens = line.split(",");
-                if (tokens.length >= 3) {
-                    String empNo = tokens[0].trim(); String fName = tokens[1].trim(); String lName = tokens[2].trim();
-                    String dept = (tokens.length >= 4) ? tokens[3].trim() : "Imported";
-                    if (!empNo.isEmpty() && !fName.isEmpty() && !lName.isEmpty()) employees.add(new EmployeeFromCsv(empNo, fName, lName, dept));
-                    else Log.w(TAG, "Skipping CSV line (URI) with missing data: " + line);
-                } else Log.w(TAG, "Skipping malformed CSV line (URI): " + line);
-            }
-        } catch (NullPointerException e) { throw new IOException("Failed to open input stream from URI.", e); }
-        return employees;
-    }
-
-    // This method is now called from the toolbar menu selection
     private void showChangePasswordDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = this.getLayoutInflater();
@@ -708,51 +630,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
         alertDialog.show();
     }
 
-    // This method is now unused in this activity
-    private void showAddEmployeeDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = this.getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_add_employee, null);
-        builder.setView(dialogView);
-        final TextInputEditText empNo = dialogView.findViewById(R.id.dialog_edit_add_employee_number);
-        final TextInputEditText fName = dialogView.findViewById(R.id.dialog_edit_add_first_name);
-        final TextInputEditText lName = dialogView.findViewById(R.id.dialog_edit_add_last_name);
-        final TextInputEditText dept = dialogView.findViewById(R.id.dialog_edit_add_department);
-        builder.setTitle("Add New Employee (Quick Add)");
-        builder.setPositiveButton("Add", null);
-        builder.setNegativeButton("Cancel", (d,w) -> d.dismiss());
-        AlertDialog alertDialog = builder.create();
-        alertDialog.setOnShowListener(dialogInterface -> {
-            Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            positiveButton.setOnClickListener(view -> {
-                String en = Objects.requireNonNull(empNo.getText()).toString().trim();
-                String fn=Objects.requireNonNull(fName.getText()).toString().trim();
-                String ln=Objects.requireNonNull(lName.getText()).toString().trim();
-                String dpt = Objects.requireNonNull(dept.getText()).toString().trim().isEmpty() ? "Unassigned" : Objects.requireNonNull(dept.getText()).toString().trim();
+    // Unused method, as add employee button was removed from this dashboard
+    // private void showAddEmployeeDialog() { ... }
 
-                empNo.setError(null); fName.setError(null); lName.setError(null);
-                boolean addValid = true;
-                if (en.isEmpty()) { empNo.setError("Emp No required."); addValid = false; }
-                if (fn.isEmpty()) { fName.setError("First Name required."); addValid = false; }
-                if (ln.isEmpty()) { lName.setError("Last Name required."); addValid = false; }
-
-                if (!addValid) return;
-
-                if (dbHelper.isEmployeeNumberTaken(en)) { empNo.setError("Employee number " + en + " exists."); return; }
-
-                if (dbHelper.insertEmployee(en, fn, ln, dpt) != -1) {
-                    txt_message.setText("Quick Added: " + fn + " " + ln);
-                    Toast.makeText(this, "Employee " + fn + " added.", Toast.LENGTH_SHORT).show();
-                    loadAdminOverviewData();
-                    alertDialog.dismiss();
-                } else {
-                    Toast.makeText(this, "Error adding employee.", Toast.LENGTH_SHORT).show();
-                    txt_message.setText("Error adding employee via Quick Add.");
-                }
-            });
-        });
-        alertDialog.show();
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -772,16 +652,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
         }
     }
 
-    private static class EmployeeFromCsv {
-        String employeeNumber, firstName, lastName, department;
-        public EmployeeFromCsv(String en, String fn, String ln, String d) {
-            employeeNumber=en; firstName=fn; lastName=ln; department=d;
-        }
-    }
+    // Unused inner class here
+    // private static class EmployeeFromCsv { ... }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // No dbHelper.close() needed here explicitly, SQLiteOpenHelper handles it.
     }
 }
