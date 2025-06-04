@@ -96,8 +96,9 @@
                 app:cardElevation="4dp">
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:orientation="horizontal"
-                    android:paddingTop="8dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:baselineAligned="false" android:paddingTop="8dp"
                     android:paddingBottom="8dp"
                     android:paddingStart="4dp"
                     android:paddingEnd="4dp">
@@ -105,27 +106,30 @@
                         android:id="@+id/btn_go_to_manage_employees"
                         style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                         android:layout_width="0dp"
-                        android:layout_height="100dp" android:layout_weight="1"
+                        android:layout_height="100dp"
+                        android:layout_weight="1"
                         android:text="Employees"
+                        android:lines="2"
+                        android:gravity="center"
                         app:icon="@drawable/ic_manage_accounts"
                         app:iconGravity="textTop"
                         app:iconPadding="8dp"
                         android:paddingTop="12dp"
                         android:paddingBottom="12dp"
-                        android:gravity="center"
                         android:layout_margin="4dp"/>
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_upload_logo"
                         style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                         android:layout_width="0dp"
-                        android:layout_height="100dp" android:layout_weight="1"
+                        android:layout_height="100dp"
+                        android:layout_weight="1"
                         android:text="App Logo"
-                        app:icon="@android:drawable/ic_menu_gallery"
-                        app:iconGravity="textTop"
+                        android:lines="2"
+                        android:gravity="center"
+                        app:icon="@android:drawable/ic_menu_gallery" app:iconGravity="textTop"
                         app:iconPadding="8dp"
                         android:paddingTop="12dp"
                         android:paddingBottom="12dp"
-                        android:gravity="center"
                         android:layout_margin="4dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
