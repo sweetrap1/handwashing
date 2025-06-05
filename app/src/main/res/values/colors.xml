@@ -9,6 +9,7 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="app_background_color">#F0F0F0</color>
+    <color name="tour_dim_background">#B0000000</color> ```
 
     <color name="section_background_light">#F5F5F5</color>
     <color name="section_background_dark">#FF303030</color>

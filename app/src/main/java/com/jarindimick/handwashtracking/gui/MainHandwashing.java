@@ -138,7 +138,7 @@ public class MainHandwashing extends AppCompatActivity {
 
             // --- Customizable Wording for Admin Access ---
             String adminTitle = "Admin Features"; // YOUR NEW TITLE HERE
-            String adminDescription = "Access employee management & app settings. Default login: admin/admin (please change!)."; // YOUR NEW DESCRIPTION HERE
+            String adminDescription = "Access employee management & app settings. Default login/password: admin (Please Change))."; // YOUR NEW DESCRIPTION HERE
             // --- End of Customizable Wording ---
 
             TapTargetSequence.Listener sequenceListener = new TapTargetSequence.Listener() {
@@ -174,34 +174,24 @@ public class MainHandwashing extends AppCompatActivity {
             ArrayList<TapTarget> targets = new ArrayList<>();
 
             targets.add(TapTarget.forView(edit_employee_number,
-                            "Guest User Option",
-                            "Enter employee number '0' to log a handwash if you are not registered.")
-                    .outerCircleColor(R.color.purple_500)      // Example color
-                    .targetCircleColor(android.R.color.white)
-                    .titleTextColor(android.R.color.white)
-                    .descriptionTextColor(android.R.color.white)
-                    .textTypeface(Typeface.SANS_SERIF)
-                    .dimColor(android.R.color.black)
-                    .drawShadow(true)
-                    .cancelable(false)
-                    .tintTarget(true)
-                    .transparentTarget(false)
-                    .id(1)
-                    .targetRadius(70));
+                            "Guest User",
+                            "Enter employee 0 to log a wash if you are not registered.")
+                    .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.75f)
+                    .targetCircleColor(android.R.color.white).titleTextColor(android.R.color.white)
+                    .descriptionTextColor(android.R.color.white).textTypeface(Typeface.SANS_SERIF)
+                    .dimColor(R.color.tour_dim_background).drawShadow(true)
+                    .cancelable(false).targetRadius(20).id(1));
 
             try {
                 targets.add(TapTarget.forToolbarOverflow(mainToolbar, // Targets the overflow menu icon
                                 adminTitle,
                                 adminDescription)
-                        .outerCircleColor(R.color.purple_500)
-                        .targetCircleColor(android.R.color.white)
-                        .titleTextColor(android.R.color.white)
-                        .descriptionTextColor(android.R.color.white)
-                        .textTypeface(Typeface.SANS_SERIF)
-                        .dimColor(android.R.color.black)
-                        .drawShadow(true)
-                        .cancelable(false)
-                        .id(2));
+                        .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.75f)
+                        .targetCircleColor(android.R.color.white).titleTextColor(android.R.color.white)
+                        .descriptionTextColor(android.R.color.white).textTypeface(Typeface.SANS_SERIF)
+                        .dimColor(R.color.tour_dim_background).drawShadow(true)
+                        .cancelable(false).targetRadius(20).id(2));
+
             } catch (Exception e) { // Catch if forToolbarOverflow fails (e.g. no overflow visible)
                 Log.e("TapTarget", "Failed to create TapTarget for toolbar overflow. Menu might not be ready or no overflow items.", e);
                 sequenceListener.onSequenceCanceled(null); // Trigger cancel to show limitations and set pref
