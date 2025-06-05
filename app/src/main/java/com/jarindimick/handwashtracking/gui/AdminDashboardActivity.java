@@ -7,16 +7,11 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
 import android.provider.MediaStore;
-import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,8 +19,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-// Make sure TextInputEditText is used if your layouts use it, or EditText if they use plain EditText
-import com.google.android.material.textfield.TextInputEditText; // Or android.widget.EditText;
+import com.google.android.material.textfield.TextInputEditText;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -41,17 +35,14 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
-import androidx.core.widget.NestedScrollView;
+import androidx.core.text.HtmlCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.getkeepsafe.taptargetview.TapTarget;
-import com.getkeepsafe.taptargetview.TapTargetSequence;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
-// TextInputEditText already imported above
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
@@ -77,12 +68,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
     public static final String KEY_CUSTOM_LOGO_PATH = "custom_logo_path";
     public static final String CUSTOM_LOGO_FILENAME = "custom_app_logo.png";
 
-    public static final String PREFS_ADMIN_TOUR_FILE = "AdminDashboardTourPrefs";
-    public static final String KEY_ADMIN_INTERACTIVE_TOUR_SHOWN = "adminInteractiveTourShown";
-    private boolean adminTourAttemptedThisSession = false;
-
-    private ArrayList<TapTarget> tourTargetsList = new ArrayList<>();
-    private ArrayList<View> tourTargetViewsList = new ArrayList<>();
+    // SharedPreferences keys for the help dialog
+    public static final String PREFS_ADMIN_DIALOG_SHOWN_FILE = "AdminDashboardDialogPrefs";
+    public static final String KEY_ADMIN_HELP_DIALOG_SHOWN = "adminHelpDialogShown";
 
     private TextView txt_overview_total_washes_today;
     private TextView txt_overview_active_employees;
@@ -126,13 +114,15 @@ public class AdminDashboardActivity extends AppCompatActivity {
         dbHelper = new DatabaseHelper(this);
         setupgui();
         setupListeners();
+
+        // Show the welcome dialog if it's the first time
+        showAdminHelpDialogIfNeeded();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         loadAdminOverviewData();
-        // adminTourAttemptedThisSession = false; // Optional: Reset to allow tour to re-attempt if focus is gained again
     }
 
     @Override
@@ -158,16 +148,27 @@ public class AdminDashboardActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus && !adminTourAttemptedThisSession) {
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                if (hasWindowFocus()) {
-                    showAdminInteractiveTourIfNeeded();
-                }
-            }, 700);
+    private void showAdminHelpDialogIfNeeded() {
+        final SharedPreferences dialogPrefs = getSharedPreferences(PREFS_ADMIN_DIALOG_SHOWN_FILE, MODE_PRIVATE);
+        boolean dialogShown = dialogPrefs.getBoolean(KEY_ADMIN_HELP_DIALOG_SHOWN, false);
+
+        if (dialogShown) {
+            Log.d(TAG, "Admin help dialog already shown.");
+            return;
         }
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.admin_dashboard_tour_title)
+                .setMessage(HtmlCompat.fromHtml(getString(R.string.admin_dashboard_tour_message), HtmlCompat.FROM_HTML_MODE_LEGACY))
+                .setPositiveButton(R.string.admin_dashboard_tour_button, (dialog, which) -> {
+                    SharedPreferences.Editor editor = dialogPrefs.edit();
+                    editor.putBoolean(KEY_ADMIN_HELP_DIALOG_SHOWN, true);
+                    editor.apply();
+                    dialog.dismiss();
+                    Log.d(TAG, "Admin help dialog shown and preference saved.");
+                })
+                .setCancelable(false)
+                .show();
     }
 
     private void setupgui() {
@@ -206,20 +207,12 @@ public class AdminDashboardActivity extends AppCompatActivity {
                         .setTitle("App Logo Options")
                         .setItems(new CharSequence[]{"Change Logo", "Remove Current Logo", "Cancel"}, (dialog, which) -> {
                             switch (which) {
-                                case 0: // Change Logo
-                                    openImagePicker();
-                                    break;
-                                case 1: // Remove Current Logo
-                                    removeCustomLogoWithConfirmation();
-                                    break;
-                                case 2: // Cancel
-                                    dialog.dismiss();
-                                    break;
+                                case 0: openImagePicker(); break;
+                                case 1: removeCustomLogoWithConfirmation(); break;
+                                case 2: dialog.dismiss(); break;
                             }
-                        })
-                        .show();
+                        }).show();
             } else {
-                // No logo exists, or path is invalid, proceed to pick new one
                 openImagePicker();
             }
         });
@@ -229,144 +222,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
             startActivity(intent);
         });
         btn_show_download_data_dialog.setOnClickListener(v -> showDownloadDataDialog());
-    }
-
-    private void scrollToView(final View view) {
-        NestedScrollView nestedScrollView = findViewById(R.id.main_scrollview_admin_dashboard);
-        if (view == null || nestedScrollView == null) {
-            Log.w(TAG, "scrollToView: View or NestedScrollView is null.");
-            return;
-        }
-        view.post(() -> {
-            Rect rect = new Rect(0, 0, view.getWidth(), view.getHeight());
-            boolean fullyVisible = view.requestRectangleOnScreen(rect, false);
-            Log.d(TAG, "View " + view.getResources().getResourceEntryName(view.getId()) + " requested on screen. Fully visible: " + fullyVisible);
-        });
-    }
-
-    private void showAdminInteractiveTourIfNeeded() {
-        final SharedPreferences tourPrefs = getSharedPreferences(PREFS_ADMIN_TOUR_FILE, MODE_PRIVATE);
-        boolean tourPermanentlyShown = tourPrefs.getBoolean(KEY_ADMIN_INTERACTIVE_TOUR_SHOWN, false);
-
-        if (tourPermanentlyShown) {
-            Log.d(TAG, "Admin interactive tour already permanently shown.");
-            return;
-        }
-        if (adminTourAttemptedThisSession && !tourPermanentlyShown) {
-            Log.d(TAG, "Admin interactive tour already attempted this session or prerequisites were not met earlier.");
-            return;
-        }
-        adminTourAttemptedThisSession = true;
-
-        View overviewCard = findViewById(R.id.card_overview);
-        View manageEmployeesButton = findViewById(R.id.btn_go_to_manage_employees);
-        View appLogoButton = findViewById(R.id.btn_upload_logo);
-        View searchButton = findViewById(R.id.btn_search_handwashes);
-        View downloadButton = findViewById(R.id.btn_show_download_data_dialog);
-
-        if (toolbarAdminDashboard == null || overviewCard == null || manageEmployeesButton == null ||
-                appLogoButton == null || searchButton == null || downloadButton == null) {
-            Log.w(TAG, "Admin tour prerequisites not met (some views are null). Tour skipped for this focus attempt.");
-            adminTourAttemptedThisSession = false;
-            return;
-        }
-        if (toolbarAdminDashboard.getMenu() == null || toolbarAdminDashboard.getMenu().size() == 0) {
-            Log.w(TAG, "Admin tour: Toolbar menu not ready yet. Tour skipped for this focus attempt.");
-            adminTourAttemptedThisSession = false;
-            return;
-        }
-
-        tourTargetsList.clear();
-        tourTargetViewsList.clear();
-        ArrayList<TapTarget> localTargets = new ArrayList<>();
-
-        try {
-            localTargets.add(TapTarget.forToolbarOverflow(toolbarAdminDashboard, "Admin Options", "Tap here for settings like changing your password, deleting data ranges, or logging out.")
-                    .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.75f)
-                    .targetCircleColor(android.R.color.white).titleTextColor(android.R.color.white)
-                    .descriptionTextColor(android.R.color.white).textTypeface(Typeface.SANS_SERIF)
-                    .dimColor(R.color.tour_dim_background).drawShadow(true)
-                    .cancelable(false).targetRadius(22).id(1)); // Smaller radius for toolbar
-
-
-            localTargets.add(TapTarget.forView(manageEmployeesButton, "Manage Your Staff", "Tap here to add new employees, edit their details, or remove them. You can also import a list of employees.")
-                    .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.70f)
-                    .targetCircleColor(android.R.color.white).titleTextColor(android.R.color.white)
-                    .descriptionTextColor(android.R.color.white).textTypeface(Typeface.SANS_SERIF)
-                    .dimColor(R.color.tour_dim_background).drawShadow(true)
-                    .cancelable(false).targetRadius(40).id(2));
-            tourTargetViewsList.add(manageEmployeesButton);
-
-
-            localTargets.add(TapTarget.forView(searchButton, "Find Past Handwashes", "Use the fields above this area to search for specific records")
-                    .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.75f)
-                    .targetCircleColor(android.R.color.white).titleTextColor(android.R.color.white)
-                    .descriptionTextColor(android.R.color.white).textTypeface(Typeface.SANS_SERIF)
-                    .dimColor(R.color.tour_dim_background).drawShadow(true)
-                    .cancelable(false).targetRadius(30).id(3));
-            tourTargetViewsList.add(searchButton);
-
-            localTargets.add(TapTarget.forView(downloadButton, "Download Reports", "Generate and download handwash reports")
-                    .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.75f)
-                    .targetCircleColor(android.R.color.white).titleTextColor(android.R.color.white)
-                    .descriptionTextColor(android.R.color.white).textTypeface(Typeface.SANS_SERIF)
-                    .dimColor(R.color.tour_dim_background).drawShadow(true)
-                    .cancelable(false).targetRadius(30).id(4));
-            tourTargetViewsList.add(downloadButton);
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error creating TapTarget for Admin Dashboard tour", e);
-            SharedPreferences.Editor editor = tourPrefs.edit();
-            editor.putBoolean(KEY_ADMIN_INTERACTIVE_TOUR_SHOWN, true); editor.apply(); return;
-        }
-
-        this.tourTargetsList.addAll(localTargets); // Populate member list
-
-        TapTargetSequence.Listener sequenceListener = new TapTargetSequence.Listener() {
-            @Override public void onSequenceFinish() {
-                Log.d(TAG, "Admin interactive tour sequence finished.");
-                SharedPreferences.Editor editor = tourPrefs.edit();
-                editor.putBoolean(KEY_ADMIN_INTERACTIVE_TOUR_SHOWN, true); editor.apply();
-                tourTargetViewsList.clear(); tourTargetsList.clear();
-            }
-
-            @Override public void onSequenceStep(TapTarget lastTarget, boolean targetClicked) {
-                int lastTargetId = lastTarget.id();
-                int nextTargetToShowIndexInFullList = -1;
-                for (int i = 0; i < tourTargetsList.size(); i++) {
-                    if (tourTargetsList.get(i).id() == lastTargetId) {
-                        nextTargetToShowIndexInFullList = i + 1;
-                        break;
-                    }
-                }
-                if (nextTargetToShowIndexInFullList > 0 && nextTargetToShowIndexInFullList < tourTargetsList.size()) {
-                    int viewListIndex = nextTargetToShowIndexInFullList - 1;
-                    if (viewListIndex >= 0 && viewListIndex < tourTargetViewsList.size()) {
-                        View nextView = tourTargetViewsList.get(viewListIndex);
-                        if (nextView != null) {
-                            Log.d(TAG, "Tour step: Scrolling to " + nextView.getResources().getResourceEntryName(nextView.getId()));
-                            new Handler(Looper.getMainLooper()).postDelayed(() -> scrollToView(nextView), 150);
-                        }
-                    }
-                }
-            }
-            @Override public void onSequenceCanceled(TapTarget lastTarget) {
-                Log.w(TAG, "Admin interactive tour sequence cancelled.");
-                SharedPreferences.Editor editor = tourPrefs.edit();
-                editor.putBoolean(KEY_ADMIN_INTERACTIVE_TOUR_SHOWN, true); editor.apply();
-                tourTargetViewsList.clear(); tourTargetsList.clear();
-            }
-        };
-
-        if (!this.tourTargetsList.isEmpty()) {
-            new TapTargetSequence(this).targets(this.tourTargetsList).listener(sequenceListener)
-                    .continueOnCancel(false).considerOuterCircleCanceled(true).start();
-            Log.d(TAG, "Admin interactive tour sequence started.");
-        } else {
-            Log.w(TAG, "No targets were created for the admin tour.");
-            SharedPreferences.Editor editor = tourPrefs.edit();
-            editor.putBoolean(KEY_ADMIN_INTERACTIVE_TOUR_SHOWN, true); editor.apply();
-        }
     }
 
     private void openImagePicker() {
@@ -569,14 +424,28 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private String formatDataToCsv(List<DatabaseHelper.HandwashLog> logs, String downloadType) {
         StringBuilder csvBuilder = new StringBuilder();
         if (downloadType.equals("summary")) {
-            csvBuilder.append("Employee Number,First Name,Last Name,Total Handwashes\n");
+            // ADD "Department" to the header
+            csvBuilder.append("Employee Number,First Name,Last Name,Department,Total Handwashes\n");
             for (DatabaseHelper.HandwashLog log : logs) {
-                csvBuilder.append(log.employeeNumber).append(",").append(log.firstName == null ? "" : log.firstName).append(",").append(log.lastName == null ? "" : log.lastName).append(",").append(log.washCount).append("\n");
+                csvBuilder.append(log.employeeNumber).append(",")
+                        .append(log.firstName == null ? "" : log.firstName).append(",")
+                        .append(log.lastName == null ? "" : log.lastName).append(",")
+                        // ADD the department data to the row
+                        .append(log.department == null ? "N/A" : log.department).append(",")
+                        .append(log.washCount).append("\n");
             }
-        } else {
-            csvBuilder.append("Employee Number,First Name,Last Name,Wash Date,Wash Time,Photo Path\n");
+        } else { // Detailed report
+            // ADD "Department" to the header
+            csvBuilder.append("Employee Number,First Name,Last Name,Department,Wash Date,Wash Time,Photo Path\n");
             for (DatabaseHelper.HandwashLog log : logs) {
-                csvBuilder.append(log.employeeNumber).append(",").append(log.firstName == null ? "" : log.firstName).append(",").append(log.lastName == null ? "" : log.lastName).append(",").append(log.washDate).append(",").append(log.washTime).append(",").append(log.photoPath == null ? "" : log.photoPath).append("\n");
+                csvBuilder.append(log.employeeNumber).append(",")
+                        .append(log.firstName == null ? "" : log.firstName).append(",")
+                        .append(log.lastName == null ? "" : log.lastName).append(",")
+                        // ADD the department data to the row
+                        .append(log.department == null ? "N/A" : log.department).append(",")
+                        .append(log.washDate).append(",")
+                        .append(log.washTime).append(",")
+                        .append(log.photoPath == null ? "" : log.photoPath).append("\n");
             }
         }
         return csvBuilder.toString();
@@ -644,7 +513,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
         inputEndDate.setFocusable(false); inputEndDate.setClickable(true);
         inputEndDate.setOnClickListener(v -> showDatePickerDialog(inputEndDate, "Select Deletion End Date"));
         LinearLayout layout = new LinearLayout(this); layout.setOrientation(LinearLayout.VERTICAL);
-        int padding = dpToPx(20); layout.setPadding(padding, dpToPx(10), padding, dpToPx(10));
+        int padding = dpToPx(20);
+        layout.setPadding(padding, dpToPx(10), padding, dpToPx(10));
         layout.addView(inputStartDate); layout.addView(inputEndDate);
         new AlertDialog.Builder(this).setTitle("Delete Handwash Logs")
                 .setMessage("Select date range to delete. THIS CANNOT BE UNDONE.").setView(layout)
@@ -652,7 +522,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     String startDateStr = Objects.requireNonNull(inputStartDate.getText()).toString().trim();
                     String endDateStr = Objects.requireNonNull(inputEndDate.getText()).toString().trim();
                     if (startDateStr.isEmpty() || endDateStr.isEmpty()) {
-                        txt_message.setText("Start and End dates are required for deletion."); return;
+                        txt_message.setText("Start and End dates are required for deletion.");
+                        return;
                     }
                     new AlertDialog.Builder(this).setTitle("FINAL CONFIRMATION")
                             .setMessage("REALLY delete logs from " + startDateStr + " to " + endDateStr + "?")
