@@ -4,6 +4,7 @@
 
     <item
         android:id="@+id/action_import_employees_csv"
+        android:icon="@drawable/outline_arrow_upload_progress_24"
         android:title="Import Employees (CSV)"
-        android:icon="@android:drawable/ic_menu_upload" app:showAsAction="ifRoom" />
+        app:showAsAction="ifRoom" />
 </menu>
