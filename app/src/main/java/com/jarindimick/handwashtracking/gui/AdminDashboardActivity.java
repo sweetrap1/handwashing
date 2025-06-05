@@ -282,11 +282,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         try {
             localTargets.add(TapTarget.forToolbarOverflow(toolbarAdminDashboard, "Admin Options", "Tap here for settings like changing your password, deleting data ranges, or logging out.")
-                    .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.70f)
+                    .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.75f)
                     .targetCircleColor(android.R.color.white).titleTextColor(android.R.color.white)
                     .descriptionTextColor(android.R.color.white).textTypeface(Typeface.SANS_SERIF)
                     .dimColor(R.color.tour_dim_background).drawShadow(true)
-                    .cancelable(false).targetRadius(40).id(1)); // Smaller radius for toolbar
+                    .cancelable(false).targetRadius(22).id(1)); // Smaller radius for toolbar
 
 
             localTargets.add(TapTarget.forView(manageEmployeesButton, "Manage Your Staff", "Tap here to add new employees, edit their details, or remove them. You can also import a list of employees.")
@@ -303,7 +303,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     .targetCircleColor(android.R.color.white).titleTextColor(android.R.color.white)
                     .descriptionTextColor(android.R.color.white).textTypeface(Typeface.SANS_SERIF)
                     .dimColor(R.color.tour_dim_background).drawShadow(true)
-                    .cancelable(false).targetRadius(20).id(3));
+                    .cancelable(false).targetRadius(30).id(3));
             tourTargetViewsList.add(searchButton);
 
             localTargets.add(TapTarget.forView(downloadButton, "Download Reports", "Generate and download handwash reports")
@@ -311,7 +311,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     .targetCircleColor(android.R.color.white).titleTextColor(android.R.color.white)
                     .descriptionTextColor(android.R.color.white).textTypeface(Typeface.SANS_SERIF)
                     .dimColor(R.color.tour_dim_background).drawShadow(true)
-                    .cancelable(false).targetRadius(20).id(4));
+                    .cancelable(false).targetRadius(30).id(4));
             tourTargetViewsList.add(downloadButton);
 
         } catch (Exception e) {
