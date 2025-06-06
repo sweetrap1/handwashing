@@ -261,11 +261,27 @@
                         android:layout_weight="1"
                         android:gravity="center"
                         android:paddingTop="12dp"
-                        android:paddingBottom="12dp"
+                        android:paddingBottom="20dp"
                         android:text="App Logo"
                         app:icon="@drawable/outline_brush_24"
                         app:iconGravity="textTop"
+                        app:iconPadding="26dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_compliance_report"
+                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="125dp"
+                        android:layout_margin="4dp"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:paddingTop="12dp"
+                        android:paddingBottom="12dp"
+                        android:text="Hourly Report"
+                        app:icon="?attr/actionModePasteDrawable"
+                        app:iconGravity="textTop"
                         app:iconPadding="8dp" />
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
             <com.google.android.material.card.MaterialCardView

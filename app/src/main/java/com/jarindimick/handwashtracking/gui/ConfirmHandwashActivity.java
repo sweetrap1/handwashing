@@ -49,9 +49,11 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
     private TextView textConfirmationMainMessage;
     private TextView textDailyCountMessage;
 
+    // ADD THE isFinalized LINE
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final ExecutorService cameraExecutor = Executors.newSingleThreadExecutor();
     private final AtomicBoolean motionDetected = new AtomicBoolean(false);
+    private final AtomicBoolean isFinalized = new AtomicBoolean(false); // <-- ADD THIS LINE
     private ProcessCameraProvider cameraProvider;
     private ImageAnalysis imageAnalysis;
 
@@ -156,16 +158,21 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
     }
 
     private void processHandwashCompletion(String confirmationStatus) {
-        if (isFinishing()) return;
+        if (isFinalized.getAndSet(true)) {
+            return;
+        }
         mainHandler.removeCallbacksAndMessages(null);
+
+        if (cameraProvider != null) {
+            cameraProvider.unbindAll();
+        }
 
         layoutInitialInstructions.setVisibility(View.GONE);
         layoutConfirmationMessage.setVisibility(View.VISIBLE);
         textConfirmationMainMessage.setText("Handwash Logged!");
 
+        // This method now handles updating the text on the screen
         saveHandwashLogToDb(confirmationStatus);
-        int dailyCount = dbHelper.getHandwashCountForEmployeeToday(employeeNumber);
-        textDailyCountMessage.setText(String.format(Locale.getDefault(), "Your daily count: %d", dailyCount));
 
         mainHandler.postDelayed(this::navigateToMainScreen, CONFIRMATION_DISPLAY_MS);
     }
@@ -177,12 +184,30 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
         String washDate = now.format(dateFormatter);
         String washTime = now.format(timeFormatter);
 
+        // First, save the log to the database
         long logResult = dbHelper.insertHandwashLog(employeeNumber, washDate, washTime, confirmationStatus);
         if (logResult == -1) {
             Log.e(TAG, "Error saving log.");
         } else {
             Log.d(TAG, "Log saved successfully.");
         }
+
+        // --- NEW HOURLY COMPLIANCE FEEDBACK ---
+        // Now that the log is saved, check the counts
+        int dailyCount = dbHelper.getHandwashCountForEmployeeToday(employeeNumber);
+        boolean alreadyWashedThisHour = dbHelper.hasWashedInCurrentHour(employeeNumber, washDate, washTime);
+
+        // Find the TextView for the daily count message
+        TextView textDailyCountMessage = findViewById(R.id.text_daily_count_message);
+
+        // Create a more informative message
+        String message = String.format(Locale.getDefault(), "Your daily count: %d", dailyCount);
+        if (!alreadyWashedThisHour) {
+            // Add a positive reinforcement message if this is the first wash in the current hour
+            message += "\n\nGreat job on your first wash this hour!";
+        }
+        textDailyCountMessage.setText(message);
+        // --- END OF NEW LOGIC ---
     }
 
     private void navigateToMainScreen() {

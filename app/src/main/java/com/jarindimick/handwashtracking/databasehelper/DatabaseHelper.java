@@ -47,6 +47,29 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    public List<String> getAllDepartments() {
+        List<String> departments = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(true, TABLE_EMPLOYEES, new String[]{COLUMN_DEPARTMENT}, null, null, null, null, COLUMN_DEPARTMENT + " ASC", null);
+            if (cursor.moveToFirst()) {
+                do {
+                    String dept = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DEPARTMENT));
+                    if(dept != null && !dept.isEmpty()) {
+                        departments.add(dept);
+                    }
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting all departments", e);
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
+        }
+        return departments;
+    }
+
     @Override
     public void onCreate(SQLiteDatabase db) {
         Log.d(TAG, "Creating database tables...");
@@ -212,7 +235,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return isTaken;
     }
 
-    // RESTORED searchHandwashLogs method
     public List<HandwashLog> searchHandwashLogs(String firstName, String lastName, String employeeNumber, String startDate, String endDate) {
         SQLiteDatabase db = this.getReadableDatabase();
         List<HandwashLog> logs = new ArrayList<>();
@@ -275,7 +297,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return logs;
     }
 
-
     public long insertEmployee(String employeeNumber, String firstName, String lastName, String department) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -308,7 +329,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return id;
     }
 
-    // The single, updated getHandwashLogs method
     public List<HandwashLog> getHandwashLogs(String startDate, String endDate, String downloadType) {
         SQLiteDatabase db = this.getReadableDatabase();
         List<HandwashLog> logs = new ArrayList<>();
@@ -542,5 +562,139 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.close();
         }
         return count;
+    }
+
+    public boolean hasWashedInCurrentHour(String employeeNumber, String washDate, String washTime) {
+        if (washTime == null || washTime.length() < 2) {
+            return false;
+        }
+        String hour = washTime.substring(0, 2);
+        String startTime = hour + ":00:00";
+        String endTime = hour + ":59:59";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            String query = "SELECT COUNT(*) FROM " + TABLE_HANDWASH_LOG +
+                    " WHERE " + COLUMN_EMPLOYEE_NUMBER + " = ?" +
+                    " AND " + COLUMN_WASH_DATE + " = ?" +
+                    " AND " + COLUMN_WASH_TIME + " BETWEEN ? AND ?";
+
+            cursor = db.rawQuery(query, new String[]{employeeNumber, washDate, startTime, endTime});
+
+            if (cursor.moveToFirst()) {
+                int count = cursor.getInt(0);
+                return count > 1;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking for wash in current hour", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return false;
+    }
+
+    public static class ComplianceResult {
+        public String employeeName;
+        public String employeeNumber;
+        public java.util.Map<Integer, Boolean> hourlyStatus;
+
+        public ComplianceResult(String employeeName, String employeeNumber) {
+            this.employeeName = employeeName;
+            this.employeeNumber = employeeNumber;
+            this.hourlyStatus = new java.util.TreeMap<>();
+        }
+    }
+
+    // This method replaces getHourlyComplianceForToday
+    public List<ComplianceResult> getHourlyComplianceForDate(LocalDate date, String departmentFilter, String employeeNameFilter) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor employeeCursor = null;
+        Cursor logCursor = null;
+        List<ComplianceResult> finalReport = new ArrayList<>();
+        java.util.Map<String, ComplianceResult> resultsMap = new java.util.LinkedHashMap<>();
+
+        try {
+            // 1. Get filtered list of active employees
+            StringBuilder employeeQuery = new StringBuilder("SELECT " + COLUMN_EMPLOYEE_NUMBER + ", " + COLUMN_FIRST_NAME + ", " + COLUMN_LAST_NAME +
+                    " FROM " + TABLE_EMPLOYEES +
+                    " WHERE " + COLUMN_IS_ACTIVE + " = 1 AND " + COLUMN_EMPLOYEE_NUMBER + " != '0'");
+            List<String> selectionArgs = new ArrayList<>();
+
+            if (departmentFilter != null && !departmentFilter.isEmpty()) {
+                employeeQuery.append(" AND ").append(COLUMN_DEPARTMENT).append(" = ?");
+                selectionArgs.add(departmentFilter);
+            }
+            if (employeeNameFilter != null && !employeeNameFilter.isEmpty()) {
+                employeeQuery.append(" AND (").append(COLUMN_FIRST_NAME).append(" LIKE ? OR ").append(COLUMN_LAST_NAME).append(" LIKE ?)");
+                selectionArgs.add("%" + employeeNameFilter + "%");
+                selectionArgs.add("%" + employeeNameFilter + "%");
+            }
+            employeeQuery.append(" ORDER BY ").append(COLUMN_LAST_NAME).append(" ASC");
+
+            employeeCursor = db.rawQuery(employeeQuery.toString(), selectionArgs.toArray(new String[0]));
+
+            if (employeeCursor.moveToFirst()) {
+                do {
+                    String empNum = employeeCursor.getString(employeeCursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
+                    String firstName = employeeCursor.getString(employeeCursor.getColumnIndexOrThrow(COLUMN_FIRST_NAME));
+                    String lastName = employeeCursor.getString(employeeCursor.getColumnIndexOrThrow(COLUMN_LAST_NAME));
+                    resultsMap.put(empNum, new ComplianceResult((firstName + " " + lastName).trim(), empNum));
+                } while (employeeCursor.moveToNext());
+            }
+
+            if (resultsMap.isEmpty()) return finalReport;
+
+            // 2. Get all handwash logs for the SELECTED date
+            String dateStr = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String logQuery = "SELECT " + COLUMN_EMPLOYEE_NUMBER + ", " + COLUMN_WASH_TIME + " FROM " + TABLE_HANDWASH_LOG + " WHERE " + COLUMN_WASH_DATE + " = ?";
+            logCursor = db.rawQuery(logQuery, new String[]{dateStr});
+
+            java.util.Map<String, List<Integer>> washesByEmployee = new java.util.HashMap<>();
+            if (logCursor.moveToFirst()) {
+                do {
+                    String empNum = logCursor.getString(logCursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
+                    if (resultsMap.containsKey(empNum)) { // Only process logs for filtered employees
+                        String washTime = logCursor.getString(logCursor.getColumnIndexOrThrow(COLUMN_WASH_TIME));
+                        int washHour = Integer.parseInt(washTime.substring(0, 2));
+                        washesByEmployee.computeIfAbsent(empNum, k -> new ArrayList<>()).add(washHour);
+                    }
+                } while (logCursor.moveToNext());
+            }
+
+            // 3. Process compliance for each filtered employee
+            for (String empNum : resultsMap.keySet()) {
+                ComplianceResult result = resultsMap.get(empNum);
+                List<Integer> washHours = washesByEmployee.get(empNum);
+
+                if (washHours == null || washHours.isEmpty()) {
+                    // Employee exists but had no washes on this day, so they are not in the compliance report
+                    continue;
+                }
+
+                int firstWashHour = washHours.stream().min(Integer::compareTo).get();
+                int lastWashHour = washHours.stream().max(Integer::compareTo).get();
+
+                for (int hour = firstWashHour; hour <= lastWashHour; hour++) {
+                    result.hourlyStatus.put(hour, washHours.contains(hour));
+                }
+                finalReport.add(result);
+
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error generating compliance report", e);
+        } finally {
+            if (employeeCursor != null) employeeCursor.close();
+            if (logCursor != null) logCursor.close();
+            db.close();
+        }
+
+        // Sort final list by employee name before returning
+        finalReport.sort((o1, o2) -> o1.employeeName.compareTo(o2.employeeName));
+        return finalReport;
     }
 }

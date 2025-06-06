@@ -77,6 +77,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private MaterialButton btn_go_to_manage_employees;
     private MaterialButton btn_upload_logo;
     private MaterialButton btn_show_download_data_dialog;
+    private MaterialButton btn_compliance_report; // Declaration added
 
     private DatabaseHelper dbHelper;
     private AlertDialog pendingDialogToDismiss;
@@ -170,6 +171,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_go_to_manage_employees = findViewById(R.id.btn_go_to_manage_employees);
         btn_upload_logo = findViewById(R.id.btn_upload_logo);
         btn_show_download_data_dialog = findViewById(R.id.btn_show_download_data_dialog);
+        btn_compliance_report = findViewById(R.id.btn_compliance_report); // Initialization added
     }
 
     private void setupListeners() {
@@ -204,7 +206,13 @@ public class AdminDashboardActivity extends AppCompatActivity {
             Intent intent = new Intent(AdminDashboardActivity.this, ManageEmployeesActivity.class);
             startActivity(intent);
         });
+
         btn_show_download_data_dialog.setOnClickListener(v -> showDownloadDataDialog());
+
+        btn_compliance_report.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminDashboardActivity.this, ComplianceReportActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void loadAdminOverviewData() {
@@ -452,7 +460,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         alertDialog.show();
     }
 
-    // All helper methods for the logo feature
     private void openImagePicker() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);

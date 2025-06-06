@@ -2,25 +2,36 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-feature android:name="android.hardware.camera" android:required="true" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
+
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
     <queries>
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE" />
         </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
+
             <data android:mimeType="text/csv" />
         </intent>
         <intent>
             <action android:name="android.intent.action.OPEN_DOCUMENT" />
+
             <category android:name="android.intent.category.OPENABLE" />
+
             <data android:mimeType="text/csv" />
         </intent>
         <intent>
             <action android:name="android.intent.action.GET_CONTENT" />
+
             <category android:name="android.intent.category.OPENABLE" />
+
             <data android:mimeType="text/csv" />
         </intent>
     </queries>
@@ -35,7 +46,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HandwashTracking"
         tools:targetApi="31">
-
+        <activity
+            android:name=".gui.ComplianceReportActivity"
+            android:exported="false"
+            android:theme="@style/Theme.HandwashTracking.NoActionBar" />
         <activity
             android:name=".gui.MainHandwashing"
             android:exported="true"
@@ -43,28 +57,27 @@
             android:theme="@style/Theme.HandwashTracking.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".gui.WelcomeActivity"
-            android:exported="false" android:screenOrientation="unspecified"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar">
-        </activity>
-
+            android:exported="false"
+            android:screenOrientation="unspecified"
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"></activity>
         <activity
             android:name=".gui.AdminLoginActivity"
             android:exported="false"
             android:screenOrientation="unspecified"
             android:theme="@style/Theme.HandwashTracking.NoActionBar"
-            android:windowSoftInputMode="adjustResize"/>
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".gui.AdminDashboardActivity"
             android:exported="false"
             android:screenOrientation="unspecified"
             android:theme="@style/Theme.HandwashTracking.NoActionBar"
-            android:windowSoftInputMode="adjustResize"/>
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".gui.ManageEmployeesActivity"
             android:exported="false"
@@ -80,27 +93,27 @@
             android:name=".gui.WetHandsActivity"
             android:exported="false"
             android:screenOrientation="unspecified"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
+            android:theme="@style/Theme.HandwashTracking.NoActionBar" />
         <activity
             android:name=".gui.ApplySoapActivity"
             android:exported="false"
             android:screenOrientation="unspecified"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
+            android:theme="@style/Theme.HandwashTracking.NoActionBar" />
         <activity
             android:name=".gui.RinseHandsActivity"
             android:exported="false"
             android:screenOrientation="unspecified"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
+            android:theme="@style/Theme.HandwashTracking.NoActionBar" />
         <activity
             android:name=".gui.DryHandsActivity"
             android:exported="false"
             android:screenOrientation="unspecified"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
+            android:theme="@style/Theme.HandwashTracking.NoActionBar" />
         <activity
             android:name=".gui.ConfirmHandwashActivity"
             android:exported="false"
             android:screenOrientation="unspecified"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar"/>
+            android:theme="@style/Theme.HandwashTracking.NoActionBar" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -111,6 +124,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
     </application>
+
 </manifest>
