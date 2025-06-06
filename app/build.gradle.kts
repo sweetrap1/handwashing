@@ -39,6 +39,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
+    packaging {
+        resources {
+            exclude("META-INF/AL2.0")
+            exclude("META-INF/LGPL2.1")
+        }
+    }
 }
 
 dependencies {
@@ -49,15 +55,15 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation ("org.mindrot:jbcrypt:0.4")
     implementation ("androidx.recyclerview:recyclerview:1.4.0")
-    // Or the latest vers
-    // CameraX libraries
-    val cameraxVersion = "1.3.0" // Or check for the latest stable version
+
+    // CameraX libraries (core includes the analysis use case)
+    val cameraxVersion = "1.3.1"
     implementation("androidx.camera:camera-core:${cameraxVersion}")
     implementation("androidx.camera:camera-camera2:${cameraxVersion}")
     implementation("androidx.camera:camera-lifecycle:${cameraxVersion}")
-    implementation("androidx.camera:camera-view:${cameraxVersion}") // For PreviewViewion
+    implementation("androidx.camera:camera-view:${cameraxVersion}")
 
-    implementation("com.getkeepsafe.taptargetview:taptargetview:1.13.3") // Check for the latest version
+    implementation("com.getkeepsafe.taptargetview:taptargetview:1.13.3")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

@@ -435,8 +435,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
                         .append(log.washCount).append("\n");
             }
         } else { // Detailed report
-            // ADD "Department" to the header
-            csvBuilder.append("Employee Number,First Name,Last Name,Department,Wash Date,Wash Time,Photo Path\n");
+            // CHANGE "Photo Path" to "Confirmation Status" in the header
+            csvBuilder.append("Employee Number,First Name,Last Name,Department,Wash Date,Wash Time,Confirmation Status\n");
             for (DatabaseHelper.HandwashLog log : logs) {
                 csvBuilder.append(log.employeeNumber).append(",")
                         .append(log.firstName == null ? "" : log.firstName).append(",")
@@ -445,6 +445,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                         .append(log.department == null ? "N/A" : log.department).append(",")
                         .append(log.washDate).append(",")
                         .append(log.washTime).append(",")
+                        // The photoPath column now contains our status message
                         .append(log.photoPath == null ? "" : log.photoPath).append("\n");
             }
         }
