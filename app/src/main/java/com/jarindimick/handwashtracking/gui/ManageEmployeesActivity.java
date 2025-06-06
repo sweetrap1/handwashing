@@ -251,12 +251,14 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
         dialogEditDepartment.setText(employeeToEdit.getDepartment());
         dialogSwitchIsActive.setChecked(employeeToEdit.isActive());
 
+        // This is the NEW code block
         if ("0".equals(employeeToEdit.getEmployeeNumber())) {
+            // For the Guest user, lock the text fields but allow the active toggle to be changed
             dialogEditFirstName.setEnabled(false);
             dialogEditLastName.setEnabled(false);
             dialogEditDepartment.setEnabled(false);
-            dialogSwitchIsActive.setEnabled(false);
-            builder.setTitle("View Guest Employee (Cannot Edit)");
+            dialogSwitchIsActive.setEnabled(true); // Allow the toggle to be used
+            builder.setTitle("Edit Guest Account Status"); // Set a more accurate title
         } else {
             builder.setTitle("Edit Employee: " + employeeToEdit.getEmployeeNumber());
         }
