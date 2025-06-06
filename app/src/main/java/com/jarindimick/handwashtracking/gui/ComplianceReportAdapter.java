@@ -54,6 +54,11 @@ public class ComplianceReportAdapter extends RecyclerView.Adapter<ComplianceRepo
         holder.txtHourlyStatus.setText(statusBuilder.toString().trim());
     }
 
+    // ADD THIS METHOD to ComplianceReportAdapter.java
+    public List<ComplianceResult> getReportData() {
+        return reportData;
+    }
+
     @Override
     public int getItemCount() {
         return reportData.size();

@@ -94,21 +94,7 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 app:cardElevation="4dp">
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_compliance_report"
-                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="100dp"
-                    android:layout_margin="4dp"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:lines="2"
-                    android:paddingTop="12dp"
-                    android:paddingBottom="12dp"
-                    android:text="Hourly Report"
-                    app:icon="@drawable/ic_wet_hands_anim"
-                    app:iconGravity="textTop"
-                    app:iconPadding="8dp" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -144,11 +130,11 @@
                         android:gravity="center"
                         android:lines="2"
                         android:paddingTop="12dp"
-                        android:paddingBottom="12dp"
+                        android:paddingBottom="18dp"
                         android:text="App Logo"
                         app:icon="@drawable/outline_brush_24"
                         app:iconGravity="textTop"
-                        app:iconPadding="4dp" />
+                        app:iconPadding="22dp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_compliance_report"
@@ -164,7 +150,7 @@
                         android:text="Hourly Report"
                         app:icon="?attr/actionModePasteDrawable"
                         app:iconGravity="textTop"
-                        app:iconPadding="4dp" />
+                        app:iconPadding="8dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
             <com.google.android.material.card.MaterialCardView
