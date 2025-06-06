@@ -1,17 +1,12 @@
 package com.jarindimick.handwashtracking.gui;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.DatePickerDialog;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -31,8 +26,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.text.HtmlCompat;
@@ -47,7 +40,6 @@ import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -61,14 +53,12 @@ import java.util.Objects;
 
 public class AdminDashboardActivity extends AppCompatActivity {
     private static final String TAG = "AdminDashboardActivity";
-    private static final int PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 101;
     private static final int REQUEST_CODE_SELECT_LOGO_IMAGE = 103;
 
     public static final String PREFS_NAME = "HandwashAppPrefs";
     public static final String KEY_CUSTOM_LOGO_PATH = "custom_logo_path";
     public static final String CUSTOM_LOGO_FILENAME = "custom_app_logo.png";
 
-    // SharedPreferences keys for the help dialog
     public static final String PREFS_ADMIN_DIALOG_SHOWN_FILE = "AdminDashboardDialogPrefs";
     public static final String KEY_ADMIN_HELP_DIALOG_SHOWN = "adminHelpDialogShown";
 
@@ -91,8 +81,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private MaterialButton btn_show_download_data_dialog;
 
     private DatabaseHelper dbHelper;
-    private String pendingCsvData;
-    private String pendingFileName;
     private AlertDialog pendingDialogToDismiss;
 
     @Override
@@ -115,7 +103,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         setupgui();
         setupListeners();
 
-        // Show the welcome dialog if it's the first time
         showAdminHelpDialogIfNeeded();
     }
 
@@ -153,7 +140,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         boolean dialogShown = dialogPrefs.getBoolean(KEY_ADMIN_HELP_DIALOG_SHOWN, false);
 
         if (dialogShown) {
-            Log.d(TAG, "Admin help dialog already shown.");
             return;
         }
 
@@ -165,7 +151,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     editor.putBoolean(KEY_ADMIN_HELP_DIALOG_SHOWN, true);
                     editor.apply();
                     dialog.dismiss();
-                    Log.d(TAG, "Admin help dialog shown and preference saved.");
                 })
                 .setCancelable(false)
                 .show();
@@ -194,28 +179,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         edit_search_end_date.setOnClickListener(v -> showDatePickerDialog(edit_search_end_date, "Set Search End Date"));
         btn_search_handwashes.setOnClickListener(v -> searchHandwashes());
 
-        btn_upload_logo.setOnClickListener(v -> {
-            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-            String currentLogoPath = prefs.getString(KEY_CUSTOM_LOGO_PATH, null);
-            File logoFile = null;
-            if (currentLogoPath != null) {
-                logoFile = new File(currentLogoPath);
-            }
-
-            if (logoFile != null && logoFile.exists()) {
-                new AlertDialog.Builder(AdminDashboardActivity.this)
-                        .setTitle("App Logo Options")
-                        .setItems(new CharSequence[]{"Change Logo", "Remove Current Logo", "Cancel"}, (dialog, which) -> {
-                            switch (which) {
-                                case 0: openImagePicker(); break;
-                                case 1: removeCustomLogoWithConfirmation(); break;
-                                case 2: dialog.dismiss(); break;
-                            }
-                        }).show();
-            } else {
-                openImagePicker();
-            }
-        });
+        btn_upload_logo.setOnClickListener(v -> Toast.makeText(AdminDashboardActivity.this, "Custom Logo Upload is not available in the free version.", Toast.LENGTH_LONG).show());
 
         btn_go_to_manage_employees.setOnClickListener(v -> {
             Intent intent = new Intent(AdminDashboardActivity.this, ManageEmployeesActivity.class);
@@ -224,90 +188,15 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_show_download_data_dialog.setOnClickListener(v -> showDownloadDataDialog());
     }
 
-    private void openImagePicker() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("image/*");
-        try {
-            startActivityForResult(intent, REQUEST_CODE_SELECT_LOGO_IMAGE);
-        } catch (android.content.ActivityNotFoundException ex) {
-            Toast.makeText(this, "Please install a File Manager or Gallery app.", Toast.LENGTH_SHORT).show();
-            txt_message.setText("No app found to select an image.");
-        }
-    }
-
-    private void removeCustomLogoWithConfirmation() {
-        new AlertDialog.Builder(this)
-                .setTitle("Remove Logo")
-                .setMessage("Are you sure you want to remove the custom app logo? This will revert to no logo on the main screen.")
-                .setPositiveButton("Remove", (dialog, which) -> performLogoRemoval())
-                .setNegativeButton("Cancel", null)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show();
-    }
-
-    private void performLogoRemoval() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        File internalDir = getFilesDir();
-        File logoFile = new File(internalDir, CUSTOM_LOGO_FILENAME);
-        boolean fileActionSuccess = false;
-        if (logoFile.exists()) {
-            fileActionSuccess = logoFile.delete();
-            if (!fileActionSuccess) Log.e(TAG, "Failed to delete custom logo file: " + logoFile.getAbsolutePath());
-        } else {
-            Log.d(TAG, "Custom logo file not found (already removed or never existed): " + logoFile.getAbsolutePath());
-            fileActionSuccess = true;
-        }
-        if (fileActionSuccess) {
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.remove(KEY_CUSTOM_LOGO_PATH);
-            editor.apply();
-            txt_message.setText("Custom app logo removed. Change will be visible on the main screen on its next load/restart.");
-            Toast.makeText(this, "Custom logo removed.", Toast.LENGTH_SHORT).show();
-        } else {
-            txt_message.setText("Error: Could not remove the custom logo file.");
-            Toast.makeText(this, "Failed to remove logo file.", Toast.LENGTH_SHORT).show();
-        }
-    }
-
     private void saveLogoToAppStorage(Uri sourceUri) {
-        if (sourceUri == null) {
-            Toast.makeText(this, "Failed to get image.", Toast.LENGTH_SHORT).show(); return;
-        }
-        File internalDir = getFilesDir();
-        File logoFile = new File(internalDir, CUSTOM_LOGO_FILENAME);
-        try (InputStream inputStream = getContentResolver().openInputStream(sourceUri);
-             OutputStream outputStream = new FileOutputStream(logoFile)) {
-            if (inputStream == null) throw new IOException("Unable to open input stream from URI");
-            byte[] buffer = new byte[1024]; int length;
-            while ((length = inputStream.read(buffer)) > 0) outputStream.write(buffer, 0, length);
-            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putString(KEY_CUSTOM_LOGO_PATH, logoFile.getAbsolutePath());
-            editor.apply();
-            txt_message.setText("Logo updated. It will show on the main screen.");
-            Toast.makeText(this, "App logo updated successfully!", Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
-            Log.e(TAG, "Error saving logo: " + e.getMessage(), e);
-            txt_message.setText("Error saving logo to app storage.");
-            Toast.makeText(this, "Error saving logo. Please try again.", Toast.LENGTH_LONG).show();
-        }
+        // This is part of a disabled feature, but we'll leave the code here.
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_SELECT_LOGO_IMAGE) {
-            if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
-                Uri selectedImageUri = data.getData();
-                txt_message.setText("Processing selected logo...");
-                saveLogoToAppStorage(selectedImageUri);
-            } else if (resultCode == Activity.RESULT_CANCELED) {
-                txt_message.setText("Logo selection cancelled.");
-            } else {
-                txt_message.setText("Failed to select logo image.");
-                Toast.makeText(this, "Failed to get image.", Toast.LENGTH_SHORT).show();
-            }
+            // This is part of a disabled feature
         }
     }
 
@@ -322,7 +211,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         } else {
             txt_overview_top_washer_today.setText("Top Washer Today: N/A");
         }
-        Log.d(TAG, "Admin overview data loaded.");
     }
 
     private void showDatePickerDialog(final TextInputEditText editTextToSetDate, String title) {
@@ -343,16 +231,20 @@ public class AdminDashboardActivity extends AppCompatActivity {
         LayoutInflater inflater = this.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_download_data, null);
         builder.setView(dialogView);
-        builder.setTitle("Download Data Options");
+        builder.setTitle("Share Report Options"); // Changed title
         final TextInputEditText dialogEditDownloadStartDate = dialogView.findViewById(R.id.dialog_edit_download_start_date);
         final TextInputEditText dialogEditDownloadEndDate = dialogView.findViewById(R.id.dialog_edit_download_end_date);
         final RadioGroup dialogRadioDownloadType = dialogView.findViewById(R.id.dialog_radio_download_type);
         final Button dialogBtnDownloadConfirm = dialogView.findViewById(R.id.dialog_btn_download_data_confirm);
+
+        // Update button text to "Share"
+        dialogBtnDownloadConfirm.setText("Share");
+
         dialogEditDownloadStartDate.setOnClickListener(v -> showDatePickerDialog(dialogEditDownloadStartDate, "Select Start Date"));
         dialogEditDownloadEndDate.setOnClickListener(v -> showDatePickerDialog(dialogEditDownloadEndDate, "Select End Date"));
         AlertDialog alertDialog = builder.create();
         dialogBtnDownloadConfirm.setOnClickListener(v -> {
-            performDataDownloadFromDialog(Objects.requireNonNull(dialogEditDownloadStartDate.getText()).toString(),
+            performDataShareFromDialog(Objects.requireNonNull(dialogEditDownloadStartDate.getText()).toString(),
                     Objects.requireNonNull(dialogEditDownloadEndDate.getText()).toString(),
                     dialogRadioDownloadType,
                     alertDialog);
@@ -360,115 +252,97 @@ public class AdminDashboardActivity extends AppCompatActivity {
         alertDialog.show();
     }
 
-    private void performDataDownloadFromDialog(String startDate, String endDate, RadioGroup radioGroup, AlertDialog dialogToDismiss) {
+    private void performDataShareFromDialog(String startDate, String endDate, RadioGroup radioGroup, AlertDialog dialogToDismiss) {
+        this.pendingDialogToDismiss = dialogToDismiss;
         int selectedId = radioGroup.getCheckedRadioButtonId();
         String downloadType;
         if (selectedId == R.id.dialog_radio_summary) downloadType = "summary";
         else if (selectedId == R.id.dialog_radio_detailed) downloadType = "detailed";
-        else { txt_message.setText("Download Error: Please select a download type."); return; }
+        else { txt_message.setText("Share Error: Please select a report type."); return; }
         if (startDate.isEmpty() || endDate.isEmpty()) {
-            txt_message.setText("Download Error: Please select start and end dates."); return;
+            txt_message.setText("Share Error: Please select start and end dates."); return;
         }
         List<DatabaseHelper.HandwashLog> logs = dbHelper.getHandwashLogs(startDate, endDate, downloadType);
         if (logs.isEmpty()) {
             txt_message.setText("No data for " + startDate + " to " + endDate + " (" + downloadType + ")."); return;
         }
         String csvData = formatDataToCsv(logs, downloadType);
-        String fileName = "handwash_" + downloadType + "_" + startDate + "_to_" + endDate + "_" + System.currentTimeMillis() + ".csv";
-        this.pendingCsvData = csvData; this.pendingFileName = fileName; this.pendingDialogToDismiss = dialogToDismiss;
-        saveCsvFile(csvData, fileName, dialogToDismiss);
+        String fileName = "handwash_" + downloadType + "_" + startDate + "_to_" + endDate + ".csv";
+
+        // Save the file and then trigger the share intent
+        saveAndShareCsvFile(csvData, fileName);
     }
 
-    private void saveCsvFile(String csvData, String fileName, AlertDialog dialogToDismiss) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
-            return;
-        }
-        proceedWithSavingCsv(csvData, fileName, dialogToDismiss);
-    }
-
-    private void proceedWithSavingCsv(String csvData, String fileName, AlertDialog dialogToDismiss) {
-        Uri fileUri = null;
+    // NEW: Method that saves the file and then calls the share action
+    private void saveAndShareCsvFile(String csvData, String fileName) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-                values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-                Uri collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-                fileUri = getContentResolver().insert(collection, values);
-                if (fileUri != null) {
-                    try (OutputStream os = getContentResolver().openOutputStream(fileUri)) {
-                        if (os != null) os.write(csvData.getBytes()); else throw new IOException("OutputStream null for MediaStore URI.");
-                    }
-                } else throw new IOException("MediaStore insert returned null URI.");
-            } else {
-                File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                if (!downloadsDir.exists() && !downloadsDir.mkdirs()) throw new IOException("Failed to create public Downloads dir.");
-                File csvFile = new File(downloadsDir, fileName);
-                try (FileWriter writer = new FileWriter(csvFile)) { writer.write(csvData); }
-                fileUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".fileprovider", csvFile);
+            // Use the "exports" subdirectory we defined in file_paths.xml
+            File exportsDir = new File(getExternalFilesDir(null), "exports");
+            if (!exportsDir.exists()) {
+                exportsDir.mkdirs();
             }
-            if (fileUri != null) {
-                openCsvFile(fileUri);
-                txt_message.setText("Data exported to Downloads: " + fileName);
-                if (dialogToDismiss != null) dialogToDismiss.dismiss();
-            } else throw new IOException("Failed to get valid URI for saved CSV.");
+            File file = new File(exportsDir, fileName);
+
+            // Write the CSV data to the file
+            try (FileWriter writer = new FileWriter(file)) {
+                writer.write(csvData);
+            }
+
+            // Get the content URI using the FileProvider
+            // The authority must match what's in AndroidManifest.xml
+            Uri fileUri = FileProvider.getUriForFile(this, "com.jarindimick.handwashtracking.fileprovider", file);
+
+            // Trigger the share action
+            shareCsvFile(fileUri, fileName);
+
+            txt_message.setText("CSV file created. Opening share menu...");
+            if (pendingDialogToDismiss != null) {
+                pendingDialogToDismiss.dismiss();
+                pendingDialogToDismiss = null;
+            }
+
         } catch (IOException | IllegalArgumentException e) {
-            txt_message.setText("Error saving CSV: " + e.getMessage());
-            Log.e(TAG, "Error saving CSV", e);
-            Toast.makeText(this, "Error saving CSV: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            txt_message.setText("Error creating shareable file: " + e.getMessage());
+            Log.e(TAG, "Error saving or sharing CSV", e);
+            Toast.makeText(this, "Error sharing file: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    // NEW: Replaces openCsvFile. This creates and launches the Share Sheet.
+    private void shareCsvFile(Uri fileUri, String fileName) {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/csv");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Handwash Report: " + fileName);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        startActivity(Intent.createChooser(shareIntent, "Share Report Via"));
     }
 
     private String formatDataToCsv(List<DatabaseHelper.HandwashLog> logs, String downloadType) {
         StringBuilder csvBuilder = new StringBuilder();
         if (downloadType.equals("summary")) {
-            // ADD "Department" to the header
             csvBuilder.append("Employee Number,First Name,Last Name,Department,Total Handwashes\n");
             for (DatabaseHelper.HandwashLog log : logs) {
                 csvBuilder.append(log.employeeNumber).append(",")
                         .append(log.firstName == null ? "" : log.firstName).append(",")
                         .append(log.lastName == null ? "" : log.lastName).append(",")
-                        // ADD the department data to the row
                         .append(log.department == null ? "N/A" : log.department).append(",")
                         .append(log.washCount).append("\n");
             }
         } else { // Detailed report
-            // CHANGE "Photo Path" to "Confirmation Status" in the header
             csvBuilder.append("Employee Number,First Name,Last Name,Department,Wash Date,Wash Time,Confirmation Status\n");
             for (DatabaseHelper.HandwashLog log : logs) {
                 csvBuilder.append(log.employeeNumber).append(",")
                         .append(log.firstName == null ? "" : log.firstName).append(",")
                         .append(log.lastName == null ? "" : log.lastName).append(",")
-                        // ADD the department data to the row
                         .append(log.department == null ? "N/A" : log.department).append(",")
                         .append(log.washDate).append(",")
                         .append(log.washTime).append(",")
-                        // The photoPath column now contains our status message
                         .append(log.photoPath == null ? "" : log.photoPath).append("\n");
             }
         }
         return csvBuilder.toString();
-    }
-
-    private void openCsvFile(Uri fileUri) {
-        Log.d(TAG, "Attempting to open CSV with Uri: " + fileUri.toString());
-        try {
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(fileUri, "text/csv");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                startActivity(Intent.createChooser(intent, "Open CSV with"));
-            } else {
-                txt_message.setText("No app found to open CSV file.");
-                Toast.makeText(this, "No app to open CSV.", Toast.LENGTH_LONG).show();
-            }
-        } catch (Exception e) {
-            txt_message.setText("Error opening CSV file: " + e.getMessage());
-            Log.e(TAG, "Error opening CSV file with Uri " + fileUri.toString(), e);
-            Toast.makeText(this, "Could not open CSV file: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
     }
 
     private void searchHandwashes() {
@@ -578,24 +452,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
             });
         });
         alertDialog.show();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.d(TAG, "WRITE_EXTERNAL_STORAGE permission granted for CSV download.");
-                if (pendingCsvData != null && pendingFileName != null) {
-                    proceedWithSavingCsv(pendingCsvData, pendingFileName, pendingDialogToDismiss);
-                }
-            } else {
-                Log.w(TAG, "WRITE_EXTERNAL_STORAGE permission denied for CSV download.");
-                txt_message.setText("Storage permission needed to save to Downloads folder.");
-                Toast.makeText(this, "Storage permission denied. Cannot save CSV to public Downloads.", Toast.LENGTH_LONG).show();
-            }
-            pendingCsvData = null; pendingFileName = null; pendingDialogToDismiss = null;
-        }
     }
 
     @Override
