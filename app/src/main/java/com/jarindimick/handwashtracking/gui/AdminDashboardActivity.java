@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -45,7 +44,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -179,25 +177,34 @@ public class AdminDashboardActivity extends AppCompatActivity {
         edit_search_end_date.setOnClickListener(v -> showDatePickerDialog(edit_search_end_date, "Set Search End Date"));
         btn_search_handwashes.setOnClickListener(v -> searchHandwashes());
 
-        btn_upload_logo.setOnClickListener(v -> Toast.makeText(AdminDashboardActivity.this, "Custom Logo Upload is not available in the free version.", Toast.LENGTH_LONG).show());
+        btn_upload_logo.setOnClickListener(v -> {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            String currentLogoPath = prefs.getString(KEY_CUSTOM_LOGO_PATH, null);
+            File logoFile = null;
+            if (currentLogoPath != null) {
+                logoFile = new File(currentLogoPath);
+            }
+
+            if (logoFile != null && logoFile.exists()) {
+                new AlertDialog.Builder(AdminDashboardActivity.this)
+                        .setTitle("App Logo Options")
+                        .setItems(new CharSequence[]{"Change Logo", "Remove Current Logo", "Cancel"}, (dialog, which) -> {
+                            switch (which) {
+                                case 0: openImagePicker(); break;
+                                case 1: removeCustomLogoWithConfirmation(); break;
+                                case 2: dialog.dismiss(); break;
+                            }
+                        }).show();
+            } else {
+                openImagePicker();
+            }
+        });
 
         btn_go_to_manage_employees.setOnClickListener(v -> {
             Intent intent = new Intent(AdminDashboardActivity.this, ManageEmployeesActivity.class);
             startActivity(intent);
         });
         btn_show_download_data_dialog.setOnClickListener(v -> showDownloadDataDialog());
-    }
-
-    private void saveLogoToAppStorage(Uri sourceUri) {
-        // This is part of a disabled feature, but we'll leave the code here.
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_SELECT_LOGO_IMAGE) {
-            // This is part of a disabled feature
-        }
     }
 
     private void loadAdminOverviewData() {
@@ -231,13 +238,12 @@ public class AdminDashboardActivity extends AppCompatActivity {
         LayoutInflater inflater = this.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_download_data, null);
         builder.setView(dialogView);
-        builder.setTitle("Share Report Options"); // Changed title
+        builder.setTitle("Share Report Options");
         final TextInputEditText dialogEditDownloadStartDate = dialogView.findViewById(R.id.dialog_edit_download_start_date);
         final TextInputEditText dialogEditDownloadEndDate = dialogView.findViewById(R.id.dialog_edit_download_end_date);
         final RadioGroup dialogRadioDownloadType = dialogView.findViewById(R.id.dialog_radio_download_type);
         final Button dialogBtnDownloadConfirm = dialogView.findViewById(R.id.dialog_btn_download_data_confirm);
 
-        // Update button text to "Share"
         dialogBtnDownloadConfirm.setText("Share");
 
         dialogEditDownloadStartDate.setOnClickListener(v -> showDatePickerDialog(dialogEditDownloadStartDate, "Select Start Date"));
@@ -269,30 +275,23 @@ public class AdminDashboardActivity extends AppCompatActivity {
         String csvData = formatDataToCsv(logs, downloadType);
         String fileName = "handwash_" + downloadType + "_" + startDate + "_to_" + endDate + ".csv";
 
-        // Save the file and then trigger the share intent
         saveAndShareCsvFile(csvData, fileName);
     }
 
-    // NEW: Method that saves the file and then calls the share action
     private void saveAndShareCsvFile(String csvData, String fileName) {
         try {
-            // Use the "exports" subdirectory we defined in file_paths.xml
             File exportsDir = new File(getExternalFilesDir(null), "exports");
             if (!exportsDir.exists()) {
                 exportsDir.mkdirs();
             }
             File file = new File(exportsDir, fileName);
 
-            // Write the CSV data to the file
             try (FileWriter writer = new FileWriter(file)) {
                 writer.write(csvData);
             }
 
-            // Get the content URI using the FileProvider
-            // The authority must match what's in AndroidManifest.xml
             Uri fileUri = FileProvider.getUriForFile(this, "com.jarindimick.handwashtracking.fileprovider", file);
 
-            // Trigger the share action
             shareCsvFile(fileUri, fileName);
 
             txt_message.setText("CSV file created. Opening share menu...");
@@ -308,7 +307,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         }
     }
 
-    // NEW: Replaces openCsvFile. This creates and launches the Share Sheet.
     private void shareCsvFile(Uri fileUri, String fileName) {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/csv");
@@ -330,7 +328,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                         .append(log.department == null ? "N/A" : log.department).append(",")
                         .append(log.washCount).append("\n");
             }
-        } else { // Detailed report
+        } else {
             csvBuilder.append("Employee Number,First Name,Last Name,Department,Wash Date,Wash Time,Confirmation Status\n");
             for (DatabaseHelper.HandwashLog log : logs) {
                 csvBuilder.append(log.employeeNumber).append(",")
@@ -452,6 +450,97 @@ public class AdminDashboardActivity extends AppCompatActivity {
             });
         });
         alertDialog.show();
+    }
+
+    // All helper methods for the logo feature
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        try {
+            startActivityForResult(intent, REQUEST_CODE_SELECT_LOGO_IMAGE);
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(this, "Please install a File Manager or Gallery app.", Toast.LENGTH_SHORT).show();
+            txt_message.setText("No app found to select an image.");
+        }
+    }
+
+    private void removeCustomLogoWithConfirmation() {
+        new AlertDialog.Builder(this)
+                .setTitle("Remove Logo")
+                .setMessage("Are you sure you want to remove the custom app logo?")
+                .setPositiveButton("Remove", (dialog, which) -> performLogoRemoval())
+                .setNegativeButton("Cancel", null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+    }
+
+    private void performLogoRemoval() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        File internalDir = getFilesDir();
+        File logoFile = new File(internalDir, CUSTOM_LOGO_FILENAME);
+        boolean fileActionSuccess;
+        if (logoFile.exists()) {
+            fileActionSuccess = logoFile.delete();
+        } else {
+            fileActionSuccess = true;
+        }
+
+        if (fileActionSuccess) {
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.remove(KEY_CUSTOM_LOGO_PATH);
+            editor.apply();
+            txt_message.setText("Custom app logo removed.");
+            Toast.makeText(this, "Custom logo removed.", Toast.LENGTH_SHORT).show();
+        } else {
+            txt_message.setText("Error: Could not remove the custom logo file.");
+            Toast.makeText(this, "Failed to remove logo file.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void saveLogoToAppStorage(Uri sourceUri) {
+        if (sourceUri == null) {
+            Toast.makeText(this, "Failed to get image.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        File internalDir = getFilesDir();
+        File logoFile = new File(internalDir, CUSTOM_LOGO_FILENAME);
+        try (InputStream inputStream = getContentResolver().openInputStream(sourceUri);
+             OutputStream outputStream = new FileOutputStream(logoFile)) {
+            if (inputStream == null) throw new IOException("Unable to open input stream from URI");
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, length);
+            }
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(KEY_CUSTOM_LOGO_PATH, logoFile.getAbsolutePath());
+            editor.apply();
+            txt_message.setText("Logo updated. It will show on the main screen.");
+            Toast.makeText(this, "App logo updated successfully!", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            Log.e(TAG, "Error saving logo: " + e.getMessage(), e);
+            txt_message.setText("Error saving logo to app storage.");
+            Toast.makeText(this, "Error saving logo. Please try again.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_SELECT_LOGO_IMAGE) {
+            if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+                Uri selectedImageUri = data.getData();
+                txt_message.setText("Processing selected logo...");
+                saveLogoToAppStorage(selectedImageUri);
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                txt_message.setText("Logo selection cancelled.");
+            } else {
+                txt_message.setText("Failed to select logo image.");
+                Toast.makeText(this, "Failed to get image.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override

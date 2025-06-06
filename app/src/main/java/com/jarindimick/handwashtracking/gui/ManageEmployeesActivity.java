@@ -233,7 +233,6 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
     }
 
     private void showEditEmployeeDialog(final Employee employeeToEdit) {
-        // ... (your existing showEditEmployeeDialog method - no changes needed here)
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = this.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_edit_employee, null);
@@ -251,14 +250,12 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
         dialogEditDepartment.setText(employeeToEdit.getDepartment());
         dialogSwitchIsActive.setChecked(employeeToEdit.isActive());
 
-        // This is the NEW code block
         if ("0".equals(employeeToEdit.getEmployeeNumber())) {
-            // For the Guest user, lock the text fields but allow the active toggle to be changed
             dialogEditFirstName.setEnabled(false);
             dialogEditLastName.setEnabled(false);
             dialogEditDepartment.setEnabled(false);
-            dialogSwitchIsActive.setEnabled(true); // Allow the toggle to be used
-            builder.setTitle("Edit Guest Account Status"); // Set a more accurate title
+            dialogSwitchIsActive.setEnabled(true);
+            builder.setTitle("Edit Guest Account Status");
         } else {
             builder.setTitle("Edit Employee: " + employeeToEdit.getEmployeeNumber());
         }
@@ -269,45 +266,59 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
         AlertDialog alertDialog = builder.create();
         alertDialog.setOnShowListener(dialogInterface -> {
             Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            if ("0".equals(employeeToEdit.getEmployeeNumber())) {
-                positiveButton.setVisibility(View.GONE);
-            }
 
+            // This listener now handles both Guest and regular employees correctly
             positiveButton.setOnClickListener(view -> {
-                String firstName = Objects.requireNonNull(dialogEditFirstName.getText()).toString().trim();
-                String lastName = Objects.requireNonNull(dialogEditLastName.getText()).toString().trim();
-                String department = Objects.requireNonNull(dialogEditDepartment.getText()).toString().trim();
-                boolean isActive = dialogSwitchIsActive.isChecked();
+                // Check if we are editing the Guest account
+                if ("0".equals(employeeToEdit.getEmployeeNumber())) {
+                    boolean isActive = dialogSwitchIsActive.isChecked();
+                    employeeToEdit.setActive(isActive);
 
-                dialogEditFirstName.setError(null);
-                dialogEditLastName.setError(null);
-
-                boolean isValid = true;
-                if (TextUtils.isEmpty(firstName)) {
-                    dialogEditFirstName.setError("First name cannot be empty.");
-                    isValid = false;
-                }
-                if (TextUtils.isEmpty(lastName)) {
-                    dialogEditLastName.setError("Last name cannot be empty.");
-                    isValid = false;
-                }
-
-                if (!isValid) {
-                    return;
-                }
-
-                employeeToEdit.setFirstName(firstName);
-                employeeToEdit.setLastName(lastName);
-                employeeToEdit.setDepartment(department.isEmpty() ? "Unassigned" : department);
-                employeeToEdit.setActive(isActive);
-
-                boolean success = dbHelper.updateEmployee(employeeToEdit);
-                if (success) {
-                    Toast.makeText(ManageEmployeesActivity.this, "Employee updated.", Toast.LENGTH_SHORT).show();
-                    loadEmployeeList();
-                    alertDialog.dismiss();
+                    boolean success = dbHelper.updateEmployee(employeeToEdit);
+                    if (success) {
+                        Toast.makeText(ManageEmployeesActivity.this, "Guest account status updated.", Toast.LENGTH_SHORT).show();
+                        loadEmployeeList();
+                        alertDialog.dismiss();
+                    } else {
+                        Toast.makeText(ManageEmployeesActivity.this, "Failed to update guest status.", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
-                    Toast.makeText(ManageEmployeesActivity.this, "Failed to update employee.", Toast.LENGTH_SHORT).show();
+                    // This is the original logic for all other employees
+                    String firstName = Objects.requireNonNull(dialogEditFirstName.getText()).toString().trim();
+                    String lastName = Objects.requireNonNull(dialogEditLastName.getText()).toString().trim();
+                    String department = Objects.requireNonNull(dialogEditDepartment.getText()).toString().trim();
+                    boolean isActive = dialogSwitchIsActive.isChecked();
+
+                    dialogEditFirstName.setError(null);
+                    dialogEditLastName.setError(null);
+
+                    boolean isValid = true;
+                    if (TextUtils.isEmpty(firstName)) {
+                        dialogEditFirstName.setError("First name cannot be empty.");
+                        isValid = false;
+                    }
+                    if (TextUtils.isEmpty(lastName)) {
+                        dialogEditLastName.setError("Last name cannot be empty.");
+                        isValid = false;
+                    }
+
+                    if (!isValid) {
+                        return;
+                    }
+
+                    employeeToEdit.setFirstName(firstName);
+                    employeeToEdit.setLastName(lastName);
+                    employeeToEdit.setDepartment(department.isEmpty() ? "Unassigned" : department);
+                    employeeToEdit.setActive(isActive);
+
+                    boolean success = dbHelper.updateEmployee(employeeToEdit);
+                    if (success) {
+                        Toast.makeText(ManageEmployeesActivity.this, "Employee updated.", Toast.LENGTH_SHORT).show();
+                        loadEmployeeList();
+                        alertDialog.dismiss();
+                    } else {
+                        Toast.makeText(ManageEmployeesActivity.this, "Failed to update employee.", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
         });
