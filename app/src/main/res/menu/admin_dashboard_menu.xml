@@ -13,6 +13,11 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_privacy_policy"
+        android:title="@string/action_privacy_policy"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_logout_toolbar"
         android:title="Logout"
         app:showAsAction="never" />

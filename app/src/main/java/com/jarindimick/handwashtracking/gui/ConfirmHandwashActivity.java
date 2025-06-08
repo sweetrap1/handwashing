@@ -13,6 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
@@ -38,7 +39,7 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
 
     private static final String TAG = "ConfirmHandwashActivity";
     private static final int PERMISSION_REQUEST_CODE_CAMERA = 101;
-    private static final long MOTION_DETECTION_DURATION_MS = 4000; // Detect for 4 seconds
+    private static final long MOTION_DETECTION_DURATION_MS = 4000;
     private static final long CONFIRMATION_DISPLAY_MS = 2000;
 
     private String employeeNumber;
@@ -49,11 +50,10 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
     private TextView textConfirmationMainMessage;
     private TextView textDailyCountMessage;
 
-    // ADD THE isFinalized LINE
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final ExecutorService cameraExecutor = Executors.newSingleThreadExecutor();
     private final AtomicBoolean motionDetected = new AtomicBoolean(false);
-    private final AtomicBoolean isFinalized = new AtomicBoolean(false); // <-- ADD THIS LINE
+    private final AtomicBoolean isFinalized = new AtomicBoolean(false);
     private ProcessCameraProvider cameraProvider;
     private ImageAnalysis imageAnalysis;
 
@@ -171,7 +171,6 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
         layoutConfirmationMessage.setVisibility(View.VISIBLE);
         textConfirmationMainMessage.setText("Handwash Logged!");
 
-        // This method now handles updating the text on the screen
         saveHandwashLogToDb(confirmationStatus);
 
         mainHandler.postDelayed(this::navigateToMainScreen, CONFIRMATION_DISPLAY_MS);
@@ -184,7 +183,6 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
         String washDate = now.format(dateFormatter);
         String washTime = now.format(timeFormatter);
 
-        // First, save the log to the database
         long logResult = dbHelper.insertHandwashLog(employeeNumber, washDate, washTime, confirmationStatus);
         if (logResult == -1) {
             Log.e(TAG, "Error saving log.");
@@ -192,22 +190,15 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
             Log.d(TAG, "Log saved successfully.");
         }
 
-        // --- NEW HOURLY COMPLIANCE FEEDBACK ---
-        // Now that the log is saved, check the counts
         int dailyCount = dbHelper.getHandwashCountForEmployeeToday(employeeNumber);
         boolean alreadyWashedThisHour = dbHelper.hasWashedInCurrentHour(employeeNumber, washDate, washTime);
 
-        // Find the TextView for the daily count message
         TextView textDailyCountMessage = findViewById(R.id.text_daily_count_message);
-
-        // Create a more informative message
         String message = String.format(Locale.getDefault(), "Your daily count: %d", dailyCount);
         if (!alreadyWashedThisHour) {
-            // Add a positive reinforcement message if this is the first wash in the current hour
             message += "\n\nGreat job on your first wash this hour!";
         }
         textDailyCountMessage.setText(message);
-        // --- END OF NEW LOGIC ---
     }
 
     private void navigateToMainScreen() {
@@ -223,7 +214,20 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
     }
 
     private void requestCameraPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE_CAMERA);
+        // This method now shows the rationale dialog first.
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.camera_rationale_title)
+                .setMessage(R.string.camera_rationale_message)
+                .setPositiveButton("OK", (dialog, which) -> {
+                    // After the user clicks OK, we request the system permission.
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE_CAMERA);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    Toast.makeText(this, "Camera access is required for motion confirmation.", Toast.LENGTH_LONG).show();
+                    processHandwashCompletion("Camera Permission Denied");
+                })
+                .setCancelable(false)
+                .show();
     }
 
     @Override
@@ -231,9 +235,11 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE_CAMERA) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission was granted
                 setupCamera();
             } else {
-                Toast.makeText(this, "Camera permission is required.", Toast.LENGTH_LONG).show();
+                // Permission was denied
+                Toast.makeText(this, "Camera permission was denied.", Toast.LENGTH_LONG).show();
                 processHandwashCompletion("Camera Permission Denied");
             }
         }

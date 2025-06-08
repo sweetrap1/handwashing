@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
+
 public class AdminDashboardActivity extends AppCompatActivity {
     private static final String TAG = "AdminDashboardActivity";
     private static final int REQUEST_CODE_SELECT_LOGO_IMAGE = 103;
@@ -129,6 +130,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
             return true;
         } else if (itemId == R.id.action_delete_data_range_toolbar) {
             deleteDataWithConfirmation();
+            return true;
+        } else if (itemId == R.id.action_privacy_policy) {
+            // HANDLE PRIVACY POLICY CLICK
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.privacy_policy_url)));
+            startActivity(browserIntent);
             return true;
         }
         return super.onOptionsItemSelected(item);

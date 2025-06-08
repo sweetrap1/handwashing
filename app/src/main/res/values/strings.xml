@@ -48,4 +48,9 @@
     <string name="admin_dashboard_tour_button">Got It!</string>
 
     <string name="confirm_wave_hand">Please wave your hand in front of the camera to confirm you are present.</string>
+    <string name="action_privacy_policy">Privacy Policy</string>
+    <string name="privacy_policy_url">https://sweetrap1.github.io/handwashing/privacy.html</string>
+
+    <string name="camera_rationale_title">Camera Access Required</string>
+    <string name="camera_rationale_message">This app uses the front-facing camera for motion detection to confirm that a handwash has been completed. No pictures or videos are ever recorded or stored. Please allow camera access to continue.</string>
 </resources>
