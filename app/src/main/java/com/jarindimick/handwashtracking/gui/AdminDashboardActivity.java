@@ -48,6 +48,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 
 public class AdminDashboardActivity extends AppCompatActivity {
@@ -440,19 +441,39 @@ public class AdminDashboardActivity extends AppCompatActivity {
         alertDialog.setOnShowListener(dialogInterface -> {
             Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
             positiveButton.setOnClickListener(view -> {
-                String o = Objects.requireNonNull(oldPass.getText()).toString(); String n = Objects.requireNonNull(newPass.getText()).toString(); String c = Objects.requireNonNull(confirmNewPass.getText()).toString();
-                oldPass.setError(null); newPass.setError(null); confirmNewPass.setError(null);
+                String o = Objects.requireNonNull(oldPass.getText()).toString();
+                String n = Objects.requireNonNull(newPass.getText()).toString();
+                String c = Objects.requireNonNull(confirmNewPass.getText()).toString();
+
+                // --- NEW: Password validation ---
+                // Rule: At least 8 characters, one number, one uppercase letter.
+                Pattern passwordPattern = Pattern.compile(
+                        "^(?=.*[0-9])(?=.*[A-Z]).{8,}$"
+                );
+
+                oldPass.setError(null);
+                newPass.setError(null);
+                confirmNewPass.setError(null);
+
                 boolean passValid = true;
                 if (o.isEmpty()) { oldPass.setError("Old password required."); passValid = false; }
                 if (n.isEmpty()) { newPass.setError("New password required."); passValid = false; }
                 if (c.isEmpty()) { confirmNewPass.setError("Confirm new password."); passValid = false; }
                 if (!passValid) return;
-                if (n.length() < 6) { newPass.setError("New password too short (min 6)."); return; }
-                if (!n.equals(c)) { confirmNewPass.setError("New passwords don't match."); return; }
+
+                if (!passwordPattern.matcher(n).matches()) {
+                    newPass.setError("Password must be at least 8 characters and include one number and one uppercase letter.");
+                    return;
+                }
+                if (!n.equals(c)) {
+                    confirmNewPass.setError("New passwords don't match.");
+                    return;
+                }
+
                 if (dbHelper.validateAdminLogin("admin", o)) {
                     if (dbHelper.updateAdminPassword("admin", n)) {
                         txt_message.setText("Admin password updated.");
-                        Toast.makeText(this, "Password changed.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Password changed successfully.", Toast.LENGTH_SHORT).show();
                         alertDialog.dismiss();
                     } else {
                         txt_message.setText("DB error changing password.");
@@ -465,6 +486,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         });
         alertDialog.show();
     }
+
 
     private void openImagePicker() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
