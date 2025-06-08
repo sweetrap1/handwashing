@@ -54,7 +54,8 @@
             android:name=".gui.MainHandwashing"
             android:exported="true"
             android:screenOrientation="fullSensor"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar">
+            android:theme="@style/Theme.HandwashTracking.NoActionBar"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

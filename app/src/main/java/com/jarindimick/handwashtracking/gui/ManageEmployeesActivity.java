@@ -1,6 +1,5 @@
 package com.jarindimick.handwashtracking.gui;
 
-// Add necessary imports (many might already be there)
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
@@ -9,9 +8,9 @@ import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu; // New import
-import android.view.MenuInflater; // New import
-import android.view.MenuItem; // New import
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -19,7 +18,7 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable; // New import
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -35,20 +34,20 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.jarindimick.handwashtracking.R;
 import com.jarindimick.handwashtracking.databasehelper.DatabaseHelper;
 
-import java.io.BufferedReader; // New import
-import java.io.IOException; // New import
-import java.io.InputStream; // New import
-import java.io.InputStreamReader; // New import
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale; // New import
-import java.util.Objects; // New import
+import java.util.Locale;
+import java.util.Objects;
 
 
 public class ManageEmployeesActivity extends AppCompatActivity implements EmployeeAdminAdapter.OnEmployeeActionListener {
 
     private static final String TAG = "ManageEmployeesActivity";
-    private static final int REQUEST_CODE_SELECT_CSV = 102; // Copied from AdminDashboardActivity
+    private static final int REQUEST_CODE_SELECT_CSV = 102;
 
     private RecyclerView recyclerEmployeeList;
     private EmployeeAdminAdapter employeeAdminAdapter;
@@ -75,8 +74,7 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_manage_employees), (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
-            // return windowInsets; // Original
-            return WindowInsetsCompat.CONSUMED; // Better practice
+            return WindowInsetsCompat.CONSUMED;
         });
 
         dbHelper = new DatabaseHelper(this);
@@ -92,7 +90,6 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
         fabAddEmployee.setOnClickListener(v -> showAddEmployeeDialog());
     }
 
-    // START: Methods for Toolbar Menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -103,17 +100,15 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
-        if (itemId == android.R.id.home) { // Handle the back arrow
+        if (itemId == android.R.id.home) {
             finish();
             return true;
         } else if (itemId == R.id.action_import_employees_csv) {
-            importEmployeesFromDevice(); // Call the import method
+            importEmployeesFromDevice();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
-    // END: Methods for Toolbar Menu
-
 
     private void loadEmployeeList() {
         Log.d(TAG, "Loading employee list...");
@@ -164,7 +159,6 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
     }
 
     private void showAddEmployeeDialog() {
-        // ... (your existing showAddEmployeeDialog method - no changes needed here)
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = this.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_add_employee, null);
@@ -267,9 +261,7 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
         alertDialog.setOnShowListener(dialogInterface -> {
             Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
 
-            // This listener now handles both Guest and regular employees correctly
             positiveButton.setOnClickListener(view -> {
-                // Check if we are editing the Guest account
                 if ("0".equals(employeeToEdit.getEmployeeNumber())) {
                     boolean isActive = dialogSwitchIsActive.isChecked();
                     employeeToEdit.setActive(isActive);
@@ -283,7 +275,6 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
                         Toast.makeText(ManageEmployeesActivity.this, "Failed to update guest status.", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    // This is the original logic for all other employees
                     String firstName = Objects.requireNonNull(dialogEditFirstName.getText()).toString().trim();
                     String lastName = Objects.requireNonNull(dialogEditLastName.getText()).toString().trim();
                     String department = Objects.requireNonNull(dialogEditDepartment.getText()).toString().trim();
@@ -331,14 +322,15 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
         loadEmployeeList();
     }
 
-    // START: Copied CSV Import Logic from AdminDashboardActivity
+    // --- CSV IMPORT LOGIC ---
+
     private void importEmployeesFromDevice() {
         String csvFormatInfo = "Please select a CSV file with the following columns in order:<br>" +
                 "1. <b>EmployeeNumber</b> (e.g., 101)<br>" +
                 "2. <b>FirstName</b> (e.g., John)<br>" +
                 "3. <b>LastName</b> (e.g., Doe)<br>" +
-                "4. <b>Department</b> (e.g., Kitchen) <i>(Optional, defaults to 'Imported')</i><br><br>" +
-                "No header row is expected in the CSV file.";
+                "4. <b>Department</b> (e.g., \"Kitchen, Main\") <i>(Optional)</i><br><br>" +
+                "Fields containing commas must be enclosed in double quotes. No header row is expected.";
         new AlertDialog.Builder(this)
                 .setTitle("CSV Import Information")
                 .setMessage(Html.fromHtml(csvFormatInfo, Html.FROM_HTML_MODE_LEGACY))
@@ -349,13 +341,8 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
     private void launchCsvFilePicker() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("text/csv"); // More specific, but EXTRA_MIME_TYPES is good for broader compatibility
-        String[] mimeTypes = {
-                "text/csv",
-                "text/comma-separated-values",
-                "application/csv", // Common MIME type
-                "application/vnd.ms-excel" // Sometimes used for CSVs
-        };
+        intent.setType("text/csv");
+        String[] mimeTypes = {"text/csv", "text/comma-separated-values", "application/csv", "application/vnd.ms-excel"};
         intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
         try {
             startActivityForResult(Intent.createChooser(intent, "Select a CSV file"), REQUEST_CODE_SELECT_CSV);
@@ -371,20 +358,16 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
             if (data != null && data.getData() != null) {
                 Uri selectedFileUri = data.getData();
                 Log.d(TAG, "CSV file selected: " + selectedFileUri.toString());
-                Toast.makeText(this, "Processing CSV: " + selectedFileUri.getLastPathSegment(), Toast.LENGTH_SHORT).show();
                 processSelectedCsv(selectedFileUri);
             } else {
                 Toast.makeText(this, "No file selected or URI is null.", Toast.LENGTH_SHORT).show();
             }
-        } else if (requestCode == REQUEST_CODE_SELECT_CSV && resultCode == Activity.RESULT_CANCELED) {
-            Toast.makeText(this, "CSV file selection cancelled.", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void processSelectedCsv(Uri csvFileUri) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = this.getLayoutInflater();
-        // Ensure dialog_progress_spinner.xml exists and has a TextView with R.id.text_progress_message
         View dialogView = inflater.inflate(R.layout.dialog_progress_spinner, null);
         TextView progressText = dialogView.findViewById(R.id.text_progress_message);
         if(progressText != null) progressText.setText("Processing CSV...");
@@ -394,10 +377,9 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
         progressDialog.show();
 
         new Thread(() -> {
-            List<EmployeeFromCsv> employeesToImport;
-            final StringBuilder resultMessageBuilder = new StringBuilder(); // Use StringBuilder for messages
+            final StringBuilder resultMessageBuilder = new StringBuilder();
             try {
-                employeesToImport = readEmployeesFromCsvUri(csvFileUri);
+                List<EmployeeFromCsv> employeesToImport = readEmployeesFromCsvUri(csvFileUri);
                 if (employeesToImport.isEmpty()) {
                     resultMessageBuilder.append("Selected CSV is empty or has no valid data.");
                 } else {
@@ -422,35 +404,79 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
 
             runOnUiThread(() -> {
                 progressDialog.dismiss();
-                // Display result in a more persistent way if needed, or longer Toast
                 Toast.makeText(ManageEmployeesActivity.this, resultMessageBuilder.toString(), Toast.LENGTH_LONG).show();
-                loadEmployeeList(); // Refresh the employee list on screen
+                loadEmployeeList(); // Refresh the employee list
             });
         }).start();
     }
 
+    /**
+     * This is the new, more robust CSV parser that can handle quoted fields.
+     * It replaces the simple "line.split()".
+     */
+    private List<String> parseCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        if (line == null || line.isEmpty()) {
+            return fields;
+        }
+
+        StringBuilder currentField = new StringBuilder();
+        boolean inQuotes = false;
+        char[] chars = line.toCharArray();
+
+        for (int i = 0; i < chars.length; i++) {
+            char c = chars[i];
+
+            if (inQuotes) {
+                if (c == '"') {
+                    // Check for an escaped double-quote ("")
+                    if (i + 1 < chars.length && chars[i + 1] == '"') {
+                        currentField.append('"');
+                        i++; // Skip the next character
+                    } else {
+                        inQuotes = false; // End of quoted field
+                    }
+                } else {
+                    currentField.append(c); // Character inside quotes
+                }
+            } else {
+                if (c == '"') {
+                    inQuotes = true;
+                } else if (c == ',') {
+                    fields.add(currentField.toString());
+                    currentField.setLength(0); // Reset for next field
+                } else {
+                    currentField.append(c); // Regular character
+                }
+            }
+        }
+        fields.add(currentField.toString()); // Add the last field
+        return fields;
+    }
+
     private List<EmployeeFromCsv> readEmployeesFromCsvUri(Uri csvFileUri) throws IOException {
         List<EmployeeFromCsv> employees = new ArrayList<>();
-        // try-with-resources to ensure streams are closed
         try (InputStream inputStream = getContentResolver().openInputStream(csvFileUri);
              BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(inputStream)))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.trim().isEmpty()) continue; // Skip empty lines
-                String[] tokens = line.split(","); // Basic CSV split
-                if (tokens.length >= 3) { // Need at least EmpNo, FirstName, LastName
-                    String empNo = tokens[0].trim();
-                    String fName = tokens[1].trim();
-                    String lName = tokens[2].trim();
-                    String dept = (tokens.length >= 4 && !tokens[3].trim().isEmpty()) ? tokens[3].trim() : "Imported"; // Default department
+
+                List<String> tokens = parseCsvLine(line); // Use the new robust parser
+
+                if (tokens.size() >= 3) {
+                    String empNo = tokens.get(0).trim();
+                    String fName = tokens.get(1).trim();
+                    String lName = tokens.get(2).trim();
+                    String dept = (tokens.size() >= 4 && !tokens.get(3).trim().isEmpty()) ? tokens.get(3).trim() : "Imported";
 
                     if (!empNo.isEmpty() && !fName.isEmpty() && !lName.isEmpty()) {
                         employees.add(new EmployeeFromCsv(empNo, fName, lName, dept));
                     } else {
-                        Log.w(TAG, "Skipping CSV line (URI) with missing essential data: " + line);
+                        Log.w(TAG, "Skipping CSV line with missing essential data: " + line);
                     }
                 } else {
-                    Log.w(TAG, "Skipping malformed CSV line (URI) - not enough columns: " + line);
+                    Log.w(TAG, "Skipping malformed CSV line - not enough columns: " + line);
                 }
             }
         } catch (NullPointerException e) {
@@ -460,12 +486,10 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
         return employees;
     }
 
-    // Inner class for holding data from CSV, copied from AdminDashboardActivity
     private static class EmployeeFromCsv {
         String employeeNumber, firstName, lastName, department;
         public EmployeeFromCsv(String en, String fn, String ln, String d) {
             employeeNumber=en; firstName=fn; lastName=ln; department=d;
         }
     }
-    // END: Copied CSV Import Logic
 }

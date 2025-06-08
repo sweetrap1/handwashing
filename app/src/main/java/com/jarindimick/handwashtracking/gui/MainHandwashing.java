@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -30,12 +31,12 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog; // Keep for other dialogs if any, or if you add one here
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
-import androidx.core.text.HtmlCompat; // For the limitations dialog, if you re-add it
+import androidx.core.text.HtmlCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
@@ -50,6 +51,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainHandwashing extends AppCompatActivity {
 
@@ -58,13 +61,14 @@ public class MainHandwashing extends AppCompatActivity {
     private EditText edit_employee_number;
     private Button btn_start;
     private TableLayout table_top_handwashers;
-    private Handler timeUpdateHandler = new Handler(Looper.getMainLooper());
+    private final Handler timeUpdateHandler = new Handler(Looper.getMainLooper());
     private Runnable updateTimeRunnable;
     private DatabaseHelper dbHelper;
-    private List<LeaderboardEntry> leaderboardData = new ArrayList<>();
     private Toolbar mainToolbar;
 
-    // SharedPreferences keys for the interactive tour
+    // Executor for background tasks
+    private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
+
     public static final String PREFS_MAIN_TOUR_FILE = "MainTourPrefs";
     public static final String KEY_MAIN_INTERACTIVE_TOUR_SHOWN = "mainInteractiveTourShown";
 
@@ -86,16 +90,15 @@ public class MainHandwashing extends AppCompatActivity {
             return windowInsets;
         });
 
-        setupgui(); // Initializes mainToolbar among other views
+        setupgui();
 
-        if (mainToolbar != null) { // Check if mainToolbar was found
+        if (mainToolbar != null) {
             setSupportActionBar(mainToolbar);
         }
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
-        loadCustomLogo();
         startUpdatingTime();
         setupListeners();
         dbHelper = new DatabaseHelper(this);
@@ -106,12 +109,11 @@ public class MainHandwashing extends AppCompatActivity {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus && !interactiveTourAttemptedThisSession) {
             hasWindowFocusForTour = true;
-            // Post a small delay to give the UI (especially menu items) time to fully render
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                if (hasWindowFocusForTour) { // Re-check focus in case it was lost during the delay
+                if (hasWindowFocusForTour) {
                     showInteractiveTourIfNeeded();
                 }
-            }, 300); // 300ms delay, adjust if necessary
+            }, 300);
         } else if (!hasFocus) {
             hasWindowFocusForTour = false;
         }
@@ -121,113 +123,70 @@ public class MainHandwashing extends AppCompatActivity {
         final SharedPreferences tourPrefs = getSharedPreferences(PREFS_MAIN_TOUR_FILE, MODE_PRIVATE);
         boolean tourShown = tourPrefs.getBoolean(KEY_MAIN_INTERACTIVE_TOUR_SHOWN, false);
 
-        if (tourShown) { // If permanently shown, do nothing.
+        if (tourShown || interactiveTourAttemptedThisSession) {
             return;
         }
 
-        // If not permanently shown, but we already tried (and possibly failed) this session, don't try again.
-        if (interactiveTourAttemptedThisSession){
-            Log.d("MainHandwashing", "Interactive tour already attempted this session.");
-            return;
-        }
+        interactiveTourAttemptedThisSession = true;
 
-        interactiveTourAttemptedThisSession = true; // Mark as attempted for this current activity instance
-
-        // Ensure views are ready and the menu item exists
-        if (edit_employee_number != null && mainToolbar != null && mainToolbar.getMenu() != null && mainToolbar.getMenu().size() > 0 && mainToolbar.getMenu().findItem(R.id.menu_admin_login) != null) {
-
-            // --- Customizable Wording for Admin Access ---
-            String adminTitle = "Admin Features"; // YOUR NEW TITLE HERE
-            String adminDescription = "Access employee management & app settings. Default login/password: admin (Please Change))."; // YOUR NEW DESCRIPTION HERE
-            // --- End of Customizable Wording ---
+        if (edit_employee_number != null && mainToolbar != null && mainToolbar.getMenu() != null && mainToolbar.getMenu().findItem(R.id.menu_admin_login) != null) {
+            String adminTitle = "Admin Features";
+            String adminDescription = "Access employee management & app settings. Default login/password: admin (Please Change)).";
 
             TapTargetSequence.Listener sequenceListener = new TapTargetSequence.Listener() {
                 @Override
                 public void onSequenceFinish() {
-                    Log.d("MainHandwashing", "Interactive tour sequence finished.");
-                    showFreeVersionLimitationsDialog(() -> { // Show limitations dialog
-                        SharedPreferences.Editor editor = tourPrefs.edit();
-                        editor.putBoolean(KEY_MAIN_INTERACTIVE_TOUR_SHOWN, true);
-                        editor.apply();
-                        Log.d("MainHandwashing", "Limitations dialog dismissed, tour preference saved.");
-                    });
-                }
-
-                @Override
-                public void onSequenceStep(TapTarget lastTarget, boolean targetClicked) {
-                    // Called when a step is completed
-                }
-
-                @Override
-                public void onSequenceCanceled(TapTarget lastTarget) {
-                    Log.w("MainHandwashing", "Interactive tour sequence cancelled/failed.");
-                    // If cancelled (e.g., target not found by library), still show limitations and mark as done
                     showFreeVersionLimitationsDialog(() -> {
                         SharedPreferences.Editor editor = tourPrefs.edit();
                         editor.putBoolean(KEY_MAIN_INTERACTIVE_TOUR_SHOWN, true);
                         editor.apply();
-                        Log.d("MainHandwashing", "Limitations dialog dismissed after tour cancel, preference saved.");
+                    });
+                }
+
+                @Override
+                public void onSequenceStep(TapTarget lastTarget, boolean targetClicked) {}
+
+                @Override
+                public void onSequenceCanceled(TapTarget lastTarget) {
+                    showFreeVersionLimitationsDialog(() -> {
+                        SharedPreferences.Editor editor = tourPrefs.edit();
+                        editor.putBoolean(KEY_MAIN_INTERACTIVE_TOUR_SHOWN, true);
+                        editor.apply();
                     });
                 }
             };
 
             ArrayList<TapTarget> targets = new ArrayList<>();
-
-            targets.add(TapTarget.forView(edit_employee_number,
-                            "Guest User",
-                            "Enter employee 0 to log a wash if you are not registered.")
-                    .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.75f)
-                    .targetCircleColor(android.R.color.white).titleTextColor(android.R.color.white)
-                    .descriptionTextColor(android.R.color.white).textTypeface(Typeface.SANS_SERIF)
-                    .dimColor(R.color.tour_dim_background).drawShadow(true)
+            targets.add(TapTarget.forView(edit_employee_number, "Guest User", "Enter employee 0 to log a wash if you are not registered.")
+                    .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.75f).targetCircleColor(android.R.color.white)
+                    .titleTextColor(android.R.color.white).descriptionTextColor(android.R.color.white)
+                    .textTypeface(Typeface.SANS_SERIF).dimColor(R.color.tour_dim_background).drawShadow(true)
                     .cancelable(false).targetRadius(20).id(1));
 
             try {
-                targets.add(TapTarget.forToolbarOverflow(mainToolbar, // Targets the overflow menu icon
-                                adminTitle,
-                                adminDescription)
-                        .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.75f)
-                        .targetCircleColor(android.R.color.white).titleTextColor(android.R.color.white)
-                        .descriptionTextColor(android.R.color.white).textTypeface(Typeface.SANS_SERIF)
-                        .dimColor(R.color.tour_dim_background).drawShadow(true)
+                targets.add(TapTarget.forToolbarOverflow(mainToolbar, adminTitle, adminDescription)
+                        .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.75f).targetCircleColor(android.R.color.white)
+                        .titleTextColor(android.R.color.white).descriptionTextColor(android.R.color.white)
+                        .textTypeface(Typeface.SANS_SERIF).dimColor(R.color.tour_dim_background).drawShadow(true)
                         .cancelable(false).targetRadius(20).id(2));
-
-            } catch (Exception e) { // Catch if forToolbarOverflow fails (e.g. no overflow visible)
-                Log.e("TapTarget", "Failed to create TapTarget for toolbar overflow. Menu might not be ready or no overflow items.", e);
-                sequenceListener.onSequenceCanceled(null); // Trigger cancel to show limitations and set pref
-                return; // Don't try to start an empty or incomplete sequence
+            } catch (Exception e) {
+                Log.e("TapTarget", "Failed to create TapTarget for toolbar overflow.", e);
+                sequenceListener.onSequenceCanceled(null);
+                return;
             }
 
-
-            if (targets.size() == 2) { // Ensure both targets were added successfully
-                new TapTargetSequence(this)
-                        .targets(targets)
-                        .listener(sequenceListener)
-                        .continueOnCancel(false)
-                        .start();
-                Log.d("MainHandwashing", "Interactive tour sequence started with " + targets.size() + " targets.");
+            if (targets.size() == 2) {
+                new TapTargetSequence(this).targets(targets).listener(sequenceListener).continueOnCancel(false).start();
             } else {
-                Log.w("MainHandwashing", "Not all targets for interactive tour were created. Tour skipped. Targets count: " + targets.size());
-                // Mark tour as shown to prevent retrying if a target is persistently missing
                 showFreeVersionLimitationsDialog(() -> {
                     SharedPreferences.Editor editor = tourPrefs.edit();
                     editor.putBoolean(KEY_MAIN_INTERACTIVE_TOUR_SHOWN, true);
                     editor.apply();
                 });
             }
-
-        } else {
-            Log.w("MainHandwashing", "Interactive tour prerequisites not met (views null, menu not ready, or already attempted this session).");
-            // If views are null, it means setupgui might not have run or IDs are wrong.
-            // If it was already attempted this session, that's fine.
-            // If tourShown is true, it's also fine.
-            // Only reset interactiveTourAttemptedThisSession if you want it to retry on next focus if views were the issue.
-            // For a one-time tour, if it fails to start due to views, the SharedPreferences flag won't be set,
-            // so it will try again next app launch.
         }
     }
 
-    // Define the OnLimitationsDialogDismissed interface
     interface OnLimitationsDialogDismissed {
         void onDismissed();
     }
@@ -243,21 +202,18 @@ public class MainHandwashing extends AppCompatActivity {
             }
         });
         builder.setCancelable(false);
-
-        AlertDialog dialog = builder.create();
-        if (!isFinishing() && !isDestroyed()) { // Ensure activity is active before showing dialog
-            dialog.show();
+        if (!isFinishing() && !isDestroyed()) {
+            builder.create().show();
         }
     }
-
 
     @Override
     protected void onResume() {
         super.onResume();
-        populateLeaderboardTable();
-        loadCustomLogo();
-        interactiveTourAttemptedThisSession = false; // Reset session flag on resume
-        hasWindowFocusForTour = false;               // Reset focus flag
+        loadLeaderboardDataAsync();
+        loadCustomLogoAsync(); // Use the new asynchronous method
+        interactiveTourAttemptedThisSession = false;
+        hasWindowFocusForTour = false;
     }
 
     private void setupgui() {
@@ -266,37 +222,46 @@ public class MainHandwashing extends AppCompatActivity {
         edit_employee_number = findViewById(R.id.edit_employee_number);
         btn_start = findViewById(R.id.btn_start);
         table_top_handwashers = findViewById(R.id.table_top_handwashers);
-        mainToolbar = findViewById(R.id.main_toolbar); // Ensure this is initialized
+        mainToolbar = findViewById(R.id.main_toolbar);
     }
 
-    private void loadCustomLogo() {
-        SharedPreferences prefs = getSharedPreferences(AdminDashboardActivity.PREFS_NAME, MODE_PRIVATE);
-        String logoPath = prefs.getString(AdminDashboardActivity.KEY_CUSTOM_LOGO_PATH, null);
-        if (img_custom_logo == null) return; // Guard against null view
+    private void loadCustomLogoAsync() {
+        backgroundExecutor.execute(() -> {
+            SharedPreferences prefs = getSharedPreferences(AdminDashboardActivity.PREFS_NAME, MODE_PRIVATE);
+            String logoPath = prefs.getString(AdminDashboardActivity.KEY_CUSTOM_LOGO_PATH, null);
 
-        if (logoPath != null) {
-            File logoFile = new File(logoPath);
-            if (logoFile.exists()) {
-                try {
-                    img_custom_logo.setImageBitmap(BitmapFactory.decodeFile(logoFile.getAbsolutePath()));
-                    img_custom_logo.setVisibility(View.VISIBLE);
-                } catch (Exception e) {
-                    Log.e("MainHandwashing", "Error loading custom logo: " + e.getMessage());
-                    img_custom_logo.setVisibility(View.GONE);
+            final Bitmap logoBitmap;
+            if (logoPath != null) {
+                File logoFile = new File(logoPath);
+                if (logoFile.exists()) {
+                    // This is the slow part that is now in the background
+                    logoBitmap = BitmapFactory.decodeFile(logoFile.getAbsolutePath());
+                } else {
+                    logoBitmap = null;
                 }
             } else {
-                img_custom_logo.setVisibility(View.GONE);
+                logoBitmap = null;
             }
-        } else {
-            img_custom_logo.setVisibility(View.GONE);
-        }
+
+            // Update the UI on the main thread
+            runOnUiThread(() -> {
+                if (img_custom_logo != null) {
+                    if (logoBitmap != null) {
+                        img_custom_logo.setImageBitmap(logoBitmap);
+                        img_custom_logo.setVisibility(View.VISIBLE);
+                    } else {
+                        img_custom_logo.setVisibility(View.GONE);
+                    }
+                }
+            });
+        });
     }
 
     private void updateDateTime() {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, uuuu", Locale.getDefault());
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault());
-        if (txt_datetime != null) { // Guard against null view
+        if (txt_datetime != null) {
             txt_datetime.setText(String.format("%s, %s", now.format(dateFormatter), now.format(timeFormatter)));
         }
     }
@@ -313,7 +278,7 @@ public class MainHandwashing extends AppCompatActivity {
     }
 
     private void setupListeners() {
-        if (btn_start == null || edit_employee_number == null) return; // Guard
+        if (btn_start == null || edit_employee_number == null) return;
 
         btn_start.setOnClickListener(v -> {
             String employeeNumberStr = edit_employee_number.getText().toString().trim();
@@ -325,21 +290,25 @@ public class MainHandwashing extends AppCompatActivity {
                 return;
             }
 
-            if (dbHelper.doesEmployeeExist(employeeNumberStr)) {
-                Intent intent = new Intent(MainHandwashing.this, WetHandsActivity.class);
-                intent.putExtra("employee_number", employeeNumberStr);
-                intent.putExtra("overall_time_remaining", WetHandsActivity.TOTAL_PROCESS_DURATION_MS);
-                startActivity(intent);
-                edit_employee_number.setText("");
-            } else {
-                edit_employee_number.setError("Employee number not found");
-                edit_employee_number.requestFocus();
-            }
+            backgroundExecutor.execute(() -> {
+                boolean employeeExists = dbHelper.doesEmployeeExist(employeeNumberStr);
+                runOnUiThread(() -> {
+                    if (employeeExists) {
+                        Intent intent = new Intent(MainHandwashing.this, WetHandsActivity.class);
+                        intent.putExtra("employee_number", employeeNumberStr);
+                        intent.putExtra("overall_time_remaining", WetHandsActivity.TOTAL_PROCESS_DURATION_MS);
+                        startActivity(intent);
+                        edit_employee_number.setText("");
+                    } else {
+                        edit_employee_number.setError("Employee number not found");
+                        edit_employee_number.requestFocus();
+                    }
+                });
+            });
         });
 
         edit_employee_number.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE ||
-                    (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+            if (actionId == EditorInfo.IME_ACTION_DONE || (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
                 if (btn_start != null) {
                     btn_start.performClick();
                 }
@@ -370,25 +339,44 @@ public class MainHandwashing extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void populateLeaderboardTable() {
-        if (table_top_handwashers == null || dbHelper == null) return; // Guard
+    private void loadLeaderboardDataAsync() {
+        if (table_top_handwashers == null || dbHelper == null) return;
+
+        table_top_handwashers.removeAllViews();
+        TableRow loadingRow = new TableRow(this);
+        TextView loadingMsg = new TextView(this);
+        loadingMsg.setText("Loading leaderboard...");
+        loadingMsg.setGravity(Gravity.CENTER);
+        TableRow.LayoutParams loadingParams = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
+        loadingParams.span = 3;
+        loadingRow.addView(loadingMsg, loadingParams);
+        table_top_handwashers.addView(loadingRow);
+
+        backgroundExecutor.execute(() -> {
+            List<LeaderboardEntry> leaderboardData = dbHelper.getTopHandwashers();
+            runOnUiThread(() -> populateLeaderboardTable(leaderboardData));
+        });
+    }
+
+    private void populateLeaderboardTable(List<LeaderboardEntry> leaderboardData) {
+        if (table_top_handwashers == null) return;
 
         table_top_handwashers.removeAllViews();
         TableRow headerRow = new TableRow(this);
-        TableRow.LayoutParams headerParams = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
-        headerRow.setLayoutParams(headerParams);
         headerRow.setPadding(dpToPx(8), dpToPx(12), dpToPx(8), dpToPx(12));
+
         TextView rankHeader = createTableHeaderTextView("Rank");
         TextView nameHeader = createTableHeaderTextView("Name");
         TextView countHeader = createTableHeaderTextView("Washes");
+
         rankHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f));
         nameHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1.5f));
         countHeader.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f));
+
         headerRow.addView(rankHeader);
         headerRow.addView(nameHeader);
         headerRow.addView(countHeader);
         table_top_handwashers.addView(headerRow);
-        leaderboardData = dbHelper.getTopHandwashers();
 
         if (leaderboardData.isEmpty()) {
             TableRow emptyRow = new TableRow(this);
@@ -406,9 +394,10 @@ public class MainHandwashing extends AppCompatActivity {
             for (LeaderboardEntry entry : leaderboardData) {
                 TableRow dataRow = new TableRow(this);
                 dataRow.setPadding(dpToPx(8), dpToPx(10), dpToPx(8), dpToPx(10));
-                int dataTextSize = 20;
-                TextView rankView = createDataTextView(String.valueOf(rank) + ".", dataTextSize, Typeface.BOLD);
+
+                TextView rankView = createDataTextView(String.valueOf(rank) + ".", 20, Typeface.BOLD);
                 rankView.setGravity(Gravity.CENTER);
+
                 LinearLayout nameCellLayout = new LinearLayout(this);
                 nameCellLayout.setOrientation(LinearLayout.HORIZONTAL);
                 nameCellLayout.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
@@ -417,6 +406,7 @@ public class MainHandwashing extends AppCompatActivity {
                 LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(20), dpToPx(20));
                 iconParams.setMarginEnd(dpToPx(4));
                 starIcon.setLayoutParams(iconParams);
+
                 String firstName = entry.employeeName;
                 String lastName = entry.lastName;
                 String displayName = (firstName == null) ? "" : firstName;
@@ -426,21 +416,18 @@ public class MainHandwashing extends AppCompatActivity {
                     displayName = "Guest";
                 }
                 displayName = displayName.trim();
-                Log.d("LeaderboardDebug", "Rank: " + rank + ", Employee: " + entry.employeeNumber + ", DisplayName: '" + displayName + "'");
-                TextView nameView = createDataTextView(displayName, dataTextSize, Typeface.NORMAL);
-                LinearLayout.LayoutParams nameViewParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
-                nameView.setLayoutParams(nameViewParams);
+
+                TextView nameView = createDataTextView(displayName, 20, Typeface.NORMAL);
                 nameView.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
                 nameCellLayout.addView(starIcon);
                 nameCellLayout.addView(nameView);
-                TextView countView = createDataTextView(String.valueOf(entry.handwashCount), dataTextSize, Typeface.BOLD);
+
+                TextView countView = createDataTextView(String.valueOf(entry.handwashCount), 20, Typeface.BOLD);
                 countView.setGravity(Gravity.CENTER);
-                TableRow.LayoutParams rankCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f);
-                TableRow.LayoutParams nameCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.MATCH_PARENT, 1.5f);
-                TableRow.LayoutParams countCellParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f);
-                dataRow.addView(rankView, rankCellParams);
-                dataRow.addView(nameCellLayout, nameCellParams);
-                dataRow.addView(countView, countCellParams);
+
+                dataRow.addView(rankView, new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.5f));
+                dataRow.addView(nameCellLayout, new TableRow.LayoutParams(0, TableRow.LayoutParams.MATCH_PARENT, 1.5f));
+                dataRow.addView(countView, new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f));
                 table_top_handwashers.addView(dataRow);
                 rank++;
             }
@@ -480,5 +467,6 @@ public class MainHandwashing extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         timeUpdateHandler.removeCallbacks(updateTimeRunnable);
+        backgroundExecutor.shutdown();
     }
 }

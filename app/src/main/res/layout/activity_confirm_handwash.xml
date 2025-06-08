@@ -32,6 +32,18 @@
             android:textColor="?android:attr/textColorSecondary"
             android:textSize="20sp" />
 
+        <TextView
+            android:id="@+id/text_step_instructions_detail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:gravity="center"
+            android:text="@string/confirm_wave_hand"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="16sp" />
+
         <ProgressBar
             android:id="@+id/initial_progress_spinner"
             style="?android:attr/progressBarStyleLarge"
