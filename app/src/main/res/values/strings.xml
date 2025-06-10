@@ -17,6 +17,12 @@
     <string name="welcome_free_no_logo">\t• Custom logo upload is <b>not available</b>.</string>
     <string name="welcome_free_consider_pro">\t• Consider upgrading for unlimited features!</string>
 
+    <!-- Text for the interactive tour on the main screen -->
+    <string name="tour_guest_title">Using as a Guest or unregistered Employee?</string>
+    <string name="tour_guest_desc">If you\'re not an employee, you can log a handwash by entering the number 0.</string>
+    <string name="tour_admin_title">Access Admin Features</string>
+    <string name="tour_admin_desc">Tap the menu icon (⋮) to log in as an administrator to manage employees and view reports.</string>
+
     <string name="welcome_button_continue">Got it! Continue</string>
     <string name="welcome_checkbox_dont_show">Don\'t show this again</string>
     <string name="dialog_limitations_title">Free Version Information</string>

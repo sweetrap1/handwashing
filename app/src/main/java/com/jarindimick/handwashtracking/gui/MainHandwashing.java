@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -21,9 +22,11 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -153,7 +156,7 @@ public class MainHandwashing extends AppCompatActivity {
             };
 
             ArrayList<TapTarget> targets = new ArrayList<>();
-            targets.add(TapTarget.forView(edit_employee_number, "Guest User", "Enter employee 0 to log a wash if you are not registered.")
+            targets.add(TapTarget.forView(edit_employee_number, "Guest User Or Unregistered Employee?", "Enter the number 0 to start the Handwash.")
                     .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.75f).targetCircleColor(android.R.color.white)
                     .titleTextColor(android.R.color.white).descriptionTextColor(android.R.color.white)
                     .textTypeface(Typeface.SANS_SERIF).dimColor(R.color.tour_dim_background).drawShadow(true)
@@ -189,20 +192,29 @@ public class MainHandwashing extends AppCompatActivity {
 
     private void showFreeVersionLimitationsDialog(OnLimitationsDialogDismissed onDismissedListener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainHandwashing.this);
-        builder.setTitle(getString(R.string.dialog_limitations_title));
-        builder.setMessage(HtmlCompat.fromHtml(getString(R.string.dialog_limitations_message), HtmlCompat.FROM_HTML_MODE_LEGACY));
-        builder.setPositiveButton(getString(R.string.dialog_ok), (dialog, which) -> {
-            dialog.dismiss();
-            if (onDismissedListener != null) {
-                onDismissedListener.onDismissed();
-            }
-        });
-        builder.setCancelable(false);
+        LayoutInflater inflater = this.getLayoutInflater();
+
+        // Inflate our NEW, simpler layout file made specifically for the dialog.
+        View dialogView = inflater.inflate(R.layout.dialog_welcome_content, null);
+
+        // Set the custom view and a standard positive button. This is a more reliable way.
+        builder.setView(dialogView)
+                .setPositiveButton(getString(R.string.dialog_ok), (dialog, which) -> {
+                    // This code runs when the "OK, Got It!" button is clicked.
+                    dialog.dismiss();
+                    if (onDismissedListener != null) {
+                        onDismissedListener.onDismissed();
+                    }
+                });
+
+        final AlertDialog dialog = builder.create();
+        dialog.setCancelable(false); // User must click the button to dismiss.
+
+        // Show the dialog, but only if the activity is still running.
         if (!isFinishing() && !isDestroyed()) {
-            builder.create().show();
+            dialog.show();
         }
     }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -234,7 +246,7 @@ public class MainHandwashing extends AppCompatActivity {
                     logoBitmap = BitmapFactory.decodeFile(logoFile.getAbsolutePath());
                 } else {
                     logoBitmap = null;
-                }
+                                   }
             } else {
                 logoBitmap = null;
             }
