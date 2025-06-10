@@ -3,8 +3,8 @@
     <string name="welcome_title">Welcome to Handwash Tracking!</string>
     <string name="welcome_intro">Here are a few tips to get you started:</string>
 
-    <string name="welcome_guest_title"><b>Using as a Guest:</b></string>
-    <string name="welcome_guest_desc">\t• If you\'re not a registered employee, you can log a handwash by entering employee number <b>0</b> on the main screen.</string>
+    <string name="welcome_guest_title"><b>Using as a Guest or unregistered employee:</b></string>
+    <string name="welcome_guest_desc">\t• If you\'re not an employee, you can log a handwash by entering the number <b>0</b> on the main screen.</string>
 
     <string name="welcome_admin_title"><b>Admin Dashboard:</b></string>
     <string name="welcome_admin_desc_login">\t• To access admin features (add employees, reports, etc.), tap the <b>menu icon</b> (⋮) on the main screen and select \"Admin Login\".</string>
