@@ -95,11 +95,7 @@ public class MainHandwashing extends AppCompatActivity {
         if (mainToolbar != null) {
             setSupportActionBar(mainToolbar);
         }
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
-        }
 
-        startUpdatingTime();
         setupListeners();
         dbHelper = new DatabaseHelper(this);
     }
@@ -255,26 +251,6 @@ public class MainHandwashing extends AppCompatActivity {
                 }
             });
         });
-    }
-
-    private void updateDateTime() {
-        LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, uuuu", Locale.getDefault());
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault());
-        if (txt_datetime != null) {
-            txt_datetime.setText(String.format("%s, %s", now.format(dateFormatter), now.format(timeFormatter)));
-        }
-    }
-
-    private void startUpdatingTime() {
-        updateTimeRunnable = new Runnable() {
-            @Override
-            public void run() {
-                updateDateTime();
-                timeUpdateHandler.postDelayed(this, 1000);
-            }
-        };
-        timeUpdateHandler.postDelayed(updateTimeRunnable, 0);
     }
 
     private void setupListeners() {
@@ -466,7 +442,9 @@ public class MainHandwashing extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        timeUpdateHandler.removeCallbacks(updateTimeRunnable);
+        if (timeUpdateHandler != null && updateTimeRunnable != null) {
+            timeUpdateHandler.removeCallbacks(updateTimeRunnable);
+        }
         backgroundExecutor.shutdown();
     }
 }

@@ -53,6 +53,7 @@
         <activity
             android:name=".gui.MainHandwashing"
             android:exported="true"
+            android:label=""
             android:screenOrientation="fullSensor"
             android:theme="@style/Theme.HandwashTracking.NoActionBar"
             android:windowSoftInputMode="adjustPan">

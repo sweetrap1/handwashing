@@ -17,7 +17,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:popupTheme="@style/AppPopupMenu" />
+        app:popupTheme="@style/AppPopupMenu"
+        app:title="">
+
+        <TextView
+            android:id="@+id/toolbar_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/app_name"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </androidx.appcompat.widget.Toolbar>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="0dp"
@@ -30,7 +42,7 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
 
             <TextView
                 android:id="@+id/txt_datetime"
@@ -42,13 +54,10 @@
                 android:gravity="center"
                 android:text="Sunday, May 4, 12:22 PM"
                 android:textSize="18sp"
-                android:visibility="visible"
-                app:layout_constraintBottom_toTopOf="@+id/upper_content_container"
+                android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.5"
-                app:layout_constraintVertical_chainStyle="packed" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <LinearLayout
                 android:id="@+id/upper_content_container"
@@ -61,7 +70,6 @@
                 android:gravity="center"
                 android:orientation="vertical"
                 android:padding="16dp"
-                app:layout_constraintBottom_toTopOf="@+id/leaderboard_section"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/txt_datetime">
@@ -83,7 +91,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
                     android:gravity="center"
-                    android:text="Employee Handwash Tracker"
+                    android:text="Enter Your Number to Start Handwash"
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
@@ -96,17 +104,17 @@
                     android:autofillHints="employeeId"
                     android:background="@drawable/edit_text_border"
                     android:gravity="center"
-                    android:hint="Enter Employee #"
+                    android:hint="Employee #"
                     android:imeOptions="actionDone"
                     android:inputType="phone"
-                    android:padding="8dp"
+                    android:padding="10dp"
                     android:textSize="15sp" />
 
                 <TextView
                     android:id="@+id/lbl_employee_number"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="6dp"
+                    android:layout_marginTop    ="8dp"
                     android:gravity="center"
                     android:text="Guest or employees not yet added enter 0"
                     android:textSize="13sp"
@@ -128,7 +136,7 @@
             <LinearLayout
                 android:id="@+id/leaderboard_section"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginEnd="16dp"
@@ -136,7 +144,6 @@
                 android:background="@drawable/leaderboard_background"
                 android:orientation="vertical"
                 android:padding="12dp"
-                app:layout_constrainedHeight="true"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
