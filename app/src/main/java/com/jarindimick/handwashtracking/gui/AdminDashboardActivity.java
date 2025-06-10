@@ -133,9 +133,13 @@ public class AdminDashboardActivity extends AppCompatActivity {
             deleteDataWithConfirmation();
             return true;
         } else if (itemId == R.id.action_privacy_policy) {
-            // HANDLE PRIVACY POLICY CLICK
             Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.privacy_policy_url)));
             startActivity(browserIntent);
+            return true;
+        } else if (itemId == R.id.action_help_guide) {
+            // This is the new part to launch the HelpActivity
+            Intent intent = new Intent(this, HelpActivity.class);
+            startActivity(intent);
             return true;
         }
         return super.onOptionsItemSelected(item);

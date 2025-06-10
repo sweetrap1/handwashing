@@ -7,9 +7,9 @@
     <string name="welcome_guest_desc">\t• If you\'re not an employee, you can log a handwash by entering the number <b>0</b> on the main screen.</string>
 
     <string name="welcome_admin_title"><b>Admin Dashboard:</b></string>
-    <string name="welcome_admin_desc_login">\t• To access admin features (add employees, reports, etc.), tap the <b>menu icon</b> (⋮) on the main screen and select \"Admin Login\".</string>
+    <string name="welcome_admin_desc_login">\t• To access admin features (add employees, reports, etc.)".</string>
     <string name="welcome_admin_desc_creds">\t• Default Admin Username: <b>admin</b></string>
-    <string name="welcome_admin_desc_pass">\t• Default Admin Password: <b>admin</b> (Please change this in the Admin Dashboard!)</string>
+    <string name="welcome_admin_desc_pass">\t• Default Admin Password: <b>admin</b> (Please change this!)</string>
 
     <string name="welcome_free_version_title"><b>Free Version Limitations:</b></string>
     <string name="welcome_free_employees">\t• You can add up to <b>15 employees</b>.</string>
@@ -34,16 +34,19 @@
         Here\'s a quick guide to the main sections:&lt;br/&gt;&lt;br/&gt;
 
         &#8226; &lt;b&gt;Today\'s Overview:&lt;/b&gt;&lt;br/&gt;
-        At the top right, you can quickly see today\'s handwash activity.&lt;br/&gt;&lt;br/&gt;
+        At the top, you can quickly see today\'s handwash activity.&lt;br/&gt;&lt;br/&gt;
 
         &#8226; &lt;b&gt;Manage Employees &amp; App Logo:&lt;/b&gt;&lt;br/&gt;
         Use these buttons to add/edit your staff members or to set your Company\'s logo on the main screen.&lt;br/&gt;&lt;br/&gt;
+
+        &#8226; &lt;b&gt;Hourly Compliance Report:&lt;/b&gt;&lt;br/&gt;
+        A powerful tool to track hourly handwash compliance for all employees.&lt;br/&gt;&lt;br/&gt;
 
         &#8226; &lt;b&gt;Handwash Log Utilities:&lt;/b&gt;&lt;br/&gt;
         Search for past records by date/employee, and download/share reports.&lt;br/&gt;&lt;br/&gt;
 
         &#8226; &lt;b&gt;More Options (&#8942;):&lt;/b&gt;&lt;br/&gt;
-        The menu in the top-right corner lets you change your password, delete data, or log out.
+        The menu in the top-right corner lets you change your password, delete data, view the new Help Guide, or log out.
     </string>
     <string name="admin_dashboard_tour_button">Got It!</string>
 
@@ -53,4 +56,42 @@
 
     <string name="camera_rationale_title">Camera Access Required</string>
     <string name="camera_rationale_message">This app uses the front-facing camera for motion detection to confirm that a handwash has been completed. No pictures or videos are ever recorded or stored. Please allow camera access to continue.</string>
+    <string name="help_title_main_screen"><b>Main Handwashing Screen</b></string>
+    <string name="help_desc_main_screen">This is the first screen of the app.
+        \n\n• <b>Start Handwash:</b> Enter an active employee\'s number and press \"Start\" to begin the guided 35-second handwashing process.
+        \n\n• <b>Guest User:</b> If you are not a registered employee or just want to log a wash without a specific user, enter employee number <b>0</b>.
+        \n\n• <b>Leaderboard:</b> The table on the right shows a live leaderboard of the top 5 hand-washers for the current day.
+        \n\n• <b>Admin Login:</b> Access the admin area by tapping the three-dot menu (⋮) in the top-right and selecting \"Admin Login\".</string>
+
+    <string name="help_title_admin_dashboard"><b>Admin Dashboard</b></string>
+    <string name="help_desc_admin_dashboard">After logging in (default user/pass: <b>admin/admin</b>), this is your control center. It provides an at-a-glance overview and access to all administrative functions.</string>
+
+    <string name="help_title_manage_employees">Manage Employees</string>
+    <string name="help_desc_manage_employees">
+        • <b>Add:</b> Use the \'+\' button to add a new employee manually.
+        \n• <b>Edit:</b> Tap the pencil icon next to an employee to change their name, department, or active status.
+        \n• <b>Delete:</b> Tap the trash icon to permanently remove an employee. Note: The Guest (0) user cannot be deleted.
+        \n• <b>Import:</b> Use the upload icon in the toolbar to bulk-import employees from a CSV file (this feature is for the pro version).
+    </string>
+
+    <string name="help_title_hourly_report">Hourly Compliance Report</string>
+    <string name="help_desc_hourly_report">This powerful report shows which employees have washed their hands during each operational hour.
+        \n\n• <b>How it works:</b> It checks for at least one handwash per employee between the first and last wash of their day. A green check (✅) means they washed during that hour, while a red cross (❌) means they did not.
+        \n\n• <b>Filtering:</b> You can filter the report by a specific date, department, or employee name.
+        \n\n• <b>Sharing:</b> Use the share icon in the toolbar to export the current view as a CSV file.
+    </string>
+
+    <string name="help_title_log_utilities">Handwash Log Utilities</string>
+    <string name="help_desc_log_utilities">
+        • <b>Search:</b> Find specific handwash records by filtering by name, employee ID, or a date range.
+        \n• <b>Download:</b> Export handwash data as a CSV file. You can choose a "Summary" report (total washes per employee) or a "Detailed" report (every single wash event).
+    </string>
+
+    <string name="help_title_other_options">Other Options (Three-Dot Menu ⋮)</string>
+    <string name="help_desc_other_options">From the admin dashboard\'s top-right menu, you can:
+        \n\n• <b>Change Password:</b> It is highly recommended to change the default admin password.
+        \n\n• <b>Delete Data:</b> Permanently delete handwash logs within a specified date range. This action cannot be undone.
+        \n\n• <b>Privacy Policy:</b> View the app\'s privacy policy.
+        \n\n• <b>Logout:</b> Securely log out of the admin dashboard.
+    </string>
 </resources>

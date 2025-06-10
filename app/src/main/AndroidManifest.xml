@@ -116,6 +116,16 @@
             android:exported="false"
             android:screenOrientation="unspecified"
             android:theme="@style/Theme.HandwashTracking.NoActionBar" />
+        <activity
+            android:name=".gui.HelpActivity"
+            android:exported="false"
+            android:label="Help &amp; Guide"
+            android:parentActivityName=".gui.AdminDashboardActivity"
+            android:theme="@style/Theme.HandwashTracking.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".gui.AdminDashboardActivity" />
+        </activity>
 
         <provider
             android:name="androidx.core.content.FileProvider"
