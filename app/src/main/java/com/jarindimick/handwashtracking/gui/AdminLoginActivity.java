@@ -3,6 +3,7 @@ package com.jarindimick.handwashtracking.gui;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log; // Added for logging isFreeVersion
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -28,12 +29,17 @@ public class AdminLoginActivity extends AppCompatActivity {
     private Button btn_login;
     private Button btn_return_to_main;
     private DatabaseHelper dbHelper;
+    private boolean isFreeVersion; // Declare isFreeVersion flag
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this); //
-        setContentView(R.layout.activity_admin_login); //
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_admin_login);
+
+        // Determine if this is the free version based on the build flavor
+        isFreeVersion = getApplicationContext().getPackageName().endsWith(".free");
+        Log.d("AdminLoginActivity", "isFreeVersion: " + isFreeVersion);
 
         View mainView = findViewById(R.id.main);
         // Capture initial padding values from the XML layout
@@ -52,20 +58,21 @@ public class AdminLoginActivity extends AppCompatActivity {
             return WindowInsetsCompat.CONSUMED; // Consume the insets as they've been applied
         });
 
-        setupgui(); //
-        dbHelper = new DatabaseHelper(this); //
-        setupListeners(); //
+        setupgui();
+        // Initialize DatabaseHelper with the isFreeVersion flag
+        dbHelper = new DatabaseHelper(this, isFreeVersion);
+        setupListeners();
     }
 
     private void setupgui() {
-        edit_username = findViewById(R.id.edit_username); //
-        edit_password = findViewById(R.id.edit_password); //
-        btn_login = findViewById(R.id.btn_login); //
-        btn_return_to_main = findViewById(R.id.btn_return_to_main); //
+        edit_username = findViewById(R.id.edit_username);
+        edit_password = findViewById(R.id.edit_password);
+        btn_login = findViewById(R.id.btn_login);
+        btn_return_to_main = findViewById(R.id.btn_return_to_main);
     }
 
     private void setupListeners() {
-        btn_login.setOnClickListener(new View.OnClickListener() { //
+        btn_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String username = edit_username.getText().toString().trim();
@@ -91,27 +98,26 @@ public class AdminLoginActivity extends AppCompatActivity {
                     return;
                 }
 
-                if (dbHelper.validateAdminLogin(username, password)) { //
-                    Toast.makeText(AdminLoginActivity.this, "Login Successful", Toast.LENGTH_SHORT).show(); //
-                    Intent intent = new Intent(AdminLoginActivity.this, AdminDashboardActivity.class); //
-                    startActivity(intent); //
-                    finish(); //
+                if (dbHelper.validateAdminLogin(username, password)) {
+                    Toast.makeText(AdminLoginActivity.this, "Login Successful", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(AdminLoginActivity.this, AdminDashboardActivity.class);
+                    startActivity(intent);
+                    finish();
                 } else {
-                    // Toast.makeText(AdminLoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show(); // OLD
-                    edit_password.setError("Invalid username or password"); // NEW
+                    edit_password.setError("Invalid username or password");
                     edit_password.requestFocus();
                 }
             }
         });
 
-        btn_return_to_main.setOnClickListener(new View.OnClickListener() { //
+        btn_return_to_main.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish(); //
+                finish();
             }
         });
 
-        edit_password.setOnEditorActionListener(new TextView.OnEditorActionListener() { //
+        edit_password.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE ||
@@ -119,7 +125,7 @@ public class AdminLoginActivity extends AppCompatActivity {
                     if (btn_login != null) {
                         btn_login.performClick();
                     }
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE); //
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     if (imm != null && getCurrentFocus() != null) {
                         imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
                     }
@@ -134,7 +140,7 @@ public class AdminLoginActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         if (dbHelper != null) {
-            dbHelper.close(); //
+            dbHelper.close();
         }
     }
 }

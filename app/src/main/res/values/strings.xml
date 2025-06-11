@@ -1,7 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Handwash Tracking</string>
     <string name="welcome_title">Welcome to Handwash Tracking!</string>
-    <string name="welcome_intro">Here are a few tips to get you started:</string>
+    <string name="welcome_intro">Here are a few tips to get your started:</string>
 
     <string name="welcome_guest_title"><b>Using as a Guest or unregistered employee:</b></string>
     <string name="welcome_guest_desc">\t• If you\'re not an employee, you can log a handwash by entering the number <b>0</b> on the main screen.</string>
@@ -15,17 +16,18 @@
     <string name="welcome_free_employees">\t• You can add up to <b>15 employees</b>.</string>
     <string name="welcome_free_no_import">\t• Employee CSV import is <b>not available</b>.</string>
     <string name="welcome_free_no_logo">\t• Custom logo upload is <b>not available</b>.</string>
-    <string name="welcome_free_consider_pro">\t• Consider upgrading for unlimited features!</string>
+    <string name="welcome_free_consider_pro">\t• Consider upgrading for no limitations and to remove Ad\'s</string>
 
     <!-- Text for the interactive tour on the main screen -->
-    <string name="tour_guest_title">Using as a Guest or unregistered Employee?</string>
-    <string name="tour_guest_desc">If you\'re not an employee, you can log a handwash by entering the number 0.</string>
-    <string name="tour_admin_title">Access Admin Features</string>
-    <string name="tour_admin_desc">Tap the menu icon (⋮) to log in as an administrator to manage employees and view reports.</string>
+    <string name="tour_guest_title">Have Guest\'s or unregistered Employees?</string>
+    <string name="tour_guest_desc">Anyone can log a Handwash by entering the number 0.</string>
+    <string name="tour_admin_title">Admin Features/Reports</string>
+    <string name="tour_admin_desc">Tap here to log in as an administrator to manage employees and view reports.</string>
 
     <string name="welcome_button_continue">Got it! Continue</string>
     <string name="welcome_checkbox_dont_show">Don\'t show this again</string>
     <string name="dialog_limitations_title">Free Version Information</string>
+    <!-- Old dialog_limitations_message is effectively replaced by dialog_welcome_message_updated -->
     <string name="dialog_limitations_message">Thank you for trying Handwash Tracking!&lt;br/&gt;&lt;br/&gt;
         This free version includes the following features &amp; limitations:&lt;br/&gt;&lt;br/&gt;
         • Up to &lt;b&gt;15 employees&lt;/b&gt; can be added.&lt;br/&gt;&lt;br/&gt;
@@ -34,6 +36,18 @@
         Enjoy the app! Consider upgrading in the future for more features.
     </string>
     <string name="dialog_ok">OK, Got It!</string>
+
+    <!-- NEW: Expanded welcome message for dialog_welcome_content.xml -->
+    <string name="dialog_welcome_message_updated">
+        Thank you for trying Handwash Tracking!&lt;br/&gt;&lt;br/&gt;
+        This app is designed to track hourly handwashes for employees in restaurants or other applicable companies. It uses motion detection at the end of the process to verify that the handwasher is still present and didn\'t leave prematurely.&lt;br/&gt;&lt;br/&gt;
+        In this current version, both the Free and Paid tiers store all stats locally on this device. We are planning a future release that will support multi-device connections and user authentication for companies.&lt;br/&gt;&lt;br/&gt;
+        For the Free Version, please note the following limitations:&lt;br/&gt;&lt;br/&gt;
+        • Up to &lt;b&gt;15 employees&lt;/b&gt; can be added.&lt;br/&gt;&lt;br/&gt;
+        • Employee data import (CSV) is &lt;b&gt;disabled&lt;/b&gt;.&lt;br/&gt;&lt;br/&gt;
+        • Custom branding and logo upload features are &lt;b&gt;disabled&lt;/b&gt;.&lt;br/&gt;&lt;br/&gt;
+        Enjoy the app! Consider upgrading to Pro for no limitations and no Ad\'s! Stay tuned for future versions and updates.
+    </string>
 
     <string name="admin_dashboard_tour_title">Welcome to your Admin Dashboard!</string>
     <string name="admin_dashboard_tour_message">
@@ -93,7 +107,7 @@
         \n• <b>Download:</b> Export handwash data as a CSV file. You can choose a "Summary" report (total washes per employee) or a "Detailed" report (every single wash event).
     </string>
 
-    <string name="help_title_other_options">Other Options (Three-Dot Menu ⋮)</string>
+    <string name="help_title_other_options">Other Options-Three-Dot Menu ⋮</string>
     <string name="help_desc_other_options">From the admin dashboard\'s top-right menu, you can:
         \n\n• <b>Change Password:</b> It is highly recommended to change the default admin password.
         \n\n• <b>Delete Data:</b> Permanently delete handwash logs within a specified date range. This action cannot be undone.

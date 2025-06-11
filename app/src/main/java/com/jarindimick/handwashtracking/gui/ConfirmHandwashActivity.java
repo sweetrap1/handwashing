@@ -56,6 +56,7 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
     private final AtomicBoolean isFinalized = new AtomicBoolean(false);
     private ProcessCameraProvider cameraProvider;
     private ImageAnalysis imageAnalysis;
+    private boolean isFreeVersion; // Declare isFreeVersion flag
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,8 +64,13 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
         setContentView(R.layout.activity_confirm_handwash);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
+        // Determine if this is the free version based on the build flavor
+        isFreeVersion = getApplicationContext().getPackageName().endsWith(".free");
+        Log.d(TAG, "isFreeVersion: " + isFreeVersion);
+
         employeeNumber = getIntent().getStringExtra("employee_number");
-        dbHelper = new DatabaseHelper(this);
+        // Initialize DatabaseHelper with the isFreeVersion flag
+        dbHelper = new DatabaseHelper(this, isFreeVersion);
 
         layoutInitialInstructions = findViewById(R.id.layout_initial_instructions);
         layoutConfirmationMessage = findViewById(R.id.layout_confirmation_message);
@@ -193,7 +199,7 @@ public class ConfirmHandwashActivity extends AppCompatActivity {
         int dailyCount = dbHelper.getHandwashCountForEmployeeToday(employeeNumber);
         boolean alreadyWashedThisHour = dbHelper.hasWashedInCurrentHour(employeeNumber, washDate, washTime);
 
-        TextView textDailyCountMessage = findViewById(R.id.text_daily_count_message);
+        // textDailyCountMessage is already initialized in setupgui(), no need to findViewById again
         String message = String.format(Locale.getDefault(), "Your daily count: %d", dailyCount);
         if (!alreadyWashedThisHour) {
             message += "\n\nGreat job on your first wash this hour!";

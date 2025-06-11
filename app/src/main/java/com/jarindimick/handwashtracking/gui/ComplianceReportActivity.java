@@ -4,7 +4,7 @@ import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
+import android.util.Log; // Added for logging isFreeVersion
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -56,6 +56,7 @@ public class ComplianceReportActivity extends AppCompatActivity {
     private Button btnFilterSearch;
 
     private LocalDate selectedDate;
+    private boolean isFreeVersion; // Declare isFreeVersion flag
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +65,10 @@ public class ComplianceReportActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_compliance_report);
+
+        // Determine if this is the free version based on the build flavor
+        isFreeVersion = getApplicationContext().getPackageName().endsWith(".free");
+        Log.d(TAG, "isFreeVersion: " + isFreeVersion);
 
         // Find the root layout
         ConstraintLayout mainLayout = findViewById(R.id.main);
@@ -91,7 +96,8 @@ public class ComplianceReportActivity extends AppCompatActivity {
         btnFilterSearch = findViewById(R.id.btn_filter_search);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        dbHelper = new DatabaseHelper(this);
+        // Initialize DatabaseHelper with the isFreeVersion flag
+        dbHelper = new DatabaseHelper(this, isFreeVersion);
 
         // Set initial date to today
         selectedDate = LocalDate.now();
@@ -214,7 +220,7 @@ public class ComplianceReportActivity extends AppCompatActivity {
     }
 
     private void updateDateDisplay() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy", Locale.getDefault());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM dd,yyyy", Locale.getDefault());
         txtSelectedDate.setText(String.format("Date: %s", selectedDate.format(formatter)));
     }
 

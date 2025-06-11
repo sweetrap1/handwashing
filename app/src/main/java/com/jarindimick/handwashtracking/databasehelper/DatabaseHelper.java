@@ -15,6 +15,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map; // Import for Map used in ComplianceResult
+import java.util.TreeMap; // Import for TreeMap used in ComplianceResult
 
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -43,32 +45,32 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_PASSWORD_HASH = "password_hash";
     public static final String COLUMN_ROLE = "role";
 
-    public DatabaseHelper(Context context) {
+    private boolean isFreeVersion; // Flag to indicate if this is the free version
+
+    public DatabaseHelper(Context context, boolean isFreeVersion) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.isFreeVersion = isFreeVersion;
+        Log.d(TAG, "DatabaseHelper initialized. isFreeVersion: " + isFreeVersion);
     }
 
-    public List<String> getAllDepartments() {
-        List<String> departments = new ArrayList<>();
+    // New helper method to get active employee count, excluding the 'Guest' user (employee number 0)
+    public int getActiveEmployeeCountExcludingGuest() {
         SQLiteDatabase db = this.getReadableDatabase();
+        int count = 0;
         Cursor cursor = null;
         try {
-            cursor = db.query(true, TABLE_EMPLOYEES, new String[]{COLUMN_DEPARTMENT}, null, null, null, null, COLUMN_DEPARTMENT + " ASC", null);
+            cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_EMPLOYEES +
+                    " WHERE " + COLUMN_IS_ACTIVE + " = 1 AND " + COLUMN_EMPLOYEE_NUMBER + " != '0'", null);
             if (cursor.moveToFirst()) {
-                do {
-                    String dept = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DEPARTMENT));
-                    if(dept != null && !dept.isEmpty()) {
-                        departments.add(dept);
-                    }
-                } while (cursor.moveToNext());
+                count = cursor.getInt(0);
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error getting all departments", e);
+            Log.e(TAG, "Error getting active employee count excluding guest: " + e.getMessage());
         } finally {
             if (cursor != null) cursor.close();
-            // Note: It's generally better to manage a single DB instance per activity/app lifecycle
-            // rather than opening/closing in every method. For this app's scale, this is okay.
         }
-        return departments;
+        Log.d(TAG, "Current active employee count (excluding guest): " + count);
+        return count;
     }
 
     @Override
@@ -135,7 +137,27 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // For now, no changes are needed between the existing versions, but the dangerous code is removed.
     }
 
-    // --- No changes to the methods below ---
+    public List<String> getAllDepartments() {
+        List<String> departments = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(true, TABLE_EMPLOYEES, new String[]{COLUMN_DEPARTMENT}, null, null, null, null, COLUMN_DEPARTMENT + " ASC", null);
+            if (cursor.moveToFirst()) {
+                do {
+                    String dept = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DEPARTMENT));
+                    if(dept != null && !dept.isEmpty()) {
+                        departments.add(dept);
+                    }
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting all departments", e);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return departments;
+    }
 
     public boolean updateEmployee(Employee employee) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -183,7 +205,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         return employeeList;
     }
-
 
     public int getTotalHandwashesToday() {
         SQLiteDatabase db = this.getReadableDatabase();
@@ -303,6 +324,45 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public long insertEmployee(String employeeNumber, String firstName, String lastName, String department) {
+        // Special handling for the "Guest" user (employee number "0")
+        if ("0".equals(employeeNumber)) {
+            Log.d(TAG, "Attempting to insert/update Guest user (employee number 0).");
+            // If the guest user already exists, update it to ensure it's active.
+            // If not, insert it normally.
+            SQLiteDatabase db = this.getWritableDatabase();
+            ContentValues guestValues = new ContentValues();
+            guestValues.put(COLUMN_FIRST_NAME, "Guest");
+            guestValues.put(COLUMN_LAST_NAME, "");
+            guestValues.put(COLUMN_DEPARTMENT, "N/A");
+            guestValues.put(COLUMN_IS_ACTIVE, 1); // Ensure Guest is always active
+
+            long updatedRows = db.update(TABLE_EMPLOYEES, guestValues, COLUMN_EMPLOYEE_NUMBER + " = ?", new String[]{"0"});
+            if (updatedRows > 0) {
+                Log.d(TAG, "Guest user (0) updated.");
+                return 0; // Indicate success for guest user update
+            } else {
+                // If not updated, it means guest user doesn't exist, so insert it
+                guestValues.put(COLUMN_EMPLOYEE_NUMBER, "0");
+                long newId = db.insert(TABLE_EMPLOYEES, null, guestValues);
+                if (newId != -1) {
+                    Log.d(TAG, "Guest user (0) inserted. ID: " + newId);
+                } else {
+                    Log.e(TAG, "Failed to insert Guest user (0).");
+                }
+                return newId;
+            }
+        }
+
+        // Apply employee limit only for the free version and if it's not the guest user
+        if (isFreeVersion) {
+            int currentEmployeeCount = getActiveEmployeeCountExcludingGuest();
+            final int FREE_VERSION_EMPLOYEE_LIMIT = 15;
+            if (currentEmployeeCount >= FREE_VERSION_EMPLOYEE_LIMIT) {
+                Log.w(TAG, "Free version limit reached. Cannot add more than " + FREE_VERSION_EMPLOYEE_LIMIT + " employees.");
+                return -2; // Special value indicating limit reached
+            }
+        }
+
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_EMPLOYEE_NUMBER, employeeNumber);
@@ -447,6 +507,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         } catch (Exception e){
             Log.e(TAG, "Error inserting handwash log: " + e.getMessage());
         } finally {
+            // It's generally not recommended to close the database in every insert/query method
+            // if you have many operations. Better to manage its lifecycle at a higher level.
+            // For now, leaving it as is since it was in your original code.
             db.close();
         }
         return id;
@@ -579,7 +642,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
             if (cursor.moveToFirst()) {
                 int count = cursor.getInt(0);
-                return count > 1;
+                return count > 1; // Assuming 'count > 1' means already washed in the current hour (i.e., more than one log means a re-wash within the hour)
             }
         } catch (Exception e) {
             Log.e(TAG, "Error checking for wash in current hour", e);
@@ -594,12 +657,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static class ComplianceResult {
         public String employeeName;
         public String employeeNumber;
-        public java.util.Map<Integer, Boolean> hourlyStatus;
+        public Map<Integer, Boolean> hourlyStatus; // Changed to java.util.Map
 
         public ComplianceResult(String employeeName, String employeeNumber) {
             this.employeeName = employeeName;
             this.employeeNumber = employeeNumber;
-            this.hourlyStatus = new java.util.TreeMap<>();
+            this.hourlyStatus = new TreeMap<>(); // Changed to java.util.TreeMap
         }
     }
 
@@ -608,7 +671,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Cursor employeeCursor = null;
         Cursor logCursor = null;
         List<ComplianceResult> finalReport = new ArrayList<>();
-        java.util.Map<String, ComplianceResult> resultsMap = new java.util.LinkedHashMap<>();
+        Map<String, ComplianceResult> resultsMap = new java.util.LinkedHashMap<>(); // Changed to java.util.Map
 
         try {
             // 1. Get filtered list of active employees
@@ -646,7 +709,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             String logQuery = "SELECT " + COLUMN_EMPLOYEE_NUMBER + ", " + COLUMN_WASH_TIME + " FROM " + TABLE_HANDWASH_LOG + " WHERE " + COLUMN_WASH_DATE + " = ?";
             logCursor = db.rawQuery(logQuery, new String[]{dateStr});
 
-            java.util.Map<String, List<Integer>> washesByEmployee = new java.util.HashMap<>();
+            Map<String, List<Integer>> washesByEmployee = new java.util.HashMap<>(); // Changed to java.util.Map
             if (logCursor.moveToFirst()) {
                 do {
                     String empNum = logCursor.getString(logCursor.getColumnIndexOrThrow(COLUMN_EMPLOYEE_NUMBER));
@@ -682,7 +745,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         } finally {
             if (employeeCursor != null) employeeCursor.close();
             if (logCursor != null) logCursor.close();
-            db.close();
+            // It's generally not recommended to close the database in every method.
+            // Consider managing the SQLiteDatabase instance across the activity/application lifecycle.
+            // For now, leaving it as is since it was in your original code.
+            // db.close(); // Removed to avoid premature closing issues if db is used across methods.
         }
 
         finalReport.sort((o1, o2) -> o1.employeeName.compareTo(o2.employeeName));

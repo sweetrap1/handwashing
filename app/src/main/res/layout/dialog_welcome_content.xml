@@ -2,7 +2,8 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:background="@drawable/rounded_video_background"> <!-- Added background to match previous intent -->
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -10,102 +11,41 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/dialog_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="16dp"
             android:text="@string/welcome_title"
             android:textSize="22sp"
-            android:textStyle="bold" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:text="@string/welcome_intro"
-            android:textSize="16sp" />
+            android:textStyle="bold"
+            android:textColor="?attr/colorPrimary"/> <!-- Ensured textColor is set -->
 
+        <!-- Replaced multiple TextViews with a single TextView referencing the expanded message -->
         <TextView
+            android:id="@+id/dialog_message_full"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="4dp"
-            android:text="@string/welcome_guest_title"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
+            android:textSize="16sp"
+            android:textColor="?attr/colorOnSurface"
             android:lineSpacingMultiplier="1.1"
-            android:text="@string/welcome_guest_desc"
-            android:textSize="16sp" />
+            android:text="@string/dialog_welcome_message_updated" />
 
+        <!-- Optional placeholder for a disclaimer if needed.
+             You had a commented out section previously,
+             keeping it here for reference.
+        -->
+        <!--
         <TextView
+            android:id="@+id/dialog_disclaimer_bottom"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="4dp"
-            android:text="@string/welcome_admin_title"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:lineSpacingMultiplier="1.1"
-            android:text="@string/welcome_admin_desc_login"
-            android:textSize="16sp" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginBottom="2dp"
-            android:lineSpacingMultiplier="1.1"
-            android:text="@string/welcome_admin_desc_creds"
-            android:textSize="16sp" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginBottom="12dp"
-            android:lineSpacingMultiplier="1.1"
-            android:text="@string/welcome_admin_desc_pass"
-            android:textSize="16sp" />
+            android:textStyle="italic"
+            android:textSize="13sp"
+            android:textColor="?attr/colorOnSurface"
+            android:layout_marginTop="16dp"
+            android:text="Please note: This is a demo version. Future updates will include more features." />
+        -->
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="4dp"
-            android:text="@string/welcome_free_version_title"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="2dp"
-            android:lineSpacingMultiplier="1.1"
-            android:text="@string/welcome_free_employees"
-            android:textSize="16sp" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="2dp"
-            android:lineSpacingMultiplier="1.1"
-            android:text="@string/welcome_free_no_import"
-            android:textSize="16sp" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:lineSpacingMultiplier="1.1"
-            android:text="@string/welcome_free_no_logo"
-            android:textSize="16sp" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="@string/welcome_free_consider_pro"
-            android:textSize="16sp" />
     </LinearLayout>
 </ScrollView>

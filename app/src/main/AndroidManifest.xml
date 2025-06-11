@@ -6,6 +6,9 @@
         android:name="android.hardware.camera"
         android:required="true" />
 
+    <!-- Permissions for Google Mobile Ads, and your existing permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -17,21 +20,16 @@
         </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
-
             <data android:mimeType="text/csv" />
         </intent>
         <intent>
             <action android:name="android.intent.action.OPEN_DOCUMENT" />
-
             <category android:name="android.intent.category.OPENABLE" />
-
             <data android:mimeType="text/csv" />
         </intent>
         <intent>
             <action android:name="android.intent.action.GET_CONTENT" />
-
             <category android:name="android.intent.category.OPENABLE" />
-
             <data android:mimeType="text/csv" />
         </intent>
     </queries>
@@ -46,6 +44,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HandwashTracking"
         tools:targetApi="31">
+
+        <!-- Google Mobile Ads App ID -->
+        <!-- This meta-data tag must be present for AdMob to initialize correctly. -->
+        <!-- Replace "ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy" with your actual AdMob App ID from your AdMob account. -->
+        <!-- For testing, you can use a sample ID like "ca-app-pub-3940256099942544~3347511713" -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"
+            tools:node="merge" />
+
         <activity
             android:name=".gui.ComplianceReportActivity"
             android:exported="false"
@@ -59,7 +67,6 @@
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -67,7 +74,7 @@
             android:name=".gui.WelcomeActivity"
             android:exported="false"
             android:screenOrientation="unspecified"
-            android:theme="@style/Theme.HandwashTracking.NoActionBar"></activity>
+            android:theme="@style/Theme.HandwashTracking.NoActionBar" />
         <activity
             android:name=".gui.AdminLoginActivity"
             android:exported="false"

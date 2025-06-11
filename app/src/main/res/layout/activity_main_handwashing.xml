@@ -2,7 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"  android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="0dp"
@@ -35,7 +35,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/adView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/main_toolbar">
@@ -114,7 +114,7 @@
                     android:id="@+id/lbl_employee_number"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop    ="8dp"
+                    android:layout_marginTop="8dp"
                     android:gravity="center"
                     android:text="Guest or employees not yet added enter 0"
                     android:textSize="13sp"
@@ -129,6 +129,18 @@
                     android:text="Start"
                     android:textColor="#FFFFFF"
                     android:textSize="17sp" />
+
+                <!-- New Upgrade to Pro Button -->
+                <Button
+                    android:id="@+id/btn_upgrade_to_pro"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:backgroundTint="#2196F3"
+                    android:text="Upgrade to Pro"
+                    android:textColor="#FFFFFF"
+                    android:textSize="17sp"
+                    android:visibility="gone" />
 
 
             </LinearLayout>
@@ -174,5 +186,19 @@
             </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <!-- AdView for banner ads -->
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        app:adSize="BANNER"
+        ads:adUnitId="ca-app-pub-3940256099942544/6300978111"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:adUnitId="ca-app-pub-3940256099942544/6300978111"
+        tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

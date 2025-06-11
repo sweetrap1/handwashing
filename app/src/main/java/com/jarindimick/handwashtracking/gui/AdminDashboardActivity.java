@@ -79,16 +79,21 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private MaterialButton btn_go_to_manage_employees;
     private MaterialButton btn_upload_logo;
     private MaterialButton btn_show_download_data_dialog;
-    private MaterialButton btn_compliance_report; // Declaration added
+    private MaterialButton btn_compliance_report;
 
     private DatabaseHelper dbHelper;
     private AlertDialog pendingDialogToDismiss;
+    private boolean isFreeVersion; // Flag to indicate if this is the free version
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_dashboard);
+
+        // Determine if this is the free version based on the build flavor
+        isFreeVersion = getApplicationContext().getPackageName().endsWith(".free");
+        Log.d(TAG, "isFreeVersion: " + isFreeVersion);
 
         toolbarAdminDashboard = findViewById(R.id.toolbar_admin_dashboard);
         setSupportActionBar(toolbarAdminDashboard);
@@ -100,7 +105,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
             return WindowInsetsCompat.CONSUMED;
         });
 
-        dbHelper = new DatabaseHelper(this);
+        // Initialize DatabaseHelper with the isFreeVersion flag
+        dbHelper = new DatabaseHelper(this, isFreeVersion);
         setupgui();
         setupListeners();
 
@@ -137,7 +143,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
             startActivity(browserIntent);
             return true;
         } else if (itemId == R.id.action_help_guide) {
-            // This is the new part to launch the HelpActivity
             Intent intent = new Intent(this, HelpActivity.class);
             startActivity(intent);
             return true;
@@ -182,7 +187,14 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_go_to_manage_employees = findViewById(R.id.btn_go_to_manage_employees);
         btn_upload_logo = findViewById(R.id.btn_upload_logo);
         btn_show_download_data_dialog = findViewById(R.id.btn_show_download_data_dialog);
-        btn_compliance_report = findViewById(R.id.btn_compliance_report); // Initialization added
+        btn_compliance_report = findViewById(R.id.btn_compliance_report);
+
+        // Disable logo upload button if it's the free version
+        if (isFreeVersion) {
+            btn_upload_logo.setEnabled(false);
+            btn_upload_logo.setAlpha(0.5f); // Visually indicate it's disabled
+            // Optionally, you could also hide it: btn_upload_logo.setVisibility(View.GONE);
+        }
     }
 
     private void setupListeners() {
@@ -191,6 +203,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_search_handwashes.setOnClickListener(v -> searchHandwashes());
 
         btn_upload_logo.setOnClickListener(v -> {
+            if (isFreeVersion) { // Double check for free version
+                Toast.makeText(AdminDashboardActivity.this, "Custom Logo Upload is a Pro feature! Please upgrade to Pro version.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
             String currentLogoPath = prefs.getString(KEY_CUSTOM_LOGO_PATH, null);
             File logoFile = null;
@@ -228,7 +245,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
     private void loadAdminOverviewData() {
         Log.d(TAG, "Loading admin overview data...");
-        if (dbHelper == null) dbHelper = new DatabaseHelper(this);
+        // Ensure dbHelper is initialized with the isFreeVersion flag
+        if (dbHelper == null) dbHelper = new DatabaseHelper(this, isFreeVersion);
         txt_overview_total_washes_today.setText(String.format(Locale.getDefault(), "Total Handwashes Today: %d", dbHelper.getTotalHandwashesToday()));
         txt_overview_active_employees.setText(String.format(Locale.getDefault(), "Active Employees: %d", dbHelper.getTotalActiveEmployeesCount()));
         List<LeaderboardEntry> topWashers = dbHelper.getTopHandwashers();

@@ -55,6 +55,7 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
     private FloatingActionButton fabAddEmployee;
     private TextView lblNoEmployees;
     private Toolbar toolbar;
+    private boolean isFreeVersion; // Declare isFreeVersion flag
 
 
     @Override
@@ -62,6 +63,10 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manage_employees);
+
+        // Determine if this is the free version based on the build flavor
+        isFreeVersion = getApplicationContext().getPackageName().endsWith(".free");
+        Log.d(TAG, "isFreeVersion: " + isFreeVersion);
 
         toolbar = findViewById(R.id.toolbar_manage_employees);
         setSupportActionBar(toolbar);
@@ -77,7 +82,8 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
             return WindowInsetsCompat.CONSUMED;
         });
 
-        dbHelper = new DatabaseHelper(this);
+        // Initialize DatabaseHelper with the isFreeVersion flag
+        dbHelper = new DatabaseHelper(this, isFreeVersion);
 
         recyclerEmployeeList = findViewById(R.id.recycler_manage_employee_list);
         lblNoEmployees = findViewById(R.id.lbl_no_employees);
@@ -94,6 +100,18 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.manage_employees_menu, menu);
+
+        // Hide CSV import option if it's the free version
+        MenuItem importCsvItem = menu.findItem(R.id.action_import_employees_csv);
+        if (importCsvItem != null && isFreeVersion) {
+            importCsvItem.setVisible(false);
+            // Optionally, you could also disable it and add a click listener that shows a "Pro feature" message
+            // importCsvItem.setEnabled(false);
+            // importCsvItem.setOnMenuItemClickListener(item -> {
+            //    Toast.makeText(this, "CSV Import is a Pro feature!", Toast.LENGTH_LONG).show();
+            //    return true;
+            // });
+        }
         return true;
     }
 
@@ -104,7 +122,13 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
             finish();
             return true;
         } else if (itemId == R.id.action_import_employees_csv) {
-            importEmployeesFromDevice();
+            if (isFreeVersion) {
+                // This check acts as a fallback, the menu item should already be hidden.
+                // Could display a toast or dialog here for UX feedback.
+                Toast.makeText(this, "CSV Import is a Pro feature! Please upgrade to Pro version.", Toast.LENGTH_LONG).show();
+            } else {
+                importEmployeesFromDevice();
+            }
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -214,7 +238,11 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
                 }
 
                 long result = dbHelper.insertEmployee(employeeNumber, firstName, lastName, department);
-                if (result != -1) {
+                if (result == -2) { // Check for the -2 return value indicating limit reached
+                    Toast.makeText(ManageEmployeesActivity.this, "Employee limit reached for free version (max 15 employees). Please upgrade to Pro!", Toast.LENGTH_LONG).show();
+                    // Optionally, you might want to dismiss the dialog here or keep it open.
+                    // alertDialog.dismiss();
+                } else if (result != -1) {
                     Toast.makeText(ManageEmployeesActivity.this, "Employee " + firstName + " added.", Toast.LENGTH_SHORT).show();
                     loadEmployeeList();
                     alertDialog.dismiss();
@@ -325,6 +353,7 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
     // --- CSV IMPORT LOGIC ---
 
     private void importEmployeesFromDevice() {
+        // This method will only be called if isFreeVersion is false, due to menu item visibility
         String csvFormatInfo = "Please select a CSV file with the following columns in order:<br>" +
                 "1. <b>EmployeeNumber</b> (e.g., 101)<br>" +
                 "2. <b>FirstName</b> (e.g., John)<br>" +
@@ -385,17 +414,25 @@ public class ManageEmployeesActivity extends AppCompatActivity implements Employ
                 } else {
                     int newCount = 0, skippedCount = 0, errorCount = 0;
                     for (EmployeeFromCsv empData : employeesToImport) {
-                        if (dbHelper.isEmployeeNumberTaken(empData.employeeNumber)) {
-                            skippedCount++;
-                        } else {
-                            if (dbHelper.insertEmployee(empData.employeeNumber, empData.firstName, empData.lastName, empData.department) > 0) {
-                                newCount++;
+                        // The insertEmployee method in DatabaseHelper now handles the limit check
+                        long insertResult = dbHelper.insertEmployee(empData.employeeNumber, empData.firstName, empData.lastName, empData.department);
+                        if (insertResult == -2) { // Limit reached
+                            resultMessageBuilder.append("\nEmployee limit reached during import. Stopping import.");
+                            break; // Stop importing further if limit is reached
+                        } else if (insertResult > 0) { // Successfully inserted
+                            newCount++;
+                        } else if (insertResult == -1) { // Error during insert (e.g., employee already exists or other DB error)
+                            // If -1 and employee number exists, it means skipped, otherwise actual error.
+                            if(dbHelper.isEmployeeNumberTaken(empData.employeeNumber)) {
+                                skippedCount++;
                             } else {
                                 errorCount++;
                             }
+                        } else { // This would be the '0' for guest, but that shouldn't happen here for new employees
+                            errorCount++;
                         }
                     }
-                    resultMessageBuilder.append(String.format(Locale.getDefault(), "CSV Import Complete:\nNew: %d\nSkipped (already exist): %d\nErrors: %d", newCount, skippedCount, errorCount));
+                    resultMessageBuilder.insert(0, String.format(Locale.getDefault(), "CSV Import Summary:\nNew: %d\nSkipped (already exist): %d\nErrors: %d", newCount, skippedCount, errorCount));
                 }
             } catch (IOException e) {
                 resultMessageBuilder.append("Error reading selected CSV: ").append(e.getMessage());
