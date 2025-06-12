@@ -21,8 +21,6 @@
         android:title="Help &amp; Guide"
         app:showAsAction="never" />
 
-    <item
-        android:id="@+id/action_logout_toolbar"
-        android:title="Logout"
-        app:showAsAction="never" />
+    <!-- Logout item removed from overflow menu -->
+
 </menu>

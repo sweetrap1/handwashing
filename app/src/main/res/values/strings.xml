@@ -39,14 +39,13 @@
 
     <!-- NEW: Expanded welcome message for dialog_welcome_content.xml -->
     <string name="dialog_welcome_message_updated">
-        Thank you for trying Handwash Tracking!&lt;br/&gt;&lt;br/&gt;
-        This app is designed to track hourly handwashes for employees in restaurants or other applicable companies. It uses motion detection at the end of the process to verify that the handwasher is still present and didn\'t leave prematurely.&lt;br/&gt;&lt;br/&gt;
-        In this current version, both the Free and Paid tiers store all stats locally on this device. We are planning a future release that will support multi-device connections and user authentication for companies.&lt;br/&gt;&lt;br/&gt;
+        This app is designed to track hourly handwashes for employees in restaurants or other applicable companies. &lt;br/&gt;&lt;br/&gt;
+        Both the Free and Paid versions store all stats locally on this device.&lt;br/&gt;&lt;br/&gt;
         For the Free Version, please note the following limitations:&lt;br/&gt;&lt;br/&gt;
         • Up to &lt;b&gt;15 employees&lt;/b&gt; can be added.&lt;br/&gt;&lt;br/&gt;
         • Employee data import (CSV) is &lt;b&gt;disabled&lt;/b&gt;.&lt;br/&gt;&lt;br/&gt;
         • Custom branding and logo upload features are &lt;b&gt;disabled&lt;/b&gt;.&lt;br/&gt;&lt;br/&gt;
-        Enjoy the app! Consider upgrading to Pro for no limitations and no Ad\'s! Stay tuned for future versions and updates.
+        Enjoy the app! Consider upgrading to Pro for no limitations and no Ad\'s! Stay tuned for future versions that support multiple devices.
     </string>
 
     <string name="admin_dashboard_tour_title">Welcome to your Admin Dashboard!</string>

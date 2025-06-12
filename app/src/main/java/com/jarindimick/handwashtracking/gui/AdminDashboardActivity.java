@@ -18,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ImageButton; // Import ImageButton
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -75,6 +76,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private HandwashLogAdapter handwashLogAdapter;
     private TextView txt_message;
     private MaterialToolbar toolbarAdminDashboard;
+    private ImageButton btnToolbarLogout; // Declare the new logout button
 
     private MaterialButton btn_go_to_manage_employees;
     private MaterialButton btn_upload_logo;
@@ -121,7 +123,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
+        MenuInflater inflater = getMenuInflater(
+        );
         inflater.inflate(R.menu.admin_dashboard_menu, menu);
         return true;
     }
@@ -132,10 +135,13 @@ public class AdminDashboardActivity extends AppCompatActivity {
         if (itemId == R.id.action_change_password_toolbar) {
             showChangePasswordDialog();
             return true;
-        } else if (itemId == R.id.action_logout_toolbar) {
+        } /* Removed as logout is now a direct button
+        else if (itemId == R.id.action_logout_toolbar) {
             logout();
             return true;
-        } else if (itemId == R.id.action_delete_data_range_toolbar) {
+        }
+        */
+        else if (itemId == R.id.action_delete_data_range_toolbar) {
             deleteDataWithConfirmation();
             return true;
         } else if (itemId == R.id.action_privacy_policy) {
@@ -188,6 +194,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btn_upload_logo = findViewById(R.id.btn_upload_logo);
         btn_show_download_data_dialog = findViewById(R.id.btn_show_download_data_dialog);
         btn_compliance_report = findViewById(R.id.btn_compliance_report);
+        btnToolbarLogout = findViewById(R.id.btn_toolbar_logout); // Initialize the new logout button
 
         // Disable logo upload button if it's the free version
         if (isFreeVersion) {
@@ -241,6 +248,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
             Intent intent = new Intent(AdminDashboardActivity.this, ComplianceReportActivity.class);
             startActivity(intent);
         });
+
+        // Set OnClickListener for the new logout ImageButton
+        if (btnToolbarLogout != null) {
+            btnToolbarLogout.setOnClickListener(v -> logout());
+        }
     }
 
     private void loadAdminOverviewData() {

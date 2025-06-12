@@ -525,7 +525,7 @@ public class MainHandwashing extends AppCompatActivity implements PurchasesUpdat
         // Only show tour if not Pro version unlocked (so they see the Pro upgrade option)
         if (isFreeVersion && !isProVersionUnlocked && edit_employee_number != null && mainToolbar != null && mainToolbar.getMenu() != null && mainToolbar.getMenu().findItem(R.id.menu_admin_login) != null) {
             String adminTitle = "Admin Features";
-            String adminDescription = "Access employee management & app settings. Default login/password: admin (Please Change)";
+            String adminDescription = "Access employee management & app settings. Default login and password: admin (Change password later)";
 
             TapTargetSequence.Listener sequenceListener = new TapTargetSequence.Listener() {
                 @Override
@@ -551,7 +551,7 @@ public class MainHandwashing extends AppCompatActivity implements PurchasesUpdat
             };
 
             ArrayList<TapTarget> targets = new ArrayList<>();
-            targets.add(TapTarget.forView(edit_employee_number, "Guest User Or Unregistered Employee?", "Enter the number 0 to start a Handwash.")
+            targets.add(TapTarget.forView(edit_employee_number, "Enter employee number here!", "Enter the number 0 to start a Handwash for a unregistered user.")
                     .outerCircleColor(R.color.purple_500).outerCircleAlpha(0.75f).targetCircleColor(android.R.color.white)
                     .titleTextColor(android.R.color.white).descriptionTextColor(android.R.color.white)
                     .textTypeface(Typeface.SANS_SERIF).dimColor(R.color.tour_dim_background).drawShadow(true)
